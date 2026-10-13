@@ -1,0 +1,3 @@
+interface:
+  display_name: "测试审查"
+  short_description: "只读检查测试覆盖、断言与运行证据，不修改任何文件，仅执行无写入的已有检查。"
