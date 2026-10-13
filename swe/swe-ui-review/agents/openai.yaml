@@ -1,0 +1,3 @@
+interface:
+  display_name: "UI 审查"
+  short_description: "对照交互规范只读检查界面、操作路径、状态反馈及平台证据，不修改任何文件。"

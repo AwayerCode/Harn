@@ -1,0 +1,3 @@
+interface:
+  display_name: "SWE 软件工程"
+  short_description: "按任务选择业务建模、设计、实现、测试与审查模块，协调产物依赖和职责边界。"

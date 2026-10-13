@@ -1,0 +1,56 @@
+{
+  "skill": "swe-ui-design",
+  "documents": {
+    "interaction-standards": {
+      "title": "交互规范",
+      "path": "design/interaction-standards/interaction-standards.md",
+      "sections": [
+        {
+          "heading": "文档信息",
+          "columns": [
+            "字段",
+            "值"
+          ]
+        },
+        {
+          "heading": "用户任务与价值"
+        },
+        {
+          "heading": "信息结构与导航"
+        },
+        {
+          "heading": "操作与业务映射",
+          "columns": [
+            "用户操作",
+            "公共能力",
+            "可见状态",
+            "反馈",
+            "后续动作"
+          ]
+        },
+        {
+          "heading": "状态与恢复"
+        },
+        {
+          "heading": "视觉与组件规则"
+        },
+        {
+          "heading": "平台与可用性"
+        },
+        {
+          "heading": "验收场景",
+          "columns": [
+            "场景",
+            "前置条件",
+            "操作",
+            "预期表现",
+            "验证平台与方法"
+          ]
+        },
+        {
+          "heading": "待确认问题"
+        }
+      ]
+    }
+  }
+}

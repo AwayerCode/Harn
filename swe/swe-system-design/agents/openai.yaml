@@ -1,0 +1,3 @@
+interface:
+  display_name: "系统设计"
+  short_description: "依据业务模型完成系统分层、模块划分、数据协议设计和技术选型。"
