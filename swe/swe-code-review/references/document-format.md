@@ -1,21 +1,10 @@
-# 审查输入文档校验
+# 输入文档规范
 
-业务模型的规范、格式契约和校验器统一由 `swe-business-model` 维护，读取[业务模型文档规则](../../swe-business-model/references/document-format.md)，使用该 Skill 的校验脚本；不在本 Skill 保存副本。通过 SWE 总入口及此处的相对链接定位同级 `swe-business-model` 模块，缺失时停止依赖业务模型的工作并说明；不回退到旧契约。其他文档仍按本 Skill 的规范与契约校验。
+格式定义与校验统一引用[共同产物规范](../../references/standards/artifacts.md)，本模块只声明所需文档类型，不维护 schema 副本。
 
-以下格式要求仅适用于本 Skill 的本地契约类型。
+- `interaction-standards`：[内容要求](../../swe-ui-design/references/document-format.md)。
+- `interface-protocol`：[内容要求](../../swe-module-design/references/document-format.md)。
+- `system-design`：[内容要求](../../swe-module-design/references/document-format.md)。
+- `test-design`：[内容要求](../../swe-testing-design/references/document-format.md)。
 
-本 Skill 只读取目标项目已有的权威文档，不保存项目文档副本、产物模板或示例文档。输入类型及格式由本目录的 `input-contract.json` 定义，使用自身 `scripts/validate_documents.py` 校验，业务模型使用 `swe-business-model` 的规范及校验器。
-
-文档是否必需取决于具体检查，判定见 [workflow.md](../workflow.md#依据与检查范围)。直接依据代码、调用路径及语言或库的明确规则成立的检查，无需先补齐设计文档。检查业务或设计符合性时，通过用户路径、项目索引和实际引用定位权威文档；不能以历史对话或现有代码替代设计依据。文档缺失、格式错误、冲突或不能支撑结论时只停止依赖它的检查并说明，其他有独立依据的部分继续；不创建或改写文档。
-
-校验检查一级标题、完整且有序的二级章节、必要内容、表格字段与非空数据、文档元信息、协议字段、模板占位符、代码围栏和本地引用。文档状态为草案、待验收或已验收，不能替代任务状态；占位符必须替换。章节不适用时保留标题并填写“不适用：”及具体原因，文档信息不能省略。
-
-使用本 Skill 的实际安装路径执行：
-
-```bash
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind <输入类型> --file <目标项目文档路径>
-```
-
-退出码 0 表示格式合格，1 表示文档违规，2 表示读取或参数错误。格式合格不代表规则正确或实现符合规则；仍须按本 Skill 的对象与粒度审查。
-
-禁止写入任何文件；只执行无写入的检查，不创建样本、缓存或报告。审查结论在回复中交付，说明依据、位置、偏离、影响、实际验证和未覆盖范围，不生成独立报告。格式契约随本 Skill 独立维护，变更不能用于迁就错误输入。
+检查当前任务相关语义，格式通过不证明依据充分、设计正确或运行行为正确。项目执行不修改 Skill 标准来迁就输入。

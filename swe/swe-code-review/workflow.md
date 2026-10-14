@@ -86,9 +86,7 @@ description: 用于审查代码改动、提交、分支或 Pull Request，也可
 | [check_scope.py](../scripts/check_scope.py) | 核对实际写入范围或只读结果；Python 3 标准库和 Git，属于规则的检查执行，不是业务资源 |
 | 内容审查、项目检查与实际验证 | 按下面保留的专业要求和完成标准确认内容与行为；涉及运行先确认工具、环境、权限、输出位置和副作用 |
 
-所有 Python 命令使用 `-B`。共享检查随 SWE 包提供，不复制到目标项目；模块不需要其他阶段先执行，但依赖明确列出的包内检查。脚本退出码 0 为本次检查通过，1 为发现问题，2 为无法检查；没有实际执行、失败或无法运行均不能说通过。相同检查问题连续三次未解决时停止重试，报告缺口和所需决策，不反复运行直到偶然通过。
-
-范围检查覆盖 Git 跟踪及非忽略文件的最终内容、类型和权限；写入检查还覆盖明确允许文件与运行目录中的忽略文件。未列明的忽略文件、`.git`、项目外文件或改后恢复的动作不在覆盖范围，也不提供权限隔离。这些对象仍受本模块行为边界约束。不得修改原基线来掩盖变化；保留用户已有修改，无法确定变化归因时明确说明。
+检查执行、范围覆盖、退出码及失败处理统一遵守[执行规范](../references/standards/execution.md)。
 
 
 ## 资源
@@ -120,7 +118,7 @@ python3 -B <SWE目录>/scripts/check_scope.py readonly --root <目标Git根目�
 
 ### 执行前文档检查
 
-业务模型的规范、格式契约和校验器统一由 `swe-business-model` 维护，读取[业务模型文档规则](../swe-business-model/references/document-format.md)，使用该 Skill 的校验脚本；不在本 Skill 保存副本。通过 SWE 总入口及此处的相对链接定位同级 `swe-business-model` 模块，缺失时停止依赖业务模型的工作并说明；不回退到旧契约。其他文档仍按本 Skill 的规范与契约校验。
+业务模型及其他文档格式统一由[共同产物规范](../references/standards/artifacts.md)维护。按声明的输入类型使用共享校验器，仅读取相关专业依据，不要求加载生产方工作流。
 
 先取得审查对象及适用要求，变更审查还需明确比较基线。按“依据与检查范围”逐项确定所需文档，只定位和校验当前检查实际依赖的类型。
 
@@ -133,7 +131,7 @@ python3 -B <SWE目录>/scripts/check_scope.py readonly --root <目标Git根目�
 ```bash
 python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
 python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
-python3 -B <swe-business-model 目录>/scripts/validate_documents.py --kind business-model --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind business-model --file <文档路径>
 python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
 python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind test-design --file <文档路径>
 ```

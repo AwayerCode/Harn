@@ -23,6 +23,7 @@ class DocumentValidationTests(unittest.TestCase):
             source = SKILL / 'references' / name
             if source.exists():
                 self.contract['documents'].update(json.loads(source.read_text())['documents'])
+        self.contract = validator.resolve_contract(self.contract)
         self.kind = next(iter(self.contract['documents']))
         self.text = self.fixture(self.kind)
 

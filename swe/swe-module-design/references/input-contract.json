@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "documents": {
+    "business-model": {
+      "$ref": "business-model.json"
+    },
+    "system-design": {
+      "$ref": "system-design.json"
+    }
+  }
+}
