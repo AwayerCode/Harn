@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "documents": {
+    "system-design": {
+      "$ref": "system-design.json"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "documents": {
+    "system-design": {
+      "$ref": "system-design.json"
+    },
+    "interface-protocol": {
+      "$ref": "interface-protocol.json"
+    }
+  }
+}

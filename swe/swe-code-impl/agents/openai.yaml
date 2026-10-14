@@ -1,3 +1,3 @@
 interface:
-  display_name: "代码实现"
-  short_description: "依据只读设计实施业务与技术模块，只修改相应代码及工程文件，不改 UI、测试或文档。"
+  display_name: "代码实现兼容入口"
+  short_description: "按模块职责路由到业务、基础设施或运行组装实现"
