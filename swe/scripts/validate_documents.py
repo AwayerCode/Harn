@@ -68,8 +68,8 @@ def check_table(lines, columns, errors, label, enums=None):
     return rows
 
 
-def validate(path, kind, contract):
-    contract = resolve_contract(contract)
+def validate(path, kind, contract, profile=None):
+    contract = resolve_contract(contract, [kind])
     errors = []
     if kind not in contract['documents']:
         return [f'未知文档类型：{kind}']
@@ -77,6 +77,26 @@ def validate(path, kind, contract):
         return [f'文件不存在：{path}']
     text = path.read_text(encoding='utf-8')
     spec = contract['documents'][kind]
+    if profile is not None:
+        owned = spec.get('profiles', {}).get(profile)
+        if not owned:
+            raise ValueError(f'文档类型 {kind} 不支持局部校验 {profile}')
+        spec = dict(spec)
+        spec['sections'] = [section for section in spec['sections'] if section['heading'] in owned]
+        spec.pop('accepted_variants', None)
+        # Project the owned sections in memory; no writes or temporary document.
+        raw = text.splitlines()
+        visible = outside_code(text, errors)
+        selected, keep = [], True
+        for line, clean in zip(raw, visible):
+            if clean.startswith('## '):
+                keep = clean[3:].strip() in owned
+            if keep:
+                selected.append(line)
+        original_ending = text.endswith('\n') and not text.endswith('\n\n')
+        text = '\n'.join(selected).rstrip() + '\n'
+        if not original_ending:
+            errors.append('文件末尾必须恰好一个换行')
     if not text.endswith('\n') or text.endswith('\n\n'):
         errors.append('文件末尾必须恰好一个换行')
     if re.search(r'\{\{[^\n{}]+\}\}|\{填写[^\n{}]*\}', text):
@@ -192,12 +212,14 @@ def validate(path, kind, contract):
     return errors
 
 
-def resolve_contract(contract):
+def resolve_contract(contract, kinds=None):
     """Resolve versioned package schemas; unknown/missing schemas fail closed."""
     if contract.get('schema_version', 1) != 1:
         raise ValueError('不支持的格式契约版本')
     result = {'documents': {}}
     for kind, spec in contract['documents'].items():
+        if kinds is not None and kind not in kinds:
+            continue
         if '$ref' in spec:
             name = spec['$ref']
             if name != kind + '.json' or Path(name).name != name:
@@ -208,10 +230,10 @@ def resolve_contract(contract):
     return result
 
 
-def load_contract(module=None):
+def load_contract(module=None, kinds=None):
     if module is None:
         root = Path(__file__).resolve().parents[1] / 'references/artifact-schemas'
-        return {'documents': {p.stem: json.loads(p.read_text(encoding='utf-8')) for p in sorted(root.glob('*.json'))}}
+        return {'documents': {p.stem: json.loads(p.read_text(encoding='utf-8')) for p in sorted(root.glob('*.json')) if kinds is None or p.stem in kinds}}
     contract = {'documents': {}}
     for name in ('input-contract.json', 'artifact-contract.json'):
         source = Path(module) / 'references' / name
@@ -220,22 +242,24 @@ def load_contract(module=None):
             if data.get('schema_version') != 1:
                 raise ValueError('不支持的格式契约版本')
             contract['documents'].update(data['documents'])
-    return resolve_contract(contract)
+    return resolve_contract(contract, kinds)
 
 
 def main(module=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--kind', required=True)
     parser.add_argument('--file', type=Path, required=True)
+    parser.add_argument('--profile', choices=['architecture'], help='仅检查架构负责章节；通过不表示整份设计通过')
     args = parser.parse_args()
     try:
-        errors = validate(args.file, args.kind, load_contract(module))
+        errors = validate(args.file, args.kind, load_contract(module, [args.kind]), args.profile)
     except (OSError, ValueError, KeyError) as exc:
         print(f'ERROR: 无法完成校验：{exc}', file=sys.stderr)
         return 2
     for error in errors:
         print(f'ERROR: {args.file}: {error}')
-    print(f'Checked {args.file}: {len(errors)} error(s)')
+    scope = 'partial:' + args.profile if args.profile else 'full'
+    print(f'Checked {args.file} [{scope}]: {len(errors)} error(s)')
     return 1 if errors else 0
 
 

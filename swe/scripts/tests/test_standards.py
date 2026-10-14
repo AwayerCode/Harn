@@ -4,6 +4,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import shutil
 import unittest
 from pathlib import Path
 
@@ -99,6 +100,71 @@ class StandardsTests(unittest.TestCase):
                 protocol.write_text(text)
             missing = subprocess.run([sys.executable, '-B', str(ROOT / 'scripts/validate_documents.py'), '--kind', 'system-design', '--file', str(Path(tmp)/'missing.md')], capture_output=True, text=True)
             self.assertEqual(missing.returncode, 1)
+
+    def test_architecture_handoff_does_not_require_module_implementation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            system, protocol = fixture(root)
+            schema = validator.load_contract(kinds=['system-design'])
+            owned = schema['documents']['system-design']['profiles']['architecture']
+            original = system.read_text()
+            chunks = re.split(r'(?m)(?=^## )', original)
+            partial = chunks[0] + ''.join(chunk for chunk in chunks[1:] if chunk.splitlines()[0][3:] in owned)
+            system.write_text(partial)
+            self.assertEqual(validator.validate(system, 'system-design', schema, 'architecture'), [])
+            self.assertTrue(validator.validate(system, 'system-design', schema))
+            system.write_text(partial + '\n## 模块与依赖\n\n{{尚未由模块设计填写}} [未完成](missing.md)\n')
+            self.assertEqual(validator.validate(system, 'system-design', schema, 'architecture'), [])
+            self.assertTrue(validator.validate(system, 'system-design', schema))
+            system.write_text(partial.replace('## 责任分层', '## 未定义的层'))
+            self.assertTrue(validator.validate(system, 'system-design', schema, 'architecture'))
+            system.write_text(original)
+            self.assertEqual(design.check(system, protocol), [])
+            result = subprocess.run([sys.executable, '-B', str(ROOT / 'scripts/validate_documents.py'), '--kind', 'system-design', '--profile', 'architecture', '--file', str(system)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn('[partial:architecture]', result.stdout)
+            wrong = subprocess.run([sys.executable, '-B', str(ROOT / 'scripts/validate_documents.py'), '--kind', 'interface-protocol', '--profile', 'architecture', '--file', str(protocol)], capture_output=True, text=True)
+            self.assertEqual(wrong.returncode, 2)
+
+    def test_shared_checks_load_only_requested_types_without_producer_modules(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'swe'
+            shutil.copytree(ROOT / 'scripts', root / 'scripts', ignore=shutil.ignore_patterns('tests', '__pycache__'))
+            shutil.copytree(ROOT / 'references/artifact-schemas', root / 'references/artifact-schemas')
+            for kind in ['system-design', 'interface-protocol']:
+                (root / 'references/artifact-schemas' / (kind + '.json')).write_text('invalid json')
+            fixture = ROOT / 'swe-testing-design/scripts/tests/fixtures/test-design.md'
+            for args in [
+                [str(root / 'scripts/validate_documents.py'), '--kind', 'test-design', '--file', str(fixture)],
+                [str(root / 'scripts/check_artifacts.py'), '--kind', 'test', '--file', str(fixture)],
+            ]:
+                result = subprocess.run([sys.executable, '-B', *args], cwd=tmp, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            result = subprocess.run([sys.executable, '-B', str(root / 'scripts/validate_documents.py'), '--kind', 'interface-protocol', '--file', str(fixture)], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+
+    def test_architecture_template_matches_owned_sections(self):
+        template = (ROOT / 'swe-architecture-design/assets/architecture-design.md').read_text()
+        expected = validator.load_contract(kinds=['system-design'])['documents']['system-design']['profiles']['architecture']
+        self.assertEqual(re.findall(r'^## (.+)$', template, re.M), expected)
+
+    def test_ui_only_work_needs_no_business_protocol_but_business_work_does(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'ui.md'
+            path.write_text(document('interaction-standards', {
+                '操作与业务映射': '| 用户操作 | 公共能力 | 可见状态 | 反馈 | 后续动作 |\n| --- | --- | --- | --- | --- |\n| 展开详情 | 界面:展开 | 展开 | 动画 | 收起 |',
+            }))
+            command = [sys.executable, '-B', str(ROOT / 'scripts/check_artifacts.py'), '--kind', 'ui', '--file', str(path)]
+            pure = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(pure.returncode, 0, pure.stdout + pure.stderr)
+            self.assertIn('纯界面动作', pure.stdout)
+            path.write_text(path.read_text().replace('界面:展开', '协议:order.read'))
+            business = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(business.returncode, 1, business.stdout + business.stderr)
+            self.assertIn('缺少接口协议', business.stdout)
+            path.write_text(path.read_text().replace('协议:order.read', '界面:'))
+            invalid = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(invalid.returncode, 1)
 
     def test_document_links(self):
         for path in ROOT.rglob('*.md'):

@@ -57,7 +57,7 @@ def links_to(source, destination):
 
 
 def check(system, protocol):
-    contract = load_contract()
+    contract = load_contract(kinds=['system-design', 'interface-protocol'])
     errors = []
     for path, kind in [(system, 'system-design'), (protocol, 'interface-protocol')]:
         errors.extend(f'{path.name}: {e}' for e in validate(path, kind, contract))
