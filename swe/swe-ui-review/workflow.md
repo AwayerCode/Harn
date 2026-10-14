@@ -13,6 +13,10 @@ description: 用于依据交互规范审查实际界面的信息层级、视觉�
 
 ## 规则
 
+涉及模块、异步、状态或资源生命周期时，读取[实现与运行约束](../references/standards/implementation.md)的适用章节。
+
+遵守[按需加载与职责边界](../references/standards/loading.md)，按当前对象读取共同标准与项目契约；不加载其他专业工作流来完成本职责。
+
 ### 文件写入边界（强制）
 
 

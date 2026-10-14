@@ -49,6 +49,16 @@ test('installed SWE includes shared standards and new/legacy validators', async 
   await writeFile(path.join(project, 'system.md'), system.replace('抽象:order.read', 'Store'));
   const invalidDesign = spawnSync('python3', designArgs, { cwd: project, encoding: 'utf8' });
   assert.equal(invalidDesign.status, 1, invalidDesign.stderr + invalidDesign.stdout);
+  const ownedSections = JSON.parse(await readFile(path.join(swe, 'references', 'artifact-schemas', 'system-design.json'), 'utf8')).profiles.architecture;
+  const chunks = system.split(/(?=^## )/m);
+  const partial = chunks[0] + chunks.slice(1).filter(chunk => ownedSections.includes(chunk.split('\n')[0].slice(3))).join('');
+  await writeFile(path.join(project, 'system.md'), partial);
+  const architectureArgs = ['-B', path.join(swe, 'swe-architecture-design', 'scripts', 'validate_documents.py'), '--kind', 'system-design', '--file', path.join(project, 'system.md')];
+  const partialCheck = spawnSync('python3', [...architectureArgs, '--profile', 'architecture'], { cwd: project, encoding: 'utf8' });
+  assert.equal(partialCheck.status, 0, partialCheck.stderr + partialCheck.stdout);
+  assert.match(partialCheck.stdout, /partial:architecture/);
+  const fullCheck = spawnSync('python3', architectureArgs, { cwd: project, encoding: 'utf8' });
+  assert.equal(fullCheck.status, 1, fullCheck.stderr + fullCheck.stdout);
   const source = path.resolve(import.meta.dirname, '../../swe/swe-code-impl/scripts/tests/fixtures/interface-protocol.md');
   const fixture = await readFile(source, 'utf8');
   const target = path.join(project, 'protocol.md');

@@ -13,6 +13,10 @@ description: 用于审查代码改动、提交、分支或 Pull Request，也可
 
 ## 规则
 
+涉及模块、异步、状态或资源生命周期时，读取[实现与运行约束](../references/standards/implementation.md)的适用章节。
+
+遵守[按需加载与职责边界](../references/standards/loading.md)，按当前对象读取共同标准与项目契约；不加载其他专业工作流来完成本职责。
+
 ### 文件写入边界（强制）
 
 本 Skill 只做 Review，禁止新增、修改、删除、移动或重命名任何文件，包括设计、源码、测试、配置、快照、报告、日志与缓存。只能读取已有产物并在回复中交付结论，不自动修正，也不在 Review 中调用其他 Skill 执行修改。

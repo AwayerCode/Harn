@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 """Check explicit UI-to-protocol or risk-to-scenario relations, without writing."""
 import argparse
-import importlib.util
 import json
 import re
 import sys
 from pathlib import Path
 
 
-def load_validator(module):
-    spec = importlib.util.spec_from_file_location('artifact_validator', module / 'scripts/validate_documents.py')
-    result = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(result)
-    return result
+import validate_documents as validator
 
 
 def references(text, prefix, errors, label):
@@ -28,35 +23,30 @@ def references(text, prefix, errors, label):
 
 
 def check(kind, path, protocol=None):
-    root = Path(__file__).resolve().parents[1]
-    module = root / ('swe-ui-design' if kind == 'ui' else 'swe-testing-design')
-    validator = load_validator(module)
-    contract = {'documents': {}}
-    for name in ['input-contract.json', 'artifact-contract.json']:
-        source = module / 'references' / name
-        if source.exists():
-            contract['documents'].update(json.loads(source.read_text())['documents'])
+    if kind not in {'ui', 'test'}:
+        raise ValueError(f'未知检查类型：{kind}')
     dtype = 'interaction-standards' if kind == 'ui' else 'test-design'
+    kinds = [dtype, 'interface-protocol'] if kind == 'ui' and protocol is not None else [dtype]
+    contract = validator.load_contract(kinds=kinds)
     result = {'errors': validator.validate(path, dtype, contract), 'checked': [], 'unverified': []}
     if result['errors']:
         return result
     lines = validator.outside_code(path.read_text(), [])
     if kind == 'ui':
-        if protocol is None:
-            raise ValueError('UI 对应关系检查需要接口协议')
-        result['errors'] += validator.validate(protocol, 'interface-protocol', contract)
-        if result['errors']:
-            return result
         ids, capabilities = set(), {}
-        for columns, rows in validator.tables(validator.outside_code(protocol.read_text(), [])):
-            if '协议标识' in columns and '能力' in columns:
-                for values in rows:
-                    row = dict(zip(columns, values))
-                    pid = row['协议标识'].strip('`')
-                    if pid in ids:
-                        result['errors'].append(f'重复协议标识：{pid}')
-                    ids.add(pid)
-                    capabilities.setdefault(row['能力'], []).append(pid)
+        if protocol is not None:
+            result['errors'] += validator.validate(protocol, 'interface-protocol', contract)
+            if result['errors']:
+                return result
+            for columns, rows in validator.tables(validator.outside_code(protocol.read_text(), [])):
+                if '协议标识' in columns and '能力' in columns:
+                    for values in rows:
+                        row = dict(zip(columns, values))
+                        pid = row['协议标识'].strip('`')
+                        if pid in ids:
+                            result['errors'].append(f'重复协议标识：{pid}')
+                        ids.add(pid)
+                        capabilities.setdefault(row['能力'], []).append(pid)
         for columns, rows in validator.tables(lines):
             if columns != ['用户操作', '公共能力', '可见状态', '反馈', '后续动作']:
                 continue
@@ -65,7 +55,9 @@ def check(kind, path, protocol=None):
                 ability = row['公共能力']
                 before = len(result['errors'])
                 refs = references(ability, '协议', result['errors'], row['用户操作'])
-                if '协议:' in ability:
+                if protocol is None and not (ability.startswith('界面:') and ability[3:].strip()):
+                    result['errors'].append(f'{row["用户操作"]}: 业务操作缺少接口协议依据')
+                elif '协议:' in ability:
                     for pid in refs:
                         if pid not in ids:
                             result['errors'].append(f'{row["用户操作"]}: 引用不存在的协议 {pid}')
