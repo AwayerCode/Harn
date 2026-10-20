@@ -2,16 +2,6 @@
   "schema_version": 1,
   "skills": [
     {
-      "name": "ai-job-search",
-      "description": "辅助求职定位、职位匹配评估、简历与求职信定制、面试准备和申请记录管理；基于 MadsLorentzen/ai-job-search 工作区，适用于个人求职流程。",
-      "version": "0.1.0",
-      "updated_at": "2026-10-20T13:48:31Z",
-      "source": {
-        "repository": "https://github.com/MadsLorentzen/ai-job-search",
-        "path": "."
-      }
-    },
-    {
       "name": "concise-response",
       "description": "控制所有分析与用户可见回复的立场和表达方式：默认站在用户已经形成的认知立场内部思考，直接揭示问题本质，不用中立化或主流叙事稀释核心判断；对话说明保持简洁，但不得把简洁原则用于压缩用户要求保存、整理或交付的完整知识与成品。每次对话、所有任务类型和所有最终回复都使用此规则。",
       "version": "0.1.0",
@@ -39,16 +29,6 @@
       "source": {
         "repository": "https://github.com/alchaincyf/huashu-motion",
         "path": "skills/huashu-motion"
-      }
-    },
-    {
-      "name": "hyperframes",
-      "description": "使用 HyperFrames 将 HTML 内容制作成可编辑、可重复渲染的视频，适用于功能演示、数据解说、更新介绍、社媒短视频和多版本输出；支持现有 HyperFrames 项目的预览、检查与渲染。",
-      "version": "0.1.0",
-      "updated_at": "2026-10-20T13:48:31Z",
-      "source": {
-        "repository": "https://github.com/heygen-com/hyperframes",
-        "path": "skills"
       }
     },
     {
