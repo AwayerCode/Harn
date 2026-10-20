@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -72,7 +73,6 @@ func readCatalog(root string) ([]Skill, error) {
 		SchemaVersion int `json:"schema_version"`
 		Skills        []struct {
 			Name        string `json:"name"`
-			Path        string `json:"path"`
 			Description string `json:"description"`
 		} `json:"skills"`
 	}
@@ -83,17 +83,17 @@ func readCatalog(root string) ([]Skill, error) {
 		return nil, errors.New("skills/index.json requires schema_version 1 and a skills array")
 	}
 	skills := make([]Skill, 0, len(catalog.Skills))
-	names, paths := map[string]bool{}, map[string]bool{}
+	names := map[string]bool{}
+	validName := regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 	for _, entry := range catalog.Skills {
-		parts := strings.Split(entry.Path, "/")
-		if strings.TrimSpace(entry.Name) == "" || strings.TrimSpace(entry.Description) == "" || len(parts) != 2 || parts[0] != "skills" || parts[1] == "" || strings.HasPrefix(parts[1], ".") || strings.HasPrefix(parts[1], "_") || strings.Contains(entry.Path, "\\") {
-			return nil, fmt.Errorf("invalid skill entry %q: name, description and public top-level skills path required", entry.Name)
+		if !validName.MatchString(entry.Name) || len(entry.Name) > 64 || strings.TrimSpace(entry.Description) == "" {
+			return nil, fmt.Errorf("invalid skill entry %q: lowercase name and description required", entry.Name)
 		}
-		if names[entry.Name] || paths[entry.Path] {
-			return nil, fmt.Errorf("duplicate skill name or path %q", entry.Name)
+		if names[entry.Name] {
+			return nil, fmt.Errorf("duplicate skill name %q", entry.Name)
 		}
-		names[entry.Name], paths[entry.Path] = true, true
-		skills = append(skills, Skill{Name: entry.Name, Path: entry.Path, Summary: strings.Join(strings.Fields(entry.Description), " ")})
+		names[entry.Name] = true
+		skills = append(skills, Skill{Name: entry.Name, Path: "skills/" + entry.Name, Summary: strings.Join(strings.Fields(entry.Description), " ")})
 	}
 	return skills, nil
 }

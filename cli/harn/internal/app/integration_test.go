@@ -65,7 +65,7 @@ func run(t *testing.T, runner *Runner, args ...string) (int, string, string) {
 func TestInstallListStatusRemoveFlow(t *testing.T) {
 	t.Parallel()
 	server := newArchiveServer(t, map[string]archiveEntry{
-		"skills/index.json":   {body: `{"schema_version":1,"skills":[{"name":"swe","path":"skills/swe","description":"engineering review"}]}`, mode: 0o644},
+		"skills/index.json":   {body: `{"schema_version":1,"skills":[{"name":"swe","description":"engineering review"}]}`, mode: 0o644},
 		"skills/swe/SKILL.md": {body: "---\nname: swe\ndescription: engineering review\n---\n", mode: 0o644},
 	})
 	project := t.TempDir()

@@ -9,7 +9,7 @@ import (
 func TestSearchFiltersCatalog(t *testing.T) {
 	t.Parallel()
 	archive := newArchiveServer(t, archiveFiles{
-		"skills/index.json":   {body: `{"schema_version":1,"skills":[{"name":"swe","path":"skills/swe","description":"engineering design review"},{"name":"concise-response","path":"skills/concise-response","description":"writing style"}]}`, mode: 0o644},
+		"skills/index.json":   {body: `{"schema_version":1,"skills":[{"name":"swe","description":"engineering design review"},{"name":"concise-response","description":"writing style"}]}`, mode: 0o644},
 		"skills/swe/SKILL.md": {body: "invalid: search must not parse this", mode: 0o644},
 	})
 	manager := Manager{Client: archive.Client()}
@@ -26,7 +26,7 @@ func TestSearchFiltersCatalog(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(skills) != 1 || skills[0].Name != "swe" {
+	if len(skills) != 1 || skills[0].Name != "swe" || skills[0].Path != "skills/swe" {
 		t.Fatalf("unexpected description match: %#v", skills)
 	}
 
@@ -66,10 +66,10 @@ func TestSearchRejectsInvalidCatalog(t *testing.T) {
 		`invalid`,
 		`{"schema_version":2,"skills":[]}`,
 		`{"schema_version":1}`,
-		`{"schema_version":1,"skills":[{"name":"a","path":"skills/a"}]}`,
-		`{"schema_version":1,"skills":[{"name":"a","path":"skills/../x","description":"a"}]}`,
-		`{"schema_version":1,"skills":[{"name":"a","path":"skills/a","description":"a"},{"name":"a","path":"skills/b","description":"b"}]}`,
-		`{"schema_version":1,"skills":[{"name":"a","path":"skills/a","description":"a"},{"name":"b","path":"skills/a","description":"b"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a"}]}`,
+		`{"schema_version":1,"skills":[{"name":"../x","description":"a"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a","description":"a"},{"name":"a","description":"b"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a/b","description":"a"}]}`,
 	} {
 		t.Run(body, func(t *testing.T) {
 			archive := newArchiveServer(t, archiveFiles{"skills/index.json": {body: body, mode: 0o644}})

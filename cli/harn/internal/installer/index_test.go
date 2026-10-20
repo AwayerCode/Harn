@@ -1,11 +1,13 @@
 package installer
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func validateCatalog(root string) error {
@@ -56,10 +58,10 @@ func TestCatalogConsistencyDetectsDrift(t *testing.T) {
 		name, index, entry string
 		valid              bool
 	}{
-		{"match", `{"name":"a","path":"skills/a","description":"hello world"}`, "name: a\ndescription: >-\n  hello\n  world", true},
-		{"name", `{"name":"b","path":"skills/a","description":"hello"}`, "name: a\ndescription: hello", false},
-		{"description", `{"name":"a","path":"skills/a","description":"stale"}`, "name: a\ndescription: hello", false},
-		{"missing file", `{"name":"a","path":"skills/a","description":"hello"}`, "", false},
+		{"match", `{"name":"a","description":"hello world"}`, "name: a\ndescription: >-\n  hello\n  world", true},
+		{"name", `{"name":"b","description":"hello"}`, "name: a\ndescription: hello", false},
+		{"description", `{"name":"a","description":"stale"}`, "name: a\ndescription: hello", false},
+		{"missing file", `{"name":"a","description":"hello"}`, "", false},
 		{"unregistered", "", "name: a\ndescription: hello", false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -80,5 +82,50 @@ func TestCatalogConsistencyDetectsDrift(t *testing.T) {
 				t.Fatalf("valid=%v error=%v", test.valid, err)
 			}
 		})
+	}
+}
+
+func TestRepositoryCatalogFields(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("..", "..", "..", "..", "skills", "index.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var catalog struct {
+		Skills []map[string]json.RawMessage `json:"skills"`
+	}
+	if err := json.Unmarshal(data, &catalog); err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range catalog.Skills {
+		if len(entry) != 5 {
+			t.Fatalf("unexpected fields: %s", data)
+		}
+		for _, key := range []string{"name", "description", "version", "updated_at", "source"} {
+			if _, ok := entry[key]; !ok {
+				t.Fatalf("missing %s", key)
+			}
+		}
+		var updated, version string
+		if err := json.Unmarshal(entry["updated_at"], &updated); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := time.Parse(time.RFC3339, updated); err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(entry["version"], &version); err != nil || version == "" {
+			t.Fatal("version required")
+		}
+		var source map[string]*string
+		if err := json.Unmarshal(entry["source"], &source); err != nil {
+			t.Fatal(err)
+		}
+		repo, hasRepo := source["repository"]
+		path, hasPath := source["path"]
+		if len(source) != 2 || !hasRepo || !hasPath || (repo == nil) != (path == nil) {
+			t.Fatal("source requires repository and path, both null or both filled")
+		}
+		if repo != nil && (strings.TrimSpace(*repo) == "" || strings.TrimSpace(*path) == "") {
+			t.Fatal("empty external source")
+		}
 	}
 }
