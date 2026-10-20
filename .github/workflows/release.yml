@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -36,7 +38,34 @@ jobs:
             echo "release assets must be uncompressed binaries" >&2
             exit 1
           fi
+      - name: Install syft
+        uses: anchore/sbom-action/download-syft@v0.17.9
+      - name: Generate SBOM
+        run: syft scan dir:. -o spdx-json=dist/harn_${GITHUB_REF_NAME}.spdx.json
+      - name: Verify release bundle
+        run: test "$(find dist -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 8
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2.4.0
+        with:
+          subject-path: |
+            dist/harn_linux_amd64
+            dist/harn_linux_arm64
+            dist/harn_darwin_amd64
+            dist/harn_darwin_arm64
+            dist/harn_windows_amd64.exe
+            dist/harn_windows_arm64.exe
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" dist/* --generate-notes --verify-tag
+      - name: Tag the CLI module
+        run: |
+          module_tag="CLI/harn/$GITHUB_REF_NAME"
+          if git ls-remote --tags origin "refs/tags/$module_tag" | grep -q .; then
+            echo "$module_tag already exists"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$module_tag" "$GITHUB_SHA"
+          git push origin "$module_tag"

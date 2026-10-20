@@ -14,11 +14,21 @@ Harn 集中维护可复制到不同项目的 Agent Skills 和附属内容。用�
 
 资源的具体用法以各自 `SKILL.md` 及其相对引用为准。本文件只负责让 Agent 找到入口，不复制完整方法。
 
+机器可读索引位于 `Skills/index.json`，`harn search` 读取它列出可用 Skill；新增 Skill 时同步登记，规范见 [Skills/authoring.md](Skills/authoring.md)。
+
 ## 下载工具
 
 工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.2.0` 为例，并把工具放在当前项目的 `.harness/bin/`。
 
 示例使用 `AwayerCode/Harn` 作为仓库地址；Agent 应根据实际收到的 Harn 仓库链接替换 `repo`。
+
+日常安装只需一行，脚本会按平台选择资产并校验 `SHA256SUMS`：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
+```
+
+需要逐步审计下载过程时使用手动流程。
 
 macOS 和 Linux：
 
@@ -96,6 +106,20 @@ Windows 使用 `.harness/bin/harn.exe` 替代本文命令中的 `.harness/bin/ha
 
 下载保留 Harn 仓库中的相对路径，因此 `Skills/swe` 位于 `.harness/Skills/swe`。工具自动创建 `.harness/downloads.json`，记录来源、版本、文件哈希和权限。
 
+不确定路径时先搜索索引：
+
+```bash
+.harness/bin/harn search
+.harness/bin/harn search review
+```
+
+首次安装前可用 `--dry-run` 验证来源、路径和空间占用，不写任何文件：
+
+```bash
+.harness/bin/harn install --source https://github.com/AwayerCode/Harn \
+  --version tag:v0.2.0 --path Skills/swe --dry-run
+```
+
 ## 使用资源
 
 Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用加载配套方法、模板和脚本。需要稳定入口时，由 Agent 按业务项目约定建立相对软链接或修改项目级 Agent 配置；Harn 工具不建立软链接，也不修改包管理配置。
@@ -113,6 +137,30 @@ Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用
 ```
 
 更新前会核对所有已记录文件。任一文件被修改、删除或权限改变时，整次更新在写入前失败；新增的本地文件不会被删除，遇到同路径上游文件也会拒绝覆盖。失败后先处理本地修改，或由用户决定保留本地版本。
+
+一次更新全部记录，或先看会改什么：
+
+```bash
+.harness/bin/harn update --all --dry-run
+.harness/bin/harn update --all
+```
+
+查看记录与本地文件是否一致：
+
+```bash
+.harness/bin/harn list
+.harness/bin/harn status
+```
+
+`status` 逐文件比对哈希和权限，`ok` 之外的状态会以非零退出码结束，可直接放进 CI 检查。
+
+## 移除资源
+
+```bash
+.harness/bin/harn remove --path Skills/swe
+```
+
+`remove` 只删除仍与记录一致的文件。目录里的本地新增文件会保留，任一记录文件被修改时整次移除失败。
 
 查看当前项目记录：
 

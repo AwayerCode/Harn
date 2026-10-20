@@ -266,13 +266,13 @@ func testArchive(t *testing.T, files []testFile) []byte {
 			Typeflag: typeflag,
 			Linkname: file.linkname,
 		}
-		if typeflag == tar.TypeReg || typeflag == tar.TypeRegA {
+		if typeflag == tar.TypeReg || typeflag == byte(0) {
 			header.Size = int64(len(file.body))
 		}
 		if err := tarWriter.WriteHeader(header); err != nil {
 			t.Fatal(err)
 		}
-		if typeflag == tar.TypeReg || typeflag == tar.TypeRegA {
+		if typeflag == tar.TypeReg || typeflag == byte(0) {
 			if _, err := tarWriter.Write([]byte(file.body)); err != nil {
 				t.Fatal(err)
 			}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill 名称"
+  short_description: "一句话说明它解决什么问题。"
+  default_prompt: "使用 $skill-name 完成以下任务："

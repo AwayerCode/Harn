@@ -22,6 +22,7 @@ import (
 type Manager struct {
 	ProjectRoot string
 	Client      *http.Client
+	DryRun      bool
 }
 
 type Result struct {
@@ -29,6 +30,20 @@ type Result struct {
 	Version string
 	Changed bool
 	Files   int
+}
+
+type Entry struct {
+	Path    string
+	Source  string
+	Version string
+	Kind    string
+	Files   int
+	Status  string
+}
+
+type Removal struct {
+	Path  string
+	Files int
 }
 
 type targetPlan struct {
@@ -64,11 +79,13 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 		return nil, errors.New("version is required")
 	}
 
-	lock, err := acquireProjectLock(m.ProjectRoot)
-	if err != nil {
-		return nil, err
+	if !m.DryRun {
+		lock, err := acquireProjectLock(m.ProjectRoot)
+		if err != nil {
+			return nil, err
+		}
+		defer lock.Close()
 	}
-	defer lock.Close()
 
 	harnessRoot := filepath.Join(m.ProjectRoot, ".harness")
 	current, err := state.Load(harnessRoot)
@@ -131,6 +148,20 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 		plans = append(plans, plan)
 	}
 
+	results := make([]Result, 0, len(targets))
+	for _, target := range targets {
+		download := staged[target].download
+		results = append(results, Result{
+			Path:    target,
+			Version: download.Version,
+			Changed: true,
+			Files:   len(download.Files),
+		})
+	}
+	if m.DryRun {
+		return results, nil
+	}
+
 	if err := applyPlans(m.ProjectRoot, harnessRoot, stage, plans); err != nil {
 		return nil, err
 	}
@@ -145,16 +176,6 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 		return nil, err
 	}
 
-	results := make([]Result, 0, len(targets))
-	for _, target := range targets {
-		download := staged[target].download
-		results = append(results, Result{
-			Path:    target,
-			Version: download.Version,
-			Changed: true,
-			Files:   len(download.Files),
-		})
-	}
 	return results, nil
 }
 
@@ -170,11 +191,13 @@ func (m *Manager) Update(ctx context.Context, requested []string, versionOverrid
 		return nil, err
 	}
 
-	lock, err := acquireProjectLock(m.ProjectRoot)
-	if err != nil {
-		return nil, err
+	if !m.DryRun {
+		lock, err := acquireProjectLock(m.ProjectRoot)
+		if err != nil {
+			return nil, err
+		}
+		defer lock.Close()
 	}
-	defer lock.Close()
 
 	harnessRoot := filepath.Join(m.ProjectRoot, ".harness")
 	current, err := state.Load(harnessRoot)
@@ -293,20 +316,26 @@ func (m *Manager) Update(ctx context.Context, requested []string, versionOverrid
 		})
 	}
 
-	if err := applyPlans(m.ProjectRoot, harnessRoot, stage, plans); err != nil {
-		return nil, err
-	}
 	results := make([]Result, 0, len(targets))
 	for _, target := range targets {
 		oldDownload := current.Downloads[target]
 		next := staged[target].download
-		current.Downloads[target] = next
 		results = append(results, Result{
 			Path:    target,
 			Version: next.Version,
 			Changed: !sameDownload(oldDownload, next),
 			Files:   len(next.Files),
 		})
+	}
+	if m.DryRun {
+		return results, nil
+	}
+
+	if err := applyPlans(m.ProjectRoot, harnessRoot, stage, plans); err != nil {
+		return nil, err
+	}
+	for _, target := range targets {
+		current.Downloads[target] = staged[target].download
 	}
 	if err := current.Save(harnessRoot); err != nil {
 		rollbackErr := rollbackPlans(m.ProjectRoot, harnessRoot, stage, plans)
