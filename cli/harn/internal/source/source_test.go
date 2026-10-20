@@ -286,3 +286,34 @@ func testArchive(t *testing.T, files []testFile) []byte {
 	}
 	return buffer.Bytes()
 }
+
+func TestFetchSkillEntries(t *testing.T) {
+	for _, prefix := range []string{"", "Harn-main/"} {
+		t.Run(prefix, func(t *testing.T) {
+			archive := testArchive(t, []testFile{
+				{name: prefix + "skills/swe/SKILL.md", body: "entry", mode: 0o644},
+				{name: prefix + "skills/swe/scripts/check.py", body: "ignored", mode: 0o644},
+				{name: prefix + "skills/swe/nested/SKILL.md", body: "ignored", mode: 0o644},
+				{name: prefix + "skills/_template/SKILL.md", body: "ignored", mode: 0o644},
+			})
+			destination := t.TempDir()
+			if err := FetchSkillEntries(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", destination); err != nil {
+				t.Fatal(err)
+			}
+			var files []string
+			err := filepath.WalkDir(destination, func(path string, entry os.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+				if !entry.IsDir() {
+					relative, _ := filepath.Rel(destination, path)
+					files = append(files, filepath.ToSlash(relative))
+				}
+				return nil
+			})
+			if err != nil || len(files) != 1 || files[0] != "skills/swe/SKILL.md" {
+				t.Fatalf("%v: %v", files, err)
+			}
+		})
+	}
+}

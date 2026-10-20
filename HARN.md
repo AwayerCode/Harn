@@ -2,7 +2,7 @@
 
 本指南以 SWE 代码审查为例，介绍能力安装、项目接入和日常管理。命令的工作目录为目标项目，无需克隆 Harn 仓库。
 
-当前源码目录为 `cli/`、`skills/` 和 `docs/`。下文固定使用已发布的 `v0.2.1`，该版本资源路径仍为 `Skills/swe`；历史版本路径大小写不随源码改名而改变。新版使用其发行索引中的 `skills/swe`，不要混用两种路径。
+当前源码目录为 `cli/`、`skills/` 和 `docs/`。下文使用 `v0.2.2`，资源路径为 `skills/swe`；旧版 `v0.2.1` 使用 `Skills/swe`，历史版本路径大小写不随源码改名而改变。
 
 ## 安装
 
@@ -22,10 +22,10 @@ Windows 从 [Releases](https://github.com/AwayerCode/Harn/releases/latest) 下�
 SWE 包含软件设计、实现、测试和审查方法，安装命令为：
 
 ```bash
-.harness/bin/harn install --source https://github.com/AwayerCode/Harn --version tag:v0.2.1 --path Skills/swe
+.harness/bin/harn install --source https://github.com/AwayerCode/Harn --version tag:v0.2.2 --path skills/swe
 ```
 
-示例固定使用 `v0.2.1`，入口位于 `.harness/Skills/swe/SKILL.md`。[README 的任务指令](README.md#使用示例)可用于首次审查；审查对象也可以是具体文件或模块。Agent 读取对应方法后执行任务，报告问题依据和未验证项。
+示例固定使用 `v0.2.2`，入口位于 `.harness/skills/swe/SKILL.md`。[README 的任务指令](README.md#使用示例)可用于首次审查；审查对象也可以是具体文件或模块。Agent 读取对应方法后执行任务，报告问题依据和未验证项。
 
 ## 项目接入
 
@@ -34,7 +34,7 @@ SWE 包含软件设计、实现、测试和审查方法，安装命令为：
 ```markdown
 ## Harn
 
-执行软件设计、实现、测试或审查任务前，先读取 `.harness/Skills/swe/SKILL.md`，按当前任务加载相关方法。
+执行软件设计、实现、测试或审查任务前，先读取 `.harness/skills/swe/SKILL.md`，按当前任务加载相关方法。
 
 沿用本项目已有约定；只修改任务涉及的文件，保留已有改动。完成后说明结果、实际验证和未验证项。
 ```
@@ -44,7 +44,7 @@ SWE 包含软件设计、实现、测试和审查方法，安装命令为：
 下载的能力文件和记录可随项目纳入 Git：
 
 ```bash
-git add .harness/Skills/swe .harness/downloads.json
+git add .harness/skills/swe .harness/downloads.json
 ```
 
 接入约定文件一并纳入版本管理；工具二进制与运行时锁文件由项目 `.gitignore` 排除：
@@ -65,21 +65,21 @@ git add .harness/Skills/swe .harness/downloads.json
 .harness/bin/harn status
 ```
 
-切换版本时使用 `--version` 指定目标版本，发布标签见 [Releases](https://github.com/AwayerCode/Harn/releases)。以下以 `v0.2.1` 为目标演示预演与实际更新；与安装示例版本相同，不代表升级到新版本：
+切换版本时使用 `--version` 指定目标版本，发布标签见 [Releases](https://github.com/AwayerCode/Harn/releases)。以下以 `v0.2.2` 为目标演示预演与实际更新；与安装示例版本相同，不代表升级到新版本：
 
 ```bash
-.harness/bin/harn update --path Skills/swe --version tag:v0.2.1 --dry-run
-.harness/bin/harn update --path Skills/swe --version tag:v0.2.1
+.harness/bin/harn update --path skills/swe --version tag:v0.2.2 --dry-run
+.harness/bin/harn update --path skills/swe --version tag:v0.2.2
 ```
 
-`--dry-run` 会下载并检查资源，不改写项目资源和记录。不指定 `--version` 时沿用原版本，不会自动升级到最新标签；更新全部已安装能力可用 `--all` 替代 `--path Skills/swe`。
+`--dry-run` 会下载并检查资源，不改写项目资源和记录。不指定 `--version` 时沿用原版本，不会自动升级到最新标签；更新全部已安装能力可用 `--all` 替代 `--path skills/swe`。
 
 本地修改会阻止更新，`status` 可显示存在变化的资源。本地新增文件会保留，与上游文件路径冲突时拒绝覆盖。
 
 SWE 的移除命令：
 
 ```bash
-.harness/bin/harn remove --path Skills/swe
+.harness/bin/harn remove --path skills/swe
 ```
 
 移除同样检查本地修改，并保留本地新增文件。项目约定中的接入文字需同步移除，Harn 不自动修改该文件。
@@ -93,8 +93,10 @@ SWE 的移除命令：
 <details>
 <summary>版本与检查规则</summary>
 
-- 版本支持 `tag:<标签>`、`commit:<SHA>` 和 `branch:<分支>`。搜索默认读取主分支索引，可加 `--version tag:v0.2.1` 与安装版本保持一致。
+- 版本支持 `tag:<标签>`、`commit:<SHA>` 和 `branch:<分支>`。搜索默认扫描主分支的 `skills/*/SKILL.md`，按名称、路径和简介匹配，可加 `--version tag:v0.2.2` 与安装版本保持一致。
 - 来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选路径。
 - 更新和移除检查本次选中资源的记录文件。内容改变、文件缺失或可执行状态改变时停止操作；Windows 不比较权限，其他平台仅区分是否可执行。
 
 </details>
+
+安装脚本安装二进制后自动列出可用 Skills；指定 `--version` 时搜索对应标签，未指定时搜索主分支。列表查询失败会提示重试，不撤销二进制安装。

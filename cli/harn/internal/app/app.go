@@ -384,7 +384,7 @@ func (r *Runner) printUsage(writer io.Writer) {
 	fmt.Fprintln(writer, "  list      List recorded resource paths")
 	fmt.Fprintln(writer, "  status    Compare recorded resources with the local files")
 	fmt.Fprintln(writer, "  remove    Remove recorded resource paths")
-	fmt.Fprintln(writer, "  search    Search the published skill index")
+	fmt.Fprintln(writer, "  search    Search available SKILL.md entries")
 	fmt.Fprintln(writer, "  version   Print the Harn version")
 }
 

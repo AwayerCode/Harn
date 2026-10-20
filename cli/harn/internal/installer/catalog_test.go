@@ -8,12 +8,12 @@ import (
 
 func TestSearchFiltersCatalog(t *testing.T) {
 	t.Parallel()
-	index := `{"schema_version":1,"skills":[
-		{"name":"swe","path":"skills/swe","summary":"engineering design","tags":["review"]},
-		{"name":"concise-response","path":"skills/concise-response","summary":"writing style","tags":["communication"]}
-	]}`
 	archive := newArchiveServer(t, archiveFiles{
-		"skills/index.json": {body: index, mode: 0o644},
+		"skills/swe/SKILL.md":              {body: "---\nname: swe\ndescription: >-\n  engineering design\n  review\n---\n", mode: 0o644},
+		"skills/concise-response/SKILL.md": {body: "---\nname: 'concise-response'\ndescription: writing style\n---\n", mode: 0o644},
+		"skills/_template/SKILL.md":        {body: "invalid", mode: 0o644},
+		"skills/swe/nested/SKILL.md":       {body: "invalid", mode: 0o644},
+		"skills/swe/script.py":             {body: "ignored", mode: 0o644},
 	})
 	manager := Manager{Client: archive.Client()}
 
@@ -30,7 +30,7 @@ func TestSearchFiltersCatalog(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(skills) != 1 || skills[0].Name != "swe" {
-		t.Fatalf("unexpected tag match: %#v", skills)
+		t.Fatalf("unexpected description match: %#v", skills)
 	}
 
 	skills, err = manager.Search(context.Background(), archive.URL, "tag:v1", "missing")
@@ -42,27 +42,35 @@ func TestSearchFiltersCatalog(t *testing.T) {
 	}
 }
 
-func TestParseCatalogRejectsInvalidIndex(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name string
-		data string
-		want string
-	}{
-		{name: "schema", data: `{"schema_version":2,"skills":[]}`, want: "unsupported"},
-		{name: "missing name", data: `{"schema_version":1,"skills":[{"path":"skills/swe"}]}`, want: "require name and path"},
-		{name: "outside skills", data: `{"schema_version":1,"skills":[{"name":"swe","path":"cli/swe"}]}`, want: "must live under skills/"},
-		{name: "duplicate", data: `{"schema_version":1,"skills":[{"name":"swe","path":"skills/swe"},{"name":"swe","path":"skills/other"}]}`, want: "duplicate"},
-		{name: "invalid json", data: `{`, want: "parse resource index"},
+func TestParseSkill(t *testing.T) {
+	tests := []struct{ name, data, want string }{
+		{"missing front matter", "hello", "missing YAML"},
+		{"unclosed", "---\nname: swe", "unclosed"},
+		{"missing description", "---\nname: swe\n---", "requires name and description"},
+		{"invalid YAML", "---\nname: [\n---", "parse YAML"},
+		{"duplicate key", "---\nname: swe\nname: other\ndescription: hi\n---", "parse YAML"},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-			_, err := parseCatalog([]byte(test.data))
+			_, err := parseSkill([]byte(test.data), "skills/swe")
 			if err == nil || !strings.Contains(err.Error(), test.want) {
-				t.Fatalf("expected error containing %q, got %v", test.want, err)
+				t.Fatalf("got %v, want %s", err, test.want)
 			}
 		})
+	}
+	skill, err := parseSkill([]byte("\xef\xbb\xbf---\r\nname: swe\r\ndescription: \"design: review\"\r\n---\r\n"), "skills/swe")
+	if err != nil || skill.Summary != "design: review" {
+		t.Fatalf("%#v: %v", skill, err)
+	}
+}
+
+func TestSearchRejectsDuplicateNames(t *testing.T) {
+	archive := newArchiveServer(t, archiveFiles{
+		"skills/a/SKILL.md": {body: "---\nname: same\ndescription: one\n---", mode: 0o644},
+		"skills/b/SKILL.md": {body: "---\nname: same\ndescription: two\n---", mode: 0o644},
+	})
+	_, err := (Manager{Client: archive.Client()}).Search(context.Background(), archive.URL, "tag:v1", "")
+	if err == nil || !strings.Contains(err.Error(), "duplicate") {
+		t.Fatalf("got %v", err)
 	}
 }

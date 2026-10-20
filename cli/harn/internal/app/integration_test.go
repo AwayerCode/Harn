@@ -65,11 +65,7 @@ func run(t *testing.T, runner *Runner, args ...string) (int, string, string) {
 func TestInstallListStatusRemoveFlow(t *testing.T) {
 	t.Parallel()
 	server := newArchiveServer(t, map[string]archiveEntry{
-		"skills/index.json": {
-			body: `{"schema_version":1,"skills":[{"name":"swe","path":"skills/swe","summary":"engineering","tags":["review"]}]}`,
-			mode: 0o644,
-		},
-		"skills/swe/SKILL.md": {body: "one", mode: 0o644},
+		"skills/swe/SKILL.md": {body: "---\nname: swe\ndescription: engineering review\n---\n", mode: 0o644},
 	})
 	project := t.TempDir()
 	runner := New(Options{Version: "v0.2.0", Client: server.Client()})
@@ -126,7 +122,7 @@ func TestInstallListStatusRemoveFlow(t *testing.T) {
 		t.Fatalf("remove should refuse local changes: %d %q", code, stderr)
 	}
 
-	if err := os.WriteFile(target, []byte("one"), 0o644); err != nil {
+	if err := os.WriteFile(target, []byte("---\nname: swe\ndescription: engineering review\n---\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	code, stdout, stderr = run(t, runner, "remove", "--path", "skills/swe", "--root", project)
