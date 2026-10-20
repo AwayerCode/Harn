@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="400" viewBox="0 0 960 400" role="img" aria-labelledby="title desc">
+<title id="title">Harn 为 Agent 提供方法、约束与验证</title><desc id="desc">任务经 Agent 执行后交付；Harn 提供专业方法、执行约束和检查验收，支撑执行过程。</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M1 1 6 4 1 7" fill="none" stroke="#928B80" stroke-width="1.4"/></marker></defs>
+<rect width="960" height="400" rx="24" fill="#F4EFE5"/>
+<g font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif">
+<text x="48" y="47" font-size="12" letter-spacing="3" fill="#786F61">HARNESS FOR AGENTS</text>
+<path d="M225 121H365M595 121H735" stroke="#928B80" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="155" y="118" text-anchor="middle" font-size="23" fill="#12100E">任务</text><text x="155" y="145" text-anchor="middle" font-size="13" fill="#786F61">目标与项目上下文</text>
+<rect x="385" y="82" width="190" height="80" rx="16" fill="#D5442A"/>
+<text x="480" y="116" text-anchor="middle" font-size="25" font-weight="600" fill="#FFF8EE">Agent</text><text x="480" y="141" text-anchor="middle" font-size="13" fill="#FFF0E4">理解 · 执行 · 修正</text>
+<text x="805" y="118" text-anchor="middle" font-size="23" fill="#12100E">交付</text><text x="805" y="145" text-anchor="middle" font-size="13" fill="#786F61">产物与验证证据</text>
+<path d="M480 162V211" stroke="#C69848" stroke-width="2"/><circle cx="480" cy="186" r="4" fill="#C69848"/>
+<rect x="48" y="211" width="864" height="153" rx="18" fill="#1A1714"/>
+<text x="76" y="252" font-size="26" font-weight="600" fill="#F4EFE5">Harn</text><text x="884" y="250" text-anchor="end" font-size="13" fill="#B9AC99">按任务加载 · 随项目演进</text>
+<path d="M76 271H884" stroke="#40372E"/>
+<g fill="#C69848" font-size="11" letter-spacing="1"><text x="76" y="301">01 / METHODS</text><text x="355" y="301">02 / CONSTRAINTS</text><text x="635" y="301">03 / VERIFICATION</text></g>
+<g fill="#F4EFE5" font-size="20"><text x="76" y="332">专业方法</text><text x="355" y="332">执行约束</text><text x="635" y="332">检查验收</text></g>
+<path d="M326 289V338M606 289V338" stroke="#40372E"/>
+</g></svg>
