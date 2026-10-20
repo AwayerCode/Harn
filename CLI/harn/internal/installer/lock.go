@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrOperationInProgress = errors.New("another harness operation is in progress")
+	ErrOperationInProgress = errors.New("another harn operation is in progress")
 	errLockBusy            = errors.New("lock busy")
 )
 

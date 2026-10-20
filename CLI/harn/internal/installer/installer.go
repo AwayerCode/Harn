@@ -15,8 +15,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/AwayerCode/Harness/CLI/harness/internal/source"
-	"github.com/AwayerCode/Harness/CLI/harness/internal/state"
+	"github.com/AwayerCode/Harn/CLI/harn/internal/source"
+	"github.com/AwayerCode/Harn/CLI/harn/internal/state"
 )
 
 type Manager struct {
@@ -96,7 +96,7 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 	if err != nil {
 		return nil, err
 	}
-	stage, err := os.MkdirTemp("", "harness-install-*")
+	stage, err := os.MkdirTemp("", "harn-install-*")
 	if err != nil {
 		return nil, fmt.Errorf("create staging directory: %w", err)
 	}
@@ -218,7 +218,7 @@ func (m *Manager) Update(ctx context.Context, requested []string, versionOverrid
 	}
 	sort.Strings(groupKeys)
 
-	stage, err := os.MkdirTemp("", "harness-update-*")
+	stage, err := os.MkdirTemp("", "harn-update-*")
 	if err != nil {
 		return nil, fmt.Errorf("create staging directory: %w", err)
 	}

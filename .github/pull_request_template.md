@@ -6,10 +6,10 @@
 
 ## 验证
 
-- [ ] `find CLI/harness -name '*.go' -type f -print0 | xargs -0 gofmt -l`
-- [ ] `(cd CLI/harness && go test ./...)`
-- [ ] `(cd CLI/harness && go test -race ./...)`
-- [ ] `(cd CLI/harness && go vet ./...)`
+- [ ] `find CLI/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l`
+- [ ] `(cd CLI/harn && go test ./...)`
+- [ ] `(cd CLI/harn && go test -race ./...)`
+- [ ] `(cd CLI/harn && go vet ./...)`
 - [ ] `python3 -B Skills/swe/scripts/tests/test_standards.py`
 - [ ] `python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --all`
 - [ ] `git diff --check`

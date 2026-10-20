@@ -79,7 +79,7 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 	if err != nil {
 		return fmt.Errorf("create archive request: %w", err)
 	}
-	request.Header.Set("User-Agent", "harness")
+	request.Header.Set("User-Agent", "harn")
 
 	response, err := client.Do(request)
 	if err != nil {

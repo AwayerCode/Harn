@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AwayerCode/Harness/CLI/harness/internal/installer"
+	"github.com/AwayerCode/Harn/CLI/harn/internal/installer"
 )
 
 type Options struct {
@@ -69,16 +69,16 @@ func (r *Runner) Run(ctx context.Context, args []string) int {
 		return r.update(ctx, args[1:])
 	case "version":
 		if len(args) != 1 {
-			fmt.Fprintln(r.stderr, "harness: version does not accept arguments")
+			fmt.Fprintln(r.stderr, "harn: version does not accept arguments")
 			return 2
 		}
-		fmt.Fprintf(r.stdout, "harness %s\n", r.version)
+		fmt.Fprintf(r.stdout, "harn %s\n", r.version)
 		return 0
 	case "help", "-h", "--help":
 		r.printUsage(r.stdout)
 		return 0
 	default:
-		fmt.Fprintf(r.stderr, "harness: unknown command %q\n\n", args[0])
+		fmt.Fprintf(r.stderr, "harn: unknown command %q\n\n", args[0])
 		r.printUsage(r.stderr)
 		return 2
 	}
@@ -92,7 +92,7 @@ func (r *Runner) install(ctx context.Context, args []string) int {
 	var version string
 	var root string
 	flags.Var(&paths, "path", "repository-relative resource path (repeatable)")
-	flags.StringVar(&rawSource, "source", "", "Harness repository or direct .tar.gz URL")
+	flags.StringVar(&rawSource, "source", "", "Harn repository or direct .tar.gz URL")
 	flags.StringVar(&version, "version", "", "branch:<name>, tag:<name>, or commit:<sha>")
 	flags.StringVar(&root, "root", "", "project root (default: current directory)")
 	flags.Usage = func() { r.printInstallUsage(flags.Output()) }
@@ -103,11 +103,11 @@ func (r *Runner) install(ctx context.Context, args []string) int {
 		return 2
 	}
 	if flags.NArg() != 0 {
-		fmt.Fprintf(r.stderr, "harness: unexpected argument %q\n", flags.Arg(0))
+		fmt.Fprintf(r.stderr, "harn: unexpected argument %q\n", flags.Arg(0))
 		return 2
 	}
 	if rawSource == "" || version == "" || len(paths) == 0 {
-		fmt.Fprintln(r.stderr, "harness: install requires --source, --version, and at least one --path")
+		fmt.Fprintln(r.stderr, "harn: install requires --source, --version, and at least one --path")
 		return 2
 	}
 
@@ -145,11 +145,11 @@ func (r *Runner) update(ctx context.Context, args []string) int {
 		return 2
 	}
 	if flags.NArg() != 0 {
-		fmt.Fprintf(r.stderr, "harness: unexpected argument %q\n", flags.Arg(0))
+		fmt.Fprintf(r.stderr, "harn: unexpected argument %q\n", flags.Arg(0))
 		return 2
 	}
 	if len(paths) == 0 {
-		fmt.Fprintln(r.stderr, "harness: update requires at least one --path")
+		fmt.Fprintln(r.stderr, "harn: update requires at least one --path")
 		return 2
 	}
 
@@ -175,24 +175,24 @@ func (r *Runner) update(ctx context.Context, args []string) int {
 }
 
 func (r *Runner) printError(err error) {
-	fmt.Fprintf(r.stderr, "harness: %v\n", err)
+	fmt.Fprintf(r.stderr, "harn: %v\n", err)
 }
 
 func (r *Runner) printUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: harness <command> [options]")
+	fmt.Fprintln(writer, "Usage: harn <command> [options]")
 	fmt.Fprintln(writer)
 	fmt.Fprintln(writer, "Commands:")
 	fmt.Fprintln(writer, "  install   Download one or more resource paths")
 	fmt.Fprintln(writer, "  update    Update recorded resource paths")
-	fmt.Fprintln(writer, "  version   Print the Harness version")
+	fmt.Fprintln(writer, "  version   Print the Harn version")
 }
 
 func (r *Runner) printInstallUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: harness install --source <url> --version <ref> --path <path> [--path <path>...] [--root <dir>]")
+	fmt.Fprintln(writer, "Usage: harn install --source <url> --version <ref> --path <path> [--path <path>...] [--root <dir>]")
 }
 
 func (r *Runner) printUpdateUsage(writer io.Writer) {
-	fmt.Fprintln(writer, "Usage: harness update --path <path> [--path <path>...] [--version <ref>] [--root <dir>]")
+	fmt.Fprintln(writer, "Usage: harn update --path <path> [--path <path>...] [--version <ref>] [--root <dir>]")
 }
 
 func resolveRoot(root string) (string, error) {

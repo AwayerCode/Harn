@@ -12,7 +12,7 @@ func TestSaveLoadAndSort(t *testing.T) {
 	root := t.TempDir()
 	record := New()
 	record.Downloads["Skills/swe"] = Download{
-		Source:  "https://github.com/AwayerCode/Harness",
+		Source:  "https://github.com/AwayerCode/Harn",
 		Version: "branch:main",
 		Kind:    "directory",
 		Files: map[string]FileState{
@@ -20,7 +20,7 @@ func TestSaveLoadAndSort(t *testing.T) {
 		},
 	}
 	record.Downloads["Agents"] = Download{
-		Source:  "https://github.com/AwayerCode/Harness",
+		Source:  "https://github.com/AwayerCode/Harn",
 		Version: "tag:v1",
 		Kind:    "file",
 		Files: map[string]FileState{

@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AwayerCode/Harness/CLI/harness/internal/state"
+	"github.com/AwayerCode/Harn/CLI/harn/internal/state"
 )
 
 func TestInstallAndUpdatePreserveLocalFiles(t *testing.T) {
@@ -162,31 +162,31 @@ func TestInstallRefusesUnrecordedPath(t *testing.T) {
 func TestInstallAndUpdateSingleFile(t *testing.T) {
 	t.Parallel()
 	archive := newArchiveServer(t, archiveFiles{
-		"HARNESS.md": {body: "# Harness", mode: 0o644},
+		"HARN.md": {body: "# Harn", mode: 0o644},
 	})
 	project := t.TempDir()
 	manager := Manager{ProjectRoot: project, Client: archive.Client()}
-	if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"HARNESS.md"}); err != nil {
+	if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"HARN.md"}); err != nil {
 		t.Fatal(err)
 	}
 	record, err := state.Load(filepath.Join(project, ".harness"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if record.Downloads["HARNESS.md"].Kind != "file" {
-		t.Fatalf("unexpected kind: %s", record.Downloads["HARNESS.md"].Kind)
+	if record.Downloads["HARN.md"].Kind != "file" {
+		t.Fatalf("unexpected kind: %s", record.Downloads["HARN.md"].Kind)
 	}
 	archive.Set(archiveFiles{
-		"HARNESS.md": {body: "# Harness v2", mode: 0o644},
+		"HARN.md": {body: "# Harn v2", mode: 0o644},
 	})
-	results, err := manager.Update(context.Background(), []string{"HARNESS.md"}, "tag:v2")
+	results, err := manager.Update(context.Background(), []string{"HARN.md"}, "tag:v2")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !results[0].Changed {
 		t.Fatal("expected file update")
 	}
-	assertFile(t, project, "HARNESS.md", "# Harness v2")
+	assertFile(t, project, "HARN.md", "# Harn v2")
 }
 
 func TestConcurrentInstallIsRejectedByProjectLock(t *testing.T) {
@@ -374,7 +374,7 @@ func makeArchiveWithoutTest(files archiveFiles) []byte {
 	for _, name := range names {
 		file := files[name]
 		header := &tar.Header{
-			Name:     "Harness-main/" + name,
+			Name:     "Harn-main/" + name,
 			Mode:     file.mode,
 			Size:     int64(len(file.body)),
 			Typeflag: tar.TypeReg,
