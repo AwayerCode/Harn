@@ -21,7 +21,7 @@ description: 对照系统设计只读审查目录、文件归属、公开入口�
 
 禁止新增、修改、删除、移动或重命名任何项目或项目外文件，包括设计、源码、测试、配置、基线、临时副本、报告、日志和缓存。不调用其他 Skill 自动修复。用户同时要求审查和修复时，先交付并结束 Review，再切换到对应 Design 或 Implementation。
 
-检查命令必须确认无写入、自动修复或其他副作用。Python 使用 `-B`；不能运行会写入的构建、测试、格式化或代码生成，也不能通过先写后删绕过只读规则。检查结果只输出到执行上下文与回复，不重定向到文件。
+检查命令必须确认无写入、自动修复或其他副作用。配套 CLI 检查不写项目缓存；不能运行会写入的构建、测试、格式化或代码生成，也不能通过先写后删绕过只读规则。检查结果只输出到执行上下文与回复，不重定向到文件。
 
 审查前后的文件指纹保存在执行上下文中，不落盘；核对最终内容、类型及权限是否变化。变化可能来自并发修改，不自动归因给 Agent，也不自动回退。该检查也记录子模块引用、检出版本及其可检查文件，不覆盖 `.git`、Git 忽略文件、项目外文件或执行中修改后恢复的动作，不是权限隔离。未覆盖对象仍受只读规则约束。
 
@@ -45,14 +45,14 @@ description: 对照系统设计只读审查目录、文件归属、公开入口�
 
 | 执行方式 | 输入、作用与边界 |
 |---|---|
-| [validate_documents.py](../scripts/validate_documents.py) | 按契约检查必要输入文档的格式与引用；Python 3 标准库，只读；不证明设计或实现正确 |
-| [check_structure.py](scripts/check_structure.py) | 输入目标根目录、系统设计及可选相对范围；检查显式代码位置、公开入口文件与映射缺口；Python 3 标准库，只读；不解析源码依赖或导出语义 |
-| [check_readonly.py](scripts/check_readonly.py) | 输入 Git 根目录，输出文件指纹，结束时与原指纹比较；Python 3 标准库和 Git，只读；不创建基线文件、不读取文件内容到输出 |
+| [documents 检查](../references/cli.md) | 按契约检查必要输入文档的格式与引用；Go CLI，只读；不证明设计或实现正确 |
+| [structure 检查](../references/cli.md) | 输入目标根目录、系统设计及可选相对范围；检查显式代码位置、公开入口文件与映射缺口；Go CLI，只读；不解析源码依赖或导出语义 |
+| [scope readonly](../references/cli.md) | 输入 Git 根目录，输出文件指纹，结束时与原指纹比较；Go CLI 和 Git，只读；不创建基线文件、不读取文件内容到输出 |
 | 项目只读结构检查器及人工审查 | 按项目语言与解析规则检查文件归属、导出和依赖；列明实际覆盖、证据与无法确认的关系 |
 
 命令按模块实际位置调用，不绑定机器绝对路径。输入文档要求见[文档规则](references/document-format.md)。结果不能混淆：0 表示脚本本次检查通过，1 表示发现问题或缺口，2 表示无法完成检查；退出码 0 不覆盖脚本明确未检查的内容。
 
-只读文件核对复用 [SWE 共享检查](../scripts/check_scope.py)，随包保留该依赖；子模块处理遵守 [SWE 改动范围](../SKILL.md#协作与改动范围)。不依赖其他阶段先执行，不读取其他模块资源补造检查依据。
+只读文件核对复用 [SWE 共享检查](../references/cli.md)，由配套 CLI 提供统一实现；子模块处理遵守 [SWE 改动范围](../SKILL.md#协作与改动范围)。不依赖其他阶段先执行，不读取其他模块资源补造检查依据。
 
 ## 资源
 
@@ -73,7 +73,7 @@ description: 对照系统设计只读审查目录、文件归属、公开入口�
 定位项目根目录、用户范围、实施阶段和已有改动。未指定范围时，以设计约定结构为范围，优先本次改动及直接受影响文件。Git 项目在其他检查前执行：
 
 ```bash
-python3 -B <本模块>/scripts/check_readonly.py --root <Git根目录>
+<SWE目录>/bin/swe-cli scope readonly --root <Git根目录>
 ```
 
 将输出的 `sha256` 保存在执行上下文中，后续不得替换或重新取得基线来掩盖变化。非 Git 项目或指纹无法取得时说明只读核对未验证，不改建仓库；仍可开展有依据的静态审查，但不能宣称只读检查通过。
@@ -83,8 +83,8 @@ python3 -B <本模块>/scripts/check_readonly.py --root <Git根目录>
 定位系统设计与必要的条件性文档，运行格式校验并核对相关内容确实提供本次结构依据。每个条件性文档只有涉及时才校验。
 
 ```bash
-python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --file <系统设计路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind <必要补充文档类型> --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind system-design --file <系统设计路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind <必要补充文档类型> --file <文档路径>
 ```
 
 输入缺失、格式不合格或依据冲突时停止依赖它的检查，交付缺口；可以列出已取得的事实，不能自动补建或改写设计。即使提前结束，已取得指纹也要执行结束核对。
@@ -94,7 +94,7 @@ python3 -B <SWE目录>/scripts/validate_documents.py --kind <必要补充文档�
 从设计提取责任、模块位置、公开入口与允许依赖，取得实际文件清单。运行基本检查：
 
 ```bash
-python3 -B <本模块>/scripts/check_structure.py --root <项目根目录> --design <系统设计路径> --scope <本轮相对路径>
+<SWE目录>/bin/swe-cli structure --root <项目根目录> --design <系统设计路径> --scope <本轮相对路径>
 ```
 
 `--scope` 可重复；省略时检查全部声明的映射。脚本输出 `checked`、`findings`、`gaps`、`unverified`；原始缺失位置需结合实施范围判断，不直接照抄为违规。
@@ -108,7 +108,7 @@ python3 -B <本模块>/scripts/check_structure.py --root <项目根目录> --des
 取得过基线时，无论正常结束还是因缺口提前结束，均执行：
 
 ```bash
-python3 -B <本模块>/scripts/check_readonly.py --root <原Git根目录> --expected <原sha256>
+<SWE目录>/bin/swe-cli scope readonly --root <原Git根目录> --expected <原sha256>
 ```
 
 指纹变化时停止后续检查，报告发生文件变化、归因未确认及覆盖边界；不自动回退、不重新定义基线。无法完成结束核对时说明失败原因，不报告只读核对通过。

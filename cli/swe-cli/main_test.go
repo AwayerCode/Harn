@@ -27,7 +27,7 @@ func TestStandaloneBinary(t *testing.T) {
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("build: %v %s", err, out)
 	}
-	fixture, err := os.ReadFile("../../skills/swe/scripts/tests/fixtures/business-model.md")
+	fixture, err := os.ReadFile("internal/app/testdata/documents/business-model.md")
 	if err != nil {
 		t.Fatal(err)
 	}

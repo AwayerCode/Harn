@@ -19,7 +19,7 @@ import (
 	"github.com/AwayerCode/Harn/cli/swe-cli/internal/checks"
 )
 
-var Version = "0.2.0-dev"
+var Version = "0.3.0-dev"
 
 const maxRequest = 1024 * 1024
 
@@ -57,6 +57,7 @@ type Result struct {
 	Diagnostics []Diagnostic `json:"diagnostics"`
 	Coverage    string       `json:"coverage"`
 	Evidence    []string     `json:"evidence"`
+	Unverified  []string     `json:"unverified,omitempty"`
 }
 type Summary struct {
 	Status   string   `json:"status"`
@@ -87,8 +88,14 @@ func unavailable(out io.Writer, err error) int {
 	return encode(out, map[string]any{"protocolVersion": ProtocolVersion, "error": Diagnostic{RuleID: "request.unavailable", Message: err.Error()}, "summary": Summary{Status: "unavailable", ExitCode: 2, Warnings: []string{}}}, 2)
 }
 func Run(args []string, in io.Reader, out io.Writer) int {
+	if len(args) > 0 && args[0] == "scope" {
+		return Scope(args[1:], out)
+	}
+	if len(args) > 0 && slices.Contains([]string{"documents", "design", "artifacts", "structure"}, args[0]) {
+		return Direct(args[0], args[1:], out)
+	}
 	if len(args) == 0 || len(args) == 1 && (args[0] == "help" || args[0] == "--help") {
-		_, err := fmt.Fprintln(out, "swe-cli check --request <file|-> [--format json]\nswe-cli version\nGo core: documents only; other checks return unavailable. No extensions.")
+		_, err := fmt.Fprintln(out, "swe-cli check --request <file|-> [--format json]\nswe-cli version\nGo core: documents, design, artifacts, structure; scope snapshot/check/readonly. No extensions.")
 		if err != nil {
 			return 2
 		}
@@ -142,7 +149,23 @@ func Run(args []string, in io.Reader, out io.Writer) int {
 	results := []Result{}
 	for _, c := range req.Checks {
 		r := Result{CheckID: c.CheckID, Source: "core", Required: *c.Required, Status: "unavailable", Diagnostics: []Diagnostic{}, Evidence: []string{}, Coverage: "Only requested checks; not task completion"}
-		if c.CheckID != "documents" {
+		if slices.Contains([]string{"design", "artifacts", "structure"}, c.CheckID) {
+			report, err := related(c.CheckID, c.Input, root, schemas, reader)
+			if err != nil {
+				r.Diagnostics = append(r.Diagnostics, Diagnostic{RuleID: c.CheckID + ".unavailable", Message: err.Error()})
+			} else {
+				r.Status = "passed"
+				if len(report.Errors) > 0 {
+					r.Status = "failed"
+				}
+				for _, message := range report.Errors {
+					r.Diagnostics = append(r.Diagnostics, Diagnostic{RuleID: c.CheckID + ".relation", Message: message})
+				}
+				r.Evidence = report.Checked
+				r.Unverified = report.Unverified
+				r.Coverage = "Explicit relations only; unverified items require manual review"
+			}
+		} else if c.CheckID != "documents" {
 			r.Diagnostics = append(r.Diagnostics, Diagnostic{RuleID: "check.unavailable", Message: "Check not implemented: " + c.CheckID})
 		} else {
 			var input Input
@@ -324,4 +347,13 @@ func (o *Observer) Changed() []string {
 	}
 	slices.Sort(changed)
 	return changed
+}
+
+func (o *Observer) PathKind(file string) (string, error) {
+	state, _, err := o.observe(file)
+	if err != nil {
+		return "", err
+	}
+	kind, _, _ := strings.Cut(state, ":")
+	return kind, nil
 }

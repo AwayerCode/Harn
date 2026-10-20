@@ -13,7 +13,7 @@ description: 制定和维护共同工程规范、格式契约与检查规则；�
 
 遵守[按需加载与职责边界](../references/standards/loading.md)，按当前对象读取共同标准与项目契约；不加载其他专业工作流来完成本职责。
 
-通用规则只维护在 `swe/references/standards/`，格式只维护在 `swe/references/artifact-schemas/`，共享检查实现位于 `swe/scripts/`。修改这些资源属于明确授权的 Skill 维护任务。
+通用规则只维护在 `swe/references/standards/`，格式只维护在 `swe/references/artifact-schemas/`，共享检查实现位于源码仓 `cli/swe-cli/`，由配套二进制提供。修改这些资源属于明确授权的 Skill 维护任务。
 
 项目标准任务只写已授权的工程约定和检查配置；项目规则依据系统分层与模块边界细化，不把项目特例提升成通用规则，不同时修改业务实现。标准变更说明兼容影响，不以放宽规则迁就当前失败产物。
 

@@ -1,12 +1,12 @@
 # 产物与格式契约
 
-共同文档格式唯一来源为 `../artifact-schemas/` 中按文档类型命名的 JSON。模块的 `input-contract.json`、`artifact-contract.json` 只声明消费或产出类型及 `$ref`，`schema_version: 1` 表示当前格式集合；校验实现唯一来源为 `../../scripts/validate_documents.py`。
+共同文档格式唯一来源为 `../artifact-schemas/` 中按文档类型命名的 JSON。模块的 `input-contract.json`、`artifact-contract.json` 只声明消费或产出类型及 `$ref`，`schema_version: 1` 表示当前格式集合；校验实现唯一来源为配套 Go CLI 的 `documents` 检查。
 
 业务模型、系统设计、接口协议、交互规范、测试设计分别使用各自的当前 schema 和生产方模板。schema 是文档格式的唯一机器契约；内容不足仍由相应专业工作流判断。
 
 目标项目保存实际业务和工程契约，Skills 仓库保存表达与检查规则。项目约定记录采用的标准及版本、路径和必要特例；若已有 API schema 或类型定义，说明它与设计文档各自的权威范围，其他地方引用，不复制字段。
 
-从任意目录调用 `python3 -B <SWE目录>/scripts/validate_documents.py --kind <类型> --file <项目文档>`。共享脚本是唯一校验入口，不要求运行上游工作流。退出码 0 为格式通过，1 为违规，2 为无法检查。格式通过不替代语义、实现和运行验证。
+从任意目录调用 `<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind <类型> --file <项目文档>`。配套 CLI 是唯一校验入口，不要求运行上游工作流。退出码 0 为格式通过，1 为违规，2 为无法检查。格式通过不替代语义、实现和运行验证。
 
 ## 共同表达与检查
 

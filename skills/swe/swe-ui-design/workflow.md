@@ -21,7 +21,7 @@ description: 用于制定和更新软件交互规范，只修改交互设计文�
 
 执行前根据用户路径、项目约定和权威文档确认允许写入的准确文件清单。新项目默认位置：`design/interaction-standards/interaction-standards.md`。已有项目使用已确认的设计目录及权威文件位置；不靠扩展名判断，不扩大到整个仓库或所有 Markdown 文档，路径归属有歧义时停止相关写入。
 
-只读参考其他文档与代码。检查工具不能修改代码、配置或生成文件；Python 校验使用 `-B`，避免缓存写入。交付前核对本次实际改动均属于上述清单，区分用户已有改动，发现越界立即停止并报告，不回退用户改动。
+只读参考其他文档与代码。检查工具不能修改代码、配置或生成文件；配套 CLI 检查不写项目缓存。交付前核对本次实际改动均属于上述清单，区分用户已有改动，发现越界立即停止并报告，不回退用户改动。
 
 需要改代码时在回复中说明实施要求，结束 Design 后由 Implementation 执行；需要改其他设计时交给对应 Design，本 Skill 不跨职责补建或修订。
 
@@ -44,7 +44,7 @@ description: 用于制定和更新软件交互规范，只修改交互设计文�
 
 ### 写入结果核对
 
-遵守[共同执行规范](../references/standards/execution.md#范围与授权)，使用包内 `scripts/check_scope.py` 固定本次范围并核对实际改动。
+遵守[共同执行规范](../references/standards/execution.md#范围与授权)，使用包内 `swe-cli scope` 固定本次范围并核对实际改动。
 
 ### 检查要求与执行
 
@@ -52,9 +52,9 @@ description: 用于制定和更新软件交互规范，只修改交互设计文�
 
 | 检查执行 | 作用与条件 |
 |---|---|
-| [本模块格式规则](references/document-format.md)与 [validate_documents.py](../scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
-| [check_scope.py](../scripts/check_scope.py) | 核对实际写入范围或只读结果；Python 3 标准库和 Git，属于规则的检查执行，不是业务资源 |
-| [check_artifacts.py](../scripts/check_artifacts.py) | 根据本模块产物检查显式对应关系；用法及未覆盖语义见下文，Python 3 标准库，只读 |
+| [本模块格式规则](references/document-format.md)与 [documents 检查](../references/cli.md) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
+| [scope 检查](../references/cli.md) | 核对实际写入范围或只读结果；Go CLI 和 Git，属于规则的检查执行，不是业务资源 |
+| [artifacts 检查](../references/cli.md) | 根据本模块产物检查显式对应关系；用法及未覆盖语义见下文，Go CLI，只读 |
 | 内容审查、项目检查与实际验证 | 按下面保留的专业要求和完成标准确认内容与行为；涉及运行先确认工具、环境、权限、输出位置和副作用 |
 
 检查执行、范围覆盖、退出码及失败处理统一遵守[执行规范](../references/standards/execution.md)。
@@ -69,7 +69,7 @@ description: 用于制定和更新软件交互规范，只修改交互设计文�
 显式引用检查完整标识，不截取有效前缀。标识使用字母、数字、点、下划线或连字符；多个引用以空格、顿号、逗号或分号分隔，可用反引号包裹。例如 `协议:save/不存在` 是非法引用，不能按 `协议:save` 通过；非法、空或悬空引用报错，不列入已检查通过项。
 
 ```bash
-python3 -B <SWE目录>/scripts/check_artifacts.py --kind ui --file <交互规范路径> --protocol <接口协议路径>
+<SWE目录>/bin/swe-cli artifacts --root <项目根目录> --kind ui --file <交互规范路径> --protocol <接口协议路径>
 ```
 
 脚本执行本模块文档格式校验、重复协议标识和悬空能力引用检查；可见状态、异常恢复和验收场景是否正确仍需内容审查。完成内容调整后重跑。
@@ -96,7 +96,7 @@ python3 -B <SWE目录>/scripts/check_artifacts.py --kind ui --file <交互规范
 先确认任务、权威输入和实际可写文件，在首次写入前固定范围：
 
 ```bash
-python3 -B <SWE目录>/scripts/check_scope.py snapshot --root <目标Git根目录> --baseline <项目外全新临时文件> --allow-file <允许文件相对路径>
+<SWE目录>/bin/swe-cli scope snapshot --root <目标Git根目录> --baseline <项目外全新临时文件> --allow-file <允许文件相对路径>
 ```
 
 多个文件重复 `--allow-file`；只有明确职责独立的目录才可用 `--allow-dir`。运行产物也要事先限定；混合源码目录和整个仓库不能当作可写范围。默认只维护自己负责的产物，不因为检查失败修正其他模块产物。
@@ -114,9 +114,9 @@ python3 -B <SWE目录>/scripts/check_scope.py snapshot --root <目标Git根目�
 使用本 Skill 的实际安装路径执行以下命令，条件性文档仅在上述条件成立时检查，`<文档路径>` 替换为实际文件：
 
 ```bash
-python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind system-design --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind interface-protocol --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind interaction-standards --file <文档路径>
 ```
 
 缺失和不合格的输入只作为阻塞反馈；本 Skill 不修复职责外输入或调用其他 Skill 越界修改，需要纠正时先结束当前环节，再进入对应 Skill。所需输入已存在且合格时直接执行当前任务，不额外请求确认。
@@ -149,7 +149,7 @@ python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standard
 校验命令使用本 Skill 的实际安装路径执行，`--file` 可以指向任意目标项目，工具不绑定项目路径：
 
 ```bash
-python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind interaction-standards --file <文档路径>
 ```
 
 交付前校验本 Skill 负责的设计产物并修正其格式错误；其他文档只读校验，缺口反馈归属，不跨范围修改。每次实际修改与执行记录在回复或已有任务记录中说明，长期设计不维护任务进度。文档校验通过只证明约定格式与局部引用成立，不证明业务、设计或运行行为正确；继续执行该 Skill 的语义检查和对应验证。
@@ -161,7 +161,7 @@ python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standard
 ### 结束核对与覆盖确认
 
 ```bash
-python3 -B <SWE目录>/scripts/check_scope.py check --root <原Git根目录> --baseline <原临时基线文件>
+<SWE目录>/bin/swe-cli scope check --root <原Git根目录> --baseline <原临时基线文件>
 ```
 
 格式或本模块产物错误在允许范围内修正后，重新执行相关检查和范围核对；内容审查产生新改动时同样重查。上游缺口、越界、生产缺陷或环境阻塞按职责反馈，不以弱化检查取得通过。
