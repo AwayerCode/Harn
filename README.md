@@ -1,72 +1,44 @@
 # Harn
 
-[![Latest release](https://img.shields.io/github/v/release/AwayerCode/Harn)](https://github.com/AwayerCode/Harn/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+让 Agent 的工作有方法、有边界、有验证。
 
-Harn 是个人维护的 Agent Skills 仓库，附带 Go CLI，将选定资源下载到项目自己的 `.harness/`，随项目保存和更新。
+Harn 是一套随项目演进的 Agent harness，将专业方法、执行约束和验收标准组织为按需加载的能力，帮助 Agent 完成设计、实现、测试与审查。
 
-下载记录包含来源、版本、文件哈希和权限。更新拒绝覆盖本地修改，路径检查、原子写入、回滚和项目锁用于保护项目文件。
+## 如何工作
 
-## 使用
+![Harn 为 Agent 提供专业方法、执行约束和检查验收](assets/harn-overview.svg)
 
-按 [HARN.md](HARN.md) 选择资源、安装工具、下载和更新。支持 macOS、Linux、Windows 的 amd64 和 arm64，无需全局安装。
+Agent 根据任务加载相关能力，在项目约定内执行，用检查结果验证交付。简单修改只用必要规则，复杂任务再展开设计与验收。
 
-版本记录以 [GitHub Releases](https://github.com/AwayerCode/Harn/releases) 为准。更名后仍沿用 `.harness/` 和 `downloads.json`，已有项目无需迁移这两个路径。
+Skills 承载方法与工具，CLI 将这些能力按版本带入项目。
 
-原 v0.2.1 变更说明：修复 `go install` 安装的二进制把版本显示为 `dev`，改为回退到模块版本。此条保留待发布说明核对，发布后移入对应 Release。
+## 快速开始
 
-## 源码
-
-- `Skills/`：Skill 入口、专业方法、契约、模板及校验器。
-- `CLI/harn/`：独立 Go module、测试和发布构建脚本。
-- [AGENTS.md](AGENTS.md)：Agent 在本仓库工作时的约定。
-
-本地构建后手动将六个平台的二进制和 `SHA256SUMS` 上传到 GitHub Releases，不提交到源码仓库。
-
-## 开发
-
-需要 Go 1.24+、Python 3、Bash 和 Git；校验发布资产需要 `sha256sum` 或 `shasum`。
-
-修改 CLI 后运行：
+在目标项目目录中安装工具（macOS / Linux）：
 
 ```bash
-find CLI/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l
-(cd CLI/harn && go test -race ./...)
-(cd CLI/harn && go vet ./...)
-CLI/harn/scripts/build-release.sh
+curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
 ```
 
-构建脚本生成六平台二进制和 `SHA256SUMS`，默认放在被 Git 忽略的 `CLI/harn/dist/`。交叉编译不代替目标平台的实际运行验证。
+Windows 安装方式见 [使用指南](HARN.md#下载工具)。
 
-修改 Skills 后运行对应测试；SWE 的共享标准和模块文档检查为：
+下载所需能力：
 
 ```bash
-python3 -B Skills/tests/test_index.py
-python3 -B Skills/swe/scripts/tests/test_standards.py
-for test in Skills/swe/*/scripts/tests/test_validate_documents.py; do
-  python3 -B "$test"
-done
+.harness/bin/harn install \
+  --source https://github.com/AwayerCode/Harn \
+  --version tag:v0.2.1 \
+  --path Skills/swe
 ```
 
-修改安装或构建脚本后运行：
+让 Agent 从入口开始工作：
 
-```bash
-sh -n install.sh
-bash -n CLI/harn/scripts/build-release.sh
-bash scripts/test-install.sh
-```
+> 读取 `.harness/Skills/swe/SKILL.md`，按其中适用的方法审查当前项目，先给出发现，不修改文件。
 
-Windows 运行验证需在 Windows 上进入 `CLI/harn` 执行 `go test -race ./...` 和 `go vet ./...`。Skill 创作约定见 [Skills/authoring.md](Skills/authoring.md)。
+![Harn 命令行演示](assets/demo.gif)
 
-修改文档后运行：
-
-```bash
-python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --changed
-git diff --check
-```
-
-提交或 PR 说明改动原因、实际验证和未覆盖风险即可。安全问题通过 [SECURITY.md](SECURITY.md) 的私密渠道报告。
+资源与下载记录保存在项目的 `.harness/` 中，可随代码一起提交。安装、接入和更新方式见 [使用指南](HARN.md)。
 
 ## 许可证
 
-[MIT License](LICENSE)
+[MIT](LICENSE)
