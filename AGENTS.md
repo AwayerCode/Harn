@@ -46,7 +46,6 @@ done
 ```bash
 sh -n install.sh
 bash -n CLI/harn/scripts/build-release.sh
-bash scripts/test-install.sh
 ```
 
 修改文档后运行：
