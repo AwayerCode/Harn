@@ -9,79 +9,7 @@ curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | s
 .harness/bin/harn version
 ```
 
-脚本下载最新发布的工具，校验 `SHA256SUMS` 后安装到 `.harness/bin/`。工具支持 macOS、Linux、Windows 的 amd64 和 arm64。手动安装与下文资源下载以 `v0.2.1` 为例，可替换为所需的发布版本。
-
-<details>
-<summary>macOS / Linux 手动安装</summary>
-
-在子 Shell 中执行，下载或校验失败即停止，校验通过后才复制二进制。
-
-```bash
-(
-set -eu
-repo="AwayerCode/Harn"
-version="v0.2.1"
-os="$(uname -s | tr '[:upper:]' '[:lower:]')"
-case "$(uname -m)" in
-  arm64|aarch64) arch="arm64" ;;
-  x86_64|amd64) arch="amd64" ;;
-  *) echo "unsupported architecture: $(uname -m)" >&2; exit 1 ;;
-esac
-asset="harn_${os}_${arch}"
-base="https://github.com/${repo}/releases/download/${version}"
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
-curl -fsSL "$base/$asset" -o "$tmp/$asset"
-curl -fsSL "$base/SHA256SUMS" -o "$tmp/SHA256SUMS"
-expected="$(awk -v asset="$asset" '$2 == asset { print $1; count++ } END { if (count != 1) exit 1 }' "$tmp/SHA256SUMS")"
-if command -v sha256sum >/dev/null 2>&1; then
-  actual="$(sha256sum "$tmp/$asset")"
-else
-  actual="$(shasum -a 256 "$tmp/$asset")"
-fi
-actual="${actual%% *}"
-if [ "$actual" != "$expected" ]; then
-  echo "SHA256 mismatch for $asset" >&2
-  exit 1
-fi
-mkdir -p .harness/bin
-cp "$tmp/$asset" .harness/bin/harn
-chmod +x .harness/bin/harn
-)
-```
-
-</details>
-
-<details>
-<summary>Windows PowerShell 安装</summary>
-
-```powershell
-$repo = "AwayerCode/Harn"
-$version = "v0.2.1"
-$arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
-$asset = "harn_windows_$arch.exe"
-$base = "https://github.com/$repo/releases/download/$version"
-$tmp = Join-Path $env:TEMP ("harn-" + [guid]::NewGuid())
-New-Item -ItemType Directory -Path $tmp -ErrorAction Stop | Out-Null
-try {
-  Invoke-WebRequest "$base/$asset" -OutFile (Join-Path $tmp $asset) -ErrorAction Stop
-  Invoke-WebRequest "$base/SHA256SUMS" -OutFile (Join-Path $tmp "SHA256SUMS") -ErrorAction Stop
-  $entries = @(Get-Content (Join-Path $tmp "SHA256SUMS") -ErrorAction Stop | Where-Object { $_ -match ("  " + [regex]::Escape($asset) + "$") })
-  if ($entries.Count -ne 1) { throw "Expected one checksum for $asset" }
-  $expected = ($entries[0] -split "\s+")[0]
-  $actual = (Get-FileHash (Join-Path $tmp $asset) -Algorithm SHA256 -ErrorAction Stop).Hash.ToLower()
-  if ($actual -ne $expected.ToLower()) { throw "SHA256 mismatch for $asset" }
-  New-Item -ItemType Directory -Path ".harness/bin" -Force -ErrorAction Stop | Out-Null
-  Copy-Item (Join-Path $tmp $asset) -Destination ".harness/bin/harn.exe" -Force -ErrorAction Stop
-} finally {
-  Remove-Item -Recurse -Force $tmp
-}
-.harness/bin/harn.exe version
-```
-
-</details>
-
-Windows 使用 `.harness/bin/harn.exe` 替代下文的 `.harness/bin/harn`；多行命令请合并为一行执行。
+脚本校验后将工具安装到 `.harness/bin/`。Windows 从 [Releases](https://github.com/AwayerCode/Harn/releases/latest) 下载对应架构的二进制，校验后保存为 `.harness/bin/harn.exe`；下文命令相应使用 `.exe`，多行命令合并为一行。
 
 ## 接入项目
 
@@ -98,7 +26,7 @@ Windows 使用 `.harness/bin/harn.exe` 替代下文的 `.harness/bin/harn`；多
 | `Skills/concise-response` | 简洁表达，保留完整交付内容。 |
 | `Skills/knowledge-doc-guard` | 知识文档整理与质量检查。 |
 
-以 SWE 为例：
+以 SWE 和 `v0.2.1` 为例，版本可按需替换：
 
 ```bash
 .harness/bin/harn install \
