@@ -17,6 +17,8 @@ Skills/<name>/
     └── tests/            # 校验脚本及其测试
 ```
 
+新增 Skill 可复制 [`_template/`](_template/SKILL.md) 到 `Skills/<name>/`，替换入口和配套文件中的占位内容，再按需删减。
+
 只创建当前 Skill 真正需要的目录。没有脚本就不建 `scripts/`，没有模板就不建 `assets/`。
 
 ## SKILL.md 要求
@@ -54,17 +56,11 @@ Skills/<name>/
 }
 ```
 
-索引由 `harn search` 读取，`name` 必须唯一，`path` 必须在 `Skills/` 下。运行 `python3 -B Skills/tests/test_index.py` 校验索引结构。
+索引由 `harn search` 读取，`name` 必须唯一，`path` 必须在 `Skills/` 下。索引校验按下节的统一验证约定执行。
 
 ## 校验
 
-提交前运行：
-
-```bash
-python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --all
-python3 -B Skills/swe/scripts/tests/test_standards.py
-for test in Skills/*/scripts/tests/test_*.py; do python3 -B "$test"; done
-```
+按仓库 [AGENTS.md 的本地验证约定](../AGENTS.md#本地验证)，执行当前改动涉及的 Skill、索引与文档检查。
 
 新增脚本必须附带测试；测试放在 `scripts/tests/`，使用 `unittest`，不依赖网络和固定绝对路径。
 
