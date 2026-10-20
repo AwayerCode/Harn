@@ -1,14 +1,14 @@
 # Skills 协作约定
 
-本仓是个人 Skill 的独立源码位置。各 Skill 目录、配套引用、模板、脚本和测试都在这里维护。
+本仓是个人 Skill 的独立源码位置。各 Skill 目录、配套引用、模板、脚本和测试统一在 `Skills/` 下维护。
 
 ## Skill 入口
 
 各 Skill 以自己的 `SKILL.md` 为入口，执行时按需读取其规范、契约与脚本；配套资源、模板和测试保留在所属 Skill 中。
 
-- [swe](swe/SKILL.md)：软件工程总入口，以共同标准、系统分层和模块契约组织专业设计、按层实现与集成验收；按任务加载相关依据和方法。
-- [concise-response](concise-response/SKILL.md)：每轮对话使用，控制立场和表达；简洁不减少必须交付的内容。
-- [knowledge-doc-guard](knowledge-doc-guard/SKILL.md)：用于知识文档读取、整理、写入和质量检查。
+- [swe](Skills/swe/SKILL.md)：软件工程总入口，以共同标准、系统分层和模块契约组织专业设计、按层实现与集成验收；按任务加载相关依据和方法。
+- [concise-response](Skills/concise-response/SKILL.md)：每轮对话使用，控制立场和表达；简洁不减少必须交付的内容。
+- [knowledge-doc-guard](Skills/knowledge-doc-guard/SKILL.md)：用于知识文档读取、整理、写入和质量检查。
 
 ## 协作约定
 
