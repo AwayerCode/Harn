@@ -103,10 +103,14 @@ cp "$tmp/$asset" "$bin_dir/harn"
 chmod +x "$bin_dir/harn"
 
 printf 'installed %s\n' "$bin_dir/harn"
+printf 'available skills:\n'
 if [ -n "$version" ]; then
-  printf 'next: %s search --source https://github.com/%s --version tag:%s\n' \
-    "$bin_dir/harn" "$repo" "$version"
+  if ! "$bin_dir/harn" search --source "https://github.com/$repo" --version "tag:$version"; then
+    printf 'install.sh: installed successfully, but could not list skills; retry harn search later\n' >&2
+  fi
 else
-  printf 'next: %s version\n' "$bin_dir/harn"
-  printf 'usage: https://github.com/%s/blob/main/HARN.md\n' "$repo"
+  if ! "$bin_dir/harn" search --source "https://github.com/$repo"; then
+    printf 'install.sh: installed successfully, but could not list skills; retry harn search later\n' >&2
+  fi
 fi
+printf 'usage: https://github.com/%s/blob/main/HARN.md\n' "$repo"

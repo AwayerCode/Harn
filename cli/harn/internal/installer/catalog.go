@@ -1,10 +1,11 @@
 package installer
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,18 +14,10 @@ import (
 	"github.com/AwayerCode/Harn/cli/harn/internal/source"
 )
 
-const indexTarget = "skills/index.json"
-
 type Skill struct {
-	Name    string   `json:"name"`
-	Path    string   `json:"path"`
-	Summary string   `json:"summary"`
-	Tags    []string `json:"tags"`
-}
-
-type catalog struct {
-	SchemaVersion int     `json:"schema_version"`
-	Skills        []Skill `json:"skills"`
+	Name    string
+	Path    string
+	Summary string
 }
 
 func (m Manager) Search(ctx context.Context, rawSource, version, query string) ([]Skill, error) {
@@ -47,14 +40,10 @@ func (m Manager) Search(ctx context.Context, rawSource, version, query string) (
 	}
 	defer os.RemoveAll(stage)
 	contentRoot := filepath.Join(stage, "content")
-	if err := source.Fetch(ctx, m.Client, archiveURL, []string{indexTarget}, contentRoot); err != nil {
-		return nil, fmt.Errorf("read resource index (does the source publish %s?): %w", indexTarget, err)
+	if err := source.FetchSkillEntries(ctx, m.Client, archiveURL, contentRoot); err != nil {
+		return nil, fmt.Errorf("read skill entries: %w", err)
 	}
-	data, err := os.ReadFile(filepath.Join(contentRoot, filepath.FromSlash(indexTarget)))
-	if err != nil {
-		return nil, fmt.Errorf("read resource index: %w", err)
-	}
-	skills, err := parseCatalog(data)
+	skills, err := scanSkills(contentRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -72,40 +61,65 @@ func (m Manager) Search(ctx context.Context, rawSource, version, query string) (
 	return matches, nil
 }
 
-func parseCatalog(data []byte) ([]Skill, error) {
-	var parsed catalog
-	if err := json.Unmarshal(data, &parsed); err != nil {
-		return nil, fmt.Errorf("parse resource index: %w", err)
+func scanSkills(root string) ([]Skill, error) {
+	files, err := filepath.Glob(filepath.Join(root, "skills", "*", "SKILL.md"))
+	if err != nil {
+		return nil, err
 	}
-	if parsed.SchemaVersion != 1 {
-		return nil, fmt.Errorf("unsupported resource index schema %d", parsed.SchemaVersion)
-	}
-	seen := make(map[string]bool, len(parsed.Skills))
-	for _, skill := range parsed.Skills {
-		if skill.Name == "" || skill.Path == "" {
-			return nil, errors.New("resource index entries require name and path")
+	skills := make([]Skill, 0, len(files))
+	seen := make(map[string]bool)
+	for _, file := range files {
+		directory := filepath.Base(filepath.Dir(file))
+		if strings.HasPrefix(directory, "_") || strings.HasPrefix(directory, ".") {
+			continue
 		}
-		if !strings.HasPrefix(skill.Path, "skills/") {
-			return nil, fmt.Errorf("resource index path %q must live under skills/", skill.Path)
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+		skill, err := parseSkill(data, "skills/"+directory)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", file, err)
 		}
 		if seen[skill.Name] {
-			return nil, fmt.Errorf("duplicate skill name %q in resource index", skill.Name)
+			return nil, fmt.Errorf("duplicate skill name %q", skill.Name)
 		}
 		seen[skill.Name] = true
+		skills = append(skills, skill)
 	}
-	return parsed.Skills, nil
+	return skills, nil
+}
+
+func parseSkill(data []byte, path string) (Skill, error) {
+	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
+	lines := strings.Split(strings.ReplaceAll(string(data), "\r\n", "\n"), "\n")
+	if len(lines) == 0 || lines[0] != "---" {
+		return Skill{}, errors.New("missing YAML front matter")
+	}
+	end := 1
+	for end < len(lines) && lines[end] != "---" {
+		end++
+	}
+	if end == len(lines) {
+		return Skill{}, errors.New("unclosed YAML front matter")
+	}
+	var metadata struct {
+		Name        string `yaml:"name"`
+		Description string `yaml:"description"`
+	}
+	if err := yaml.Unmarshal([]byte(strings.Join(lines[1:end], "\n")), &metadata); err != nil {
+		return Skill{}, fmt.Errorf("parse YAML front matter: %w", err)
+	}
+	name := strings.TrimSpace(metadata.Name)
+	summary := strings.Join(strings.Fields(metadata.Description), " ")
+	if name == "" || summary == "" {
+		return Skill{}, errors.New("front matter requires name and description")
+	}
+	return Skill{Name: name, Path: path, Summary: summary}, nil
 }
 
 func matchesQuery(skill Skill, needle string) bool {
-	if strings.Contains(strings.ToLower(skill.Name), needle) ||
+	return strings.Contains(strings.ToLower(skill.Name), needle) ||
 		strings.Contains(strings.ToLower(skill.Path), needle) ||
-		strings.Contains(strings.ToLower(skill.Summary), needle) {
-		return true
-	}
-	for _, tag := range skill.Tags {
-		if strings.Contains(strings.ToLower(tag), needle) {
-			return true
-		}
-	}
-	return false
+		strings.Contains(strings.ToLower(skill.Summary), needle)
 }

@@ -31,10 +31,9 @@ cli/harn/scripts/build-release.sh
 
 `gofmt -l` 应无输出。构建产物位于 `cli/harn/dist/`，不提交。交叉编译不代替 Windows 实际运行验证；在 Windows 上进入 `cli/harn` 执行 `go test -race ./...` 和 `go vet ./...`。
 
-修改 Skill 或索引时，按涉及范围运行：
+修改 Skill 时，按涉及范围运行：
 
 ```bash
-python3 -B skills/tests/test_index.py
 python3 -B skills/swe/scripts/tests/test_standards.py
 for test in skills/swe/*/scripts/tests/test_validate_documents.py; do
   python3 -B "$test" || exit 1
