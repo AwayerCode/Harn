@@ -1,14 +1,14 @@
 # Harn 协作约定
 
-本仓是 Harn 的完整源码位置：`Skills/` 保存可版本化的 Agent 能力，`CLI/harn/` 保存项目内资源分发工具，测试与构建在本地执行，二进制手动发布到 GitHub Releases。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
+本仓是 Harn 的完整源码位置：`docs/` 保存系统设计，根目录 `HARN.md` 保存使用指南，`skills/` 保存可版本化的 Agent 能力，`cli/harn/` 保存项目内资源分发工具，测试与构建在本地执行，二进制手动发布到 GitHub Releases。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
 
 ## Skill 入口
 
 执行前按需读取目标 Skill 的入口与相关资源：
 
-- [swe](Skills/swe/SKILL.md)：软件工程总入口，以共同标准、系统分层和模块契约组织专业设计、按层实现与集成验收。
-- [concise-response](Skills/concise-response/SKILL.md)：每轮对话使用，控制立场和表达；简洁不减少必须交付的内容。
-- [knowledge-doc-guard](Skills/knowledge-doc-guard/SKILL.md)：用于知识文档读取、整理、写入和质量检查。
+- [swe](skills/swe/SKILL.md)：软件工程总入口，以共同标准、系统分层和模块契约组织专业设计、按层实现与集成验收。
+- [concise-response](skills/concise-response/SKILL.md)：每轮对话使用，控制立场和表达；简洁不减少必须交付的内容。
+- [knowledge-doc-guard](skills/knowledge-doc-guard/SKILL.md)：用于知识文档读取、整理、写入和质量检查。
 
 ## 协作约定
 
@@ -23,20 +23,20 @@
 命令从仓库根目录执行。修改 Go 代码后检查格式、运行测试与竞态检测、执行 vet，并构建六平台产物：
 
 ```bash
-find CLI/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l
-(cd CLI/harn && go test -race ./...)
-(cd CLI/harn && go vet ./...)
-CLI/harn/scripts/build-release.sh
+find cli/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l
+(cd cli/harn && go test -race ./...)
+(cd cli/harn && go vet ./...)
+cli/harn/scripts/build-release.sh
 ```
 
-`gofmt -l` 应无输出。构建产物位于 `CLI/harn/dist/`，不提交。交叉编译不代替 Windows 实际运行验证；在 Windows 上进入 `CLI/harn` 执行 `go test -race ./...` 和 `go vet ./...`。
+`gofmt -l` 应无输出。构建产物位于 `cli/harn/dist/`，不提交。交叉编译不代替 Windows 实际运行验证；在 Windows 上进入 `cli/harn` 执行 `go test -race ./...` 和 `go vet ./...`。
 
 修改 Skill 或索引时，按涉及范围运行：
 
 ```bash
-python3 -B Skills/tests/test_index.py
-python3 -B Skills/swe/scripts/tests/test_standards.py
-for test in Skills/swe/*/scripts/tests/test_validate_documents.py; do
+python3 -B skills/tests/test_index.py
+python3 -B skills/swe/scripts/tests/test_standards.py
+for test in skills/swe/*/scripts/tests/test_validate_documents.py; do
   python3 -B "$test" || exit 1
 done
 ```
@@ -45,12 +45,12 @@ done
 
 ```bash
 sh -n install.sh
-bash -n CLI/harn/scripts/build-release.sh
+bash -n cli/harn/scripts/build-release.sh
 ```
 
 修改文档后运行：
 
 ```bash
-python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --changed
+python3 -B skills/knowledge-doc-guard/scripts/knowledge_lint.py --changed
 git diff --check
 ```

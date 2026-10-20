@@ -3,4 +3,4 @@ __pycache__/
 *.py[cod]
 *.tgz
 .DS_Store
-CLI/harn/dist/
+cli/harn/dist/
