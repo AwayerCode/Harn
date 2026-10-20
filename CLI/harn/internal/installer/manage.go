@@ -124,7 +124,9 @@ func (m Manager) Remove(requested []string) ([]Removal, error) {
 		return nil, err
 	}
 	for _, plan := range plans {
-		pruneEmptyDirs(harnessRoot, plan.target)
+		for _, file := range plan.deletes {
+			pruneEmptyDirs(harnessRoot, file)
+		}
 		delete(current.Downloads, plan.target)
 	}
 	if err := current.Save(harnessRoot); err != nil {

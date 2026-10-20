@@ -19,8 +19,6 @@ curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | s
 
 > 先读取 `.harness/Skills/swe/SKILL.md`，选择代码审查方法，审查当前项目尚未提交的代码改动。只报告有依据的问题，说明文件位置、影响和原因，不修改文件。缺少必要依据时明确说明。
 
-审查对象也可以是具体文件或模块。
-
 安装完成后，入口位于 `.harness/Skills/swe/SKILL.md`。项目接入、版本管理和更新说明见 [使用指南](HARN.md)。Windows 下载方式见 [安装](HARN.md#安装)。
 
 ## 许可证
