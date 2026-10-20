@@ -19,7 +19,7 @@ func main() {
 	runner := app.New(app.Options{
 		Stdout:  os.Stdout,
 		Stderr:  os.Stderr,
-		Version: buildinfo.Version,
+		Version: buildinfo.Resolve(),
 		Client:  &http.Client{Timeout: 5 * time.Minute},
 	})
 	os.Exit(runner.Run(ctx, os.Args[1:]))
