@@ -13,16 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: CLI/harness
+        working-directory: CLI/harn
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
-          go-version-file: CLI/harness/go.mod
+          go-version-file: CLI/harn/go.mod
           cache: true
-          cache-dependency-path: CLI/harness/go.mod
+          cache-dependency-path: CLI/harn/go.mod
       - name: Test
         run: go test ./...
       - name: Build release assets

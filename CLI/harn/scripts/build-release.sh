@@ -20,7 +20,7 @@ assets=()
 for target in "${targets[@]}"; do
   goos="${target%/*}"
   goarch="${target#*/}"
-  asset="harness_${goos}_${goarch}"
+  asset="harn_${goos}_${goarch}"
   if [[ "$goos" == "windows" ]]; then
     asset="${asset}.exe"
   fi
@@ -29,7 +29,7 @@ for target in "${targets[@]}"; do
     cd "$root"
     CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build \
       -trimpath \
-      -ldflags "-s -w -X github.com/AwayerCode/Harness/CLI/harness/internal/buildinfo.Version=${version}" \
+      -ldflags "-s -w -X github.com/AwayerCode/Harn/CLI/harn/internal/buildinfo.Version=${version}" \
       -o "$dist/$asset" \
       .
   )
@@ -45,4 +45,4 @@ done
   fi
 )
 
-printf 'built Harness %s in %s\n' "$version" "$dist"
+printf 'built Harn %s in %s\n' "$version" "$dist"

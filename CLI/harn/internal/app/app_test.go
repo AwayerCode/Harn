@@ -14,7 +14,7 @@ func TestVersionAndHelp(t *testing.T) {
 	if code := runner.Run(context.Background(), []string{"version"}); code != 0 {
 		t.Fatalf("version exit code %d", code)
 	}
-	if stdout.String() != "harness v1.2.3\n" {
+	if stdout.String() != "harn v1.2.3\n" {
 		t.Fatalf("unexpected output %q", stdout.String())
 	}
 

@@ -1,5 +1,5 @@
 name: Bug report
-description: 报告可复现的 Harness 行为问题
+description: 报告可复现的 Harn 行为问题
 title: "bug: "
 labels: ["bug"]
 body:
@@ -11,8 +11,8 @@ body:
     id: version
     attributes:
       label: 版本
-      description: 输出来自 `harness version` 的版本号
-      placeholder: v0.1.2
+      description: 输出来自 `harn version` 的版本号
+      placeholder: v0.2.0
     validations:
       required: true
   - type: input

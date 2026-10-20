@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢你改进 Harness。这个仓库同时维护 Skill 文档、共享校验器和项目内分发 CLI，提交应保持职责边界清晰。
+感谢你改进 Harn。这个仓库同时维护 Skill 文档、共享校验器和项目内分发 CLI，提交应保持职责边界清晰。
 
 ## 开发环境
 
@@ -22,10 +22,10 @@
 提交前至少运行：
 
 ```bash
-find CLI/harness -name '*.go' -type f -print0 | xargs -0 gofmt -l
-(cd CLI/harness && go test ./...)
-(cd CLI/harness && go test -race ./...)
-(cd CLI/harness && go vet ./...)
+find CLI/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l
+(cd CLI/harn && go test ./...)
+(cd CLI/harn && go test -race ./...)
+(cd CLI/harn && go vet ./...)
 python3 -B Skills/swe/scripts/tests/test_standards.py
 python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --all
 git diff --check

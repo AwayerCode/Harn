@@ -1,13 +1,13 @@
-# Harness 协作约定
+# Harn 协作约定
 
-本仓是 Harness 的完整源码位置：`Skills/` 保存可版本化的 Agent 能力，`CLI/harness/` 保存项目内资源分发工具，CI 与 GitHub Releases 负责验证和交付二进制。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
+本仓是 Harn 的完整源码位置：`Skills/` 保存可版本化的 Agent 能力，`CLI/harn/` 保存项目内资源分发工具，CI 与 GitHub Releases 负责验证和交付二进制。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
 
 ## 仓库组成
 
 - `Skills/`：Skill 入口、规范、契约、模板、脚本和测试；每个 Skill 以 `SKILL.md` 为入口。
-- `CLI/harness/`：第一个 CLI 及其独立 Go module、共享实现、构建脚本和测试；后续 CLI 使用 `CLI/<name>/`。
+- `CLI/harn/`：第一个 CLI 及其独立 Go module、共享实现、构建脚本和测试；后续 CLI 使用 `CLI/<name>/`。
 - `.github/`：CI、Release、Issue/PR 模板和发布说明配置。
-- `HARNESS.md`：面向使用者的资源选择、下载、更新和保存说明。
+- `HARN.md`：面向使用者的资源选择、下载、更新和保存说明。
 
 ## Skill 入口
 

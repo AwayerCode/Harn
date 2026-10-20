@@ -168,7 +168,7 @@ func validateTarget(target string) error {
 		return fmt.Errorf("resource path %q is reserved", target)
 	}
 	if clean == "bin" || strings.HasPrefix(clean, "bin/") || clean == "downloads.json" {
-		return fmt.Errorf("resource path %q conflicts with the Harness directory", target)
+		return fmt.Errorf("resource path %q conflicts with the Harn directory", target)
 	}
 	for _, part := range strings.Split(clean, "/") {
 		if part == "" || part == "." || part == ".." || part == ".git" {

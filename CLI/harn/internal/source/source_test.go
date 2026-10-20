@@ -24,27 +24,27 @@ func TestResolveArchiveURL(t *testing.T) {
 	}{
 		{
 			name:    "branch",
-			source:  "https://github.com/AwayerCode/Harness.git",
+			source:  "https://github.com/AwayerCode/Harn.git",
 			version: "branch:main",
-			want:    "https://github.com/AwayerCode/Harness/archive/refs/heads/main.tar.gz",
+			want:    "https://github.com/AwayerCode/Harn/archive/refs/heads/main.tar.gz",
 		},
 		{
 			name:    "tag with slash",
-			source:  "https://github.com/AwayerCode/Harness",
+			source:  "https://github.com/AwayerCode/Harn",
 			version: "tag:release/2026.10",
-			want:    "https://github.com/AwayerCode/Harness/archive/refs/tags/release/2026.10.tar.gz",
+			want:    "https://github.com/AwayerCode/Harn/archive/refs/tags/release/2026.10.tar.gz",
 		},
 		{
 			name:    "branch requiring escaping",
-			source:  "https://github.com/AwayerCode/Harness",
+			source:  "https://github.com/AwayerCode/Harn",
 			version: "branch:feature/new skill",
-			want:    "https://github.com/AwayerCode/Harness/archive/refs/heads/feature/new%20skill.tar.gz",
+			want:    "https://github.com/AwayerCode/Harn/archive/refs/heads/feature/new%20skill.tar.gz",
 		},
 		{
 			name:    "commit",
-			source:  "https://github.com/AwayerCode/Harness",
+			source:  "https://github.com/AwayerCode/Harn",
 			version: "commit:0123456789abcdef",
-			want:    "https://github.com/AwayerCode/Harness/archive/0123456789abcdef.tar.gz",
+			want:    "https://github.com/AwayerCode/Harn/archive/0123456789abcdef.tar.gz",
 		},
 		{
 			name:    "direct archive",
@@ -54,13 +54,13 @@ func TestResolveArchiveURL(t *testing.T) {
 		},
 		{
 			name:    "unqualified version",
-			source:  "https://github.com/AwayerCode/Harness",
+			source:  "https://github.com/AwayerCode/Harn",
 			version: "main",
 			wantErr: true,
 		},
 		{
 			name:    "unsupported host",
-			source:  "https://example.com/AwayerCode/Harness",
+			source:  "https://example.com/AwayerCode/Harn",
 			version: "branch:main",
 			wantErr: true,
 		},
@@ -90,10 +90,10 @@ func TestResolveArchiveURL(t *testing.T) {
 func TestFetchSelectsPathsAndPreservesExecutableMode(t *testing.T) {
 	t.Parallel()
 	archive := testArchive(t, []testFile{
-		{name: "._Harness-main", body: "apple double", mode: 0o644},
-		{name: "Harness-main/Skills/swe/SKILL.md", body: "skill", mode: 0o644},
-		{name: "Harness-main/Skills/swe/scripts/check.py", body: "#!/usr/bin/env python3\n", mode: 0o755},
-		{name: "Harness-main/Skills/other/SKILL.md", body: "other", mode: 0o644},
+		{name: "._Harn-main", body: "apple double", mode: 0o644},
+		{name: "Harn-main/Skills/swe/SKILL.md", body: "skill", mode: 0o644},
+		{name: "Harn-main/Skills/swe/scripts/check.py", body: "#!/usr/bin/env python3\n", mode: 0o755},
+		{name: "Harn-main/Skills/other/SKILL.md", body: "other", mode: 0o644},
 	})
 	client := archiveClient(archive)
 
@@ -125,7 +125,7 @@ func TestFetchIgnoresTopLevelArchiveMetadata(t *testing.T) {
 	t.Parallel()
 	archive := testArchive(t, []testFile{
 		{name: "pax_global_header", body: "github archive metadata", mode: 0o644},
-		{name: "Harness-main/Skills/swe/SKILL.md", body: "skill", mode: 0o644},
+		{name: "Harn-main/Skills/swe/SKILL.md", body: "skill", mode: 0o644},
 	})
 
 	destination := t.TempDir()
@@ -173,19 +173,19 @@ func TestFetchSupportsRootlessArchive(t *testing.T) {
 func TestFetchSupportsSingleFileArchive(t *testing.T) {
 	t.Parallel()
 	archive := testArchive(t, []testFile{
-		{name: "HARNESS.md", body: "# Harness", mode: 0o644},
+		{name: "HARN.md", body: "# Harn", mode: 0o644},
 	})
 
 	destination := t.TempDir()
-	err := Fetch(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", []string{"HARNESS.md"}, destination)
+	err := Fetch(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", []string{"HARN.md"}, destination)
 	if err != nil {
 		t.Fatal(err)
 	}
-	body, err := os.ReadFile(filepath.Join(destination, "HARNESS.md"))
+	body, err := os.ReadFile(filepath.Join(destination, "HARN.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(body) != "# Harness" {
+	if string(body) != "# Harn" {
 		t.Fatalf("unexpected content %q", body)
 	}
 }
@@ -204,7 +204,7 @@ func TestFetchRejectsUnsafeArchivePath(t *testing.T) {
 func TestFetchRejectsSelectedSymlink(t *testing.T) {
 	t.Parallel()
 	archive := testArchive(t, []testFile{
-		{name: "Harness-main/Skills/swe/link", linkname: "../../outside", mode: 0o777, typeflag: tar.TypeSymlink},
+		{name: "Harn-main/Skills/swe/link", linkname: "../../outside", mode: 0o777, typeflag: tar.TypeSymlink},
 	})
 	err := Fetch(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", []string{"Skills/swe"}, t.TempDir())
 	if err == nil || !strings.Contains(err.Error(), "not a regular file or directory") {
@@ -215,7 +215,7 @@ func TestFetchRejectsSelectedSymlink(t *testing.T) {
 func TestFetchReportsMissingTarget(t *testing.T) {
 	t.Parallel()
 	archive := testArchive(t, []testFile{
-		{name: "Harness-main/Skills/swe/SKILL.md", body: "skill", mode: 0o644},
+		{name: "Harn-main/Skills/swe/SKILL.md", body: "skill", mode: 0o644},
 	})
 	err := Fetch(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", []string{"Skills/missing"}, t.TempDir())
 	if err == nil || !strings.Contains(err.Error(), "was not found") {

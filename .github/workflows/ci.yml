@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: CLI/harness
+        working-directory: CLI/harn
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version-file: CLI/harness/go.mod
+          go-version-file: CLI/harn/go.mod
           cache: true
-          cache-dependency-path: CLI/harness/go.mod
+          cache-dependency-path: CLI/harn/go.mod
       - name: Check formatting
         run: test -z "$(find . -name '*.go' -type f -print0 | xargs -0 gofmt -l)"
       - name: Vet
@@ -29,7 +29,7 @@ jobs:
       - name: Race test
         run: go test -race ./...
       - name: Build
-        run: go build -o "$RUNNER_TEMP/harness" .
+        run: go build -o "$RUNNER_TEMP/harn" .
       - name: Build release assets
         env:
           DIST_DIR: ${{ runner.temp }}/dist
