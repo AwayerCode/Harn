@@ -1,36 +1,37 @@
-# SWE CLI 运行原型
+# SWE CLI
 
-本目录实现[系统设计](../../docs/system-design.md)的第一阶段：验证包含 Node 运行时的二进制、单次校验协议及外围 TS 子进程执行。尚未替换 SWE 的 Python 检查器，也尚未接入 harn 配套安装，不作为完整 SWE 发行包发布。
+[系统设计](../../docs/system-design.md)中的 Go 单次校验核心。现有文档检查已从 Node 原型迁移，Node 打包、TS 扩展宿主和扩展协议已移除。方法与项目适配放在 Skill 中，Agent 按 Skill 调用项目测试和构建。
 
-## 已实现能力
+## 当前能力
 
-1. help/version 与 JSON stdin 请求，0/1/2 分别表示通过、违规、不可检查。
-2. documents 检查使用构建时从唯一来源 `skills/swe/references/artifact-schemas/` 读取并嵌入的 schema，覆盖格式、局部架构模式与本地链接；规则摘要随结果返回，不另维护规则副本。
-3. 显式配置的单文件 TS 扩展在子进程中执行；校验内容摘要、接口版本、超时与结果格式，扩展结果不能覆盖核心结果。
-4. 读取的输入文件生成摘要，结束前复核内容；发现变化返回不可检查，不声称提供原子快照。
-5. Node SEA 本机打包、macOS 签名与 SHA-256 输出。只验证了 macOS arm64，不代表六平台验收完成。
+- documents 校验文档格式、局部 architecture 模式与本地链接，不判断语义正确性或任务是否完成。
+- JSON 请求与结果，退出码 0 表示通过、1 表示违规、2 表示不可检查。必需检查不可用优先于违规；可选检查问题保留在 warnings。
+- schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入二进制。生成文件不可手改，测试检查其与来源一致。
+- 结果包含 runId、核心版本、规则与输入摘要；结束前复核已观察文件的内容、路径解析和链接存在性。不是文件系统原子快照。
+- 检查不写项目文件，不加载外部脚本，不依赖系统 Node、TS、Python 或 Go。
 
-## 开发与打包
+## 开发与构建
 
-构建锁定 Node 22.22.3，开发依赖由 package-lock.json 固定。以下命令在本目录运行：
+使用 Go 1.24 或更高版本，在本目录执行：
 
 ```bash
-npm ci
-npm run typecheck
-npm test
-npm run package
-npm run test:binary
+go generate ./...
+go test -race ./...
+go vet ./...
+scripts/build-release.sh 0.2.0-dev
 ```
 
-构建产物位于 `dist/`，不提交。package 仅打包当前机器平台；不伪装成交叉编译脚本。test:binary 将二进制单独复制到含空格和中文的临时目录，使用无 Node/Python 的 PATH，从不同工作目录运行核心和 TS 扩展；不是完整容器或三系统验证。
+无第三方 Go 依赖。生成与构建需要完整源码仓；运行二进制不需要源码。迁移对照测试在存在 Python 时运行原检查器，缺少 Python 会明确跳过该组测试；正式校验不会回退 Python。
 
-## 请求示例
+构建输出在忽略的 dist 目录，包括 macOS、Linux、Windows 的 amd64/arm64 二进制及 SHA256SUMS。独立运行测试将二进制置于含中文和空格的临时目录，在没有语言运行时的 PATH 下，从不同工作目录执行 Review 并检查无项目写入。六平台交叉构建不替代各系统实际运行验收；当前只在 macOS arm64 实测。
 
-这是原型接口，JSON 从 stdin 输入，不需要创建请求文件。projectRoot 必须使用真实的绝对项目路径；示例路径由使用者替换。
+## 请求与结果
+
+原型协议升级到 2，旧版本及 extensions 字段明确拒绝，不静默忽略旧扩展。projectRoot 使用真实的绝对项目路径；文件路径可相对于它。
 
 ```json
 {
-  "protocolVersion": 1,
+  "protocolVersion": 2,
   "taskId": "document-check",
   "round": 1,
   "mode": "design",
@@ -48,31 +49,10 @@ npm run test:binary
 }
 ```
 
-调用 `swe-cli check --request - --format json`，或将请求保存到授权文件后传入其路径。version 输出运行时版本和 standalone 标志。原型只支持 documents 检查，每次请求最多一个同名检查；其他 checkId 明确返回 unavailable。缺失文件和不支持的请求返回 2，不把环境缺口伪装成格式违规。整体 passed 不是任务完成结论。
+调用 `swe-cli check --request - --format json` 从 stdin 读取，或将短横线替换为请求文件路径。请求上限 1 MiB，至少包含一个必需检查，不允许重复 checkId。version 输出核心、协议和 Go 运行时版本。
 
-## 外围 TS 契约
+支持 business-model、system-design、interface-protocol、interaction-standards、test-design；system-design 可指定 profile 为 architecture。缺失文件、无效 UTF-8、越出项目的真实路径、未知检查或无效请求返回不可检查。只支持每次一个 documents 检查，多文档需分别调用；未实现的检查不会报告通过。
 
-扩展是可信代码，不是安全沙箱。首版使用可擦除类型语法和 CommonJS 形式，不能使用静态 import、第三方包、相对模块导入或需转换的 TS 语法。提供给扩展的 require 仅允许 node:path、node:url、node:crypto、node:fs 和 node:fs/promises；这不是对恶意代码的权限隔离。
+## 后续边界
 
-```typescript
-module.exports = async function (context: { taskId: string }) {
-  return {
-    interfaceVersion: 1,
-    status: 'passed',
-    diagnostics: [],
-    evidence: [context.taskId]
-  };
-};
-```
-
-在请求的 extensions 数组中显式配置 id、path、sha256、interfaceVersion、required、timeoutMs、input 和 readOnly。path 相对 projectRoot，真实路径不得越出项目；随包路径定位尚待分发层接入。sha256 必须对应文件内容；timeoutMs 为正整数，单位毫秒。输入和扩展总输出限制为 1 MiB，这是原型资源上限，不是性能承诺。
-
-Review 只接受明确声明 readOnly 的已审查扩展，该标志本身不证明没有副作用。扩展返回 interfaceVersion、status、diagnostics、evidence，不接受额外字段。非通过结果必须包含诊断，诊断包含 ruleId、message 和可选 location。子进程异常、超时、无效输出、摘要或版本不匹配均为 unavailable。
-
-核心报告由父进程保存。必需扩展无法检查时整体退出 2，违规退出 1；可选扩展的问题作为显式 warnings 保留。扩展不接收可写的核心结果，不能通过返回 source 或 summary 改写核心结论。
-
-## 后续迁移边界
-
-设计、产物、范围和系统结构检查尚未迁移；尚未实现配套安装清单、读写锁、恢复事务、项目配置和 Agent 接入。完整协议还需机器 schema 和迁移对照验证。当前 schema 由构建内嵌，发行资源版本绑定仍待实现，不声称已验证外置资源完整性。
-
-现有 SWE 工作流继续调用 Python，避免原型被误认为完整替代。后续需完成六个原脚本的语义对照，接入共享执行规范的循环，然后接入 harn 的平台配套安装与恢复，最后进行六平台发行验收。
+其余 Python 检查、范围基线、资源绑定、安装读写锁、恢复事务、项目配置及 harn 配套安装仍待实现。现有 SWE 工作流继续使用原 Python 检查器，待完整迁移与验证后接入 Go CLI。当前版本不是完整 SWE 发行包；核心通过不能替代业务验收或 Agent 的完成判断。
