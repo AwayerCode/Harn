@@ -16,7 +16,7 @@ Harness 集中维护可复制到不同项目的 Agent Skills 和附属内容。�
 
 ## 下载工具
 
-工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.1.0` 为例，并把工具放在当前项目的 `.harness/bin/`。
+工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.1.1` 为例，并把工具放在当前项目的 `.harness/bin/`。
 
 示例使用 `AwayerCode/Harness` 作为仓库地址；Agent 应根据实际收到的 Harness 仓库链接替换 `repo`。
 
@@ -24,7 +24,7 @@ macOS 和 Linux：
 
 ```bash
 repo="AwayerCode/Harness"
-version="v0.1.0"
+version="v0.1.1"
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 case "$(uname -m)" in
   arm64|aarch64) arch="arm64" ;;
@@ -54,20 +54,20 @@ Windows PowerShell：
 
 ```powershell
 $repo = "AwayerCode/Harness"
-$version = "v0.1.0"
+$version = "v0.1.1"
 $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
-  $asset = "harness_windows_$arch.exe"
+$asset = "harness_windows_$arch.exe"
 $base = "https://github.com/$repo/releases/download/$version"
 $tmp = Join-Path $env:TEMP ("harness-" + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $tmp | Out-Null
 try {
-    Invoke-WebRequest "$base/$asset" -OutFile (Join-Path $tmp $asset)
+  Invoke-WebRequest "$base/$asset" -OutFile (Join-Path $tmp $asset)
   Invoke-WebRequest "$base/SHA256SUMS" -OutFile (Join-Path $tmp "SHA256SUMS")
-    $expected = ((Get-Content (Join-Path $tmp "SHA256SUMS")) | Where-Object { $_ -match "  $asset$" }).Split()[0]
-    $actual = (Get-FileHash (Join-Path $tmp $asset) -Algorithm SHA256).Hash.ToLower()
-    if ($actual -ne $expected.ToLower()) { throw "SHA256 mismatch for $asset" }
+  $expected = ((Get-Content (Join-Path $tmp "SHA256SUMS")) | Where-Object { $_ -match "  $asset$" }).Split()[0]
+  $actual = (Get-FileHash (Join-Path $tmp $asset) -Algorithm SHA256).Hash.ToLower()
+  if ($actual -ne $expected.ToLower()) { throw "SHA256 mismatch for $asset" }
   New-Item -ItemType Directory -Path ".harness/bin" -Force | Out-Null
-    Copy-Item (Join-Path $tmp $asset) -Destination ".harness/bin/harness.exe" -Force
+  Copy-Item (Join-Path $tmp $asset) -Destination ".harness/bin/harness.exe" -Force
 } finally {
   Remove-Item -Recurse -Force $tmp
 }
@@ -88,7 +88,7 @@ Windows 使用 `.harness/bin/harness.exe` 替代本文命令中的 `.harness/bin
 ```bash
 .harness/bin/harness install \
   --source https://github.com/AwayerCode/Harness \
-  --version tag:v0.1.0 \
+  --version tag:v0.1.1 \
   --path Skills/concise-response \
   --path Skills/knowledge-doc-guard \
   --path Skills/swe

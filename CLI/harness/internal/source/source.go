@@ -129,14 +129,14 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 		}
 
 		parts := strings.Split(name, "/")
+		if len(parts) == 1 {
+			continue
+		}
 		if archiveRoot == "" {
 			archiveRoot = parts[0]
 		}
 		if parts[0] != archiveRoot {
 			return fmt.Errorf("archive has multiple root directories %q and %q", archiveRoot, parts[0])
-		}
-		if len(parts) == 1 {
-			continue
 		}
 		relative := strings.Join(parts[1:], "/")
 		if !isSelected(relative, selected) {
