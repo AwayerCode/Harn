@@ -39,7 +39,7 @@ jobs:
             exit 1
           fi
       - name: Install syft
-        uses: anchore/sbom-action/download-syft@v0.17.9
+        uses: anchore/sbom-action/download-syft@v0.24.3
       - name: Generate SBOM
         run: syft scan dir:. -o spdx-json=dist/harn_${GITHUB_REF_NAME}.spdx.json
       - name: Verify release bundle
