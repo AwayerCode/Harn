@@ -107,5 +107,6 @@ if [ -n "$version" ]; then
   printf 'next: %s install --source https://github.com/%s --version tag:%s --path Skills/swe\n' \
     "$bin_dir/harn" "$repo" "$version"
 else
-  printf 'next: %s version && %s search\n' "$bin_dir/harn" "$bin_dir/harn"
+  printf 'next: %s version\n' "$bin_dir/harn"
+  printf 'usage: https://github.com/%s/blob/main/HARN.md\n' "$repo"
 fi

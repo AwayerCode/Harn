@@ -12,7 +12,7 @@ Harn 集中维护可复制到不同项目的 Agent Skills 和附属内容。用�
 | `Skills/concise-response` | 每轮对话和最终回复；控制表达密度，但不得削减任务交付内容。 |
 | `Skills/knowledge-doc-guard` | 读取、整理、写入或检查知识文档时；约束内容完整性、Markdown 格式和质量检查。 |
 
-资源的具体用法以各自 `SKILL.md` 及其相对引用为准。本文件只负责让 Agent 找到入口，不复制完整方法。
+资源的具体用法以各自 `SKILL.md` 及其相对引用为准。本文件负责资源选择和使用，不复制 Skill 的专业方法。
 
 机器可读索引位于 `Skills/index.json`，`harn search` 读取它列出可用 Skill；新增 Skill 时同步登记，规范见 [Skills/authoring.md](Skills/authoring.md)。
 
@@ -93,7 +93,7 @@ Windows 使用 `.harness/bin/harn.exe` 替代本文命令中的 `.harness/bin/ha
 
 ## 下载资源
 
-`--version` 使用 `branch:<name>`、`tag:<name>` 或 `commit:<sha>` 标识来源版本。为保持项目可复现，优先使用发布标签；需要跟踪更新时使用分支。`--path` 可重复，工具不会替 Agent 判断应该下载哪些资源。
+`--version` 使用 `branch:<name>`、`tag:<name>` 或 `commit:<sha>` 标识来源版本。为保持项目可复现，优先使用发布标签；需要跟踪更新时使用分支。`--path` 可重复，工具不会替 Agent 判断应该下载哪些资源。`--source` 支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；直接归档需包含所选路径，可带或不带顶层目录。
 
 ```bash
 .harness/bin/harn install \
@@ -113,7 +113,7 @@ Windows 使用 `.harness/bin/harn.exe` 替代本文命令中的 `.harness/bin/ha
 .harness/bin/harn search review
 ```
 
-首次安装前可用 `--dry-run` 验证来源、路径和空间占用，不写任何文件：
+首次安装前可用 `--dry-run` 下载并验证资源，不写入项目资源和下载记录：
 
 ```bash
 .harness/bin/harn install --source https://github.com/AwayerCode/Harn \
@@ -152,7 +152,7 @@ Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用
 .harness/bin/harn status
 ```
 
-`status` 逐文件比对哈希和权限，`ok` 之外的状态会以非零退出码结束，可直接放进 CI 检查。
+`status` 逐文件比对哈希和权限，`ok` 之外的状态会以非零退出码结束，可用于脚本检查。
 
 ## 移除资源
 
@@ -177,19 +177,3 @@ Windows 可使用 `Get-Content .harness/downloads.json`。
 不同操作系统和架构需要各自的工具二进制。切换平台时按本文重新下载对应版本；应用资源和 `downloads.json` 保持原路径。提交、推送和软链接接入遵循业务项目自己的授权。
 
 分发工具只下载和更新显式指定的资源，不选择资源、不解释 Skill、不自动提交，也不修改业务项目的 `.gitignore`。
-
-## 源码布局
-
-CLI 源码统一位于仓库的 `CLI/`：
-
-```tree
-CLI/
-└── harn/                       # 第一个 CLI，完整且自包含
-    ├── go.mod
-    ├── main.go
-    ├── internal/               # 当前 CLI 的共享实现
-    ├── scripts/                # 当前 CLI 的构建脚本
-    └── dist/                   # 本机构建产物，Git 忽略
-```
-
-`CLI/` 只是多个 CLI 的容器。后续 CLI 使用各自的子目录、Go module、实现和构建脚本。发布二进制由 CI 构建并上传到 GitHub Releases，不提交到源码仓库。

@@ -54,7 +54,7 @@ Skills/<name>/
 }
 ```
 
-索引由 `harn search` 读取，`name` 必须唯一，`path` 必须在 `Skills/` 下。CI 会校验索引结构。
+索引由 `harn search` 读取，`name` 必须唯一，`path` 必须在 `Skills/` 下。运行 `python3 -B Skills/tests/test_index.py` 校验索引结构。
 
 ## 校验
 
