@@ -32,9 +32,11 @@ SWE 的演进方案是将稳定校验逻辑放入 Node 独立可执行文件 `sw
 
 当前仓库以 Skills、Python 校验脚本和项目内资源分发工具 `harn` 提供能力。上述分层与执行闭环的实施由 [Issue #6](https://github.com/AwayerCode/Harn/issues/6) 跟踪，首版计划由 Agent 按 Skill 驱动；独立的任务分发调度器不在该 Issue 范围内。
 
+本阶段聚焦独立任务：闭环统一放在 SWE 的共享执行规范中，Agent 执行循环，swe-cli 提供单次校验。目标架构、模块边界及迁移安排见[系统设计](docs/system-design.md)，数据与失败语义见[接口协议](docs/interface-protocol.md)；两份文档描述待实施方案。
+
 ## 使用示例
 
-项目内安装工具和 SWE 的命令（macOS / Linux）：
+项目内安装工具和 SWE 的命令（macOS / Linux；示例使用旧版 `v0.2.1` 的 `Skills/swe` 路径，新版源码使用 `skills/swe`）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh

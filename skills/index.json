@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "name": "swe",
+      "path": "skills/swe",
+      "summary": "按工程对象、共同标准和模块契约组织设计、实现与验收",
+      "tags": ["engineering", "design", "implementation", "review"]
+    },
+    {
+      "name": "concise-response",
+      "path": "skills/concise-response",
+      "summary": "控制表达密度和立场，不削减必须交付的内容",
+      "tags": ["writing", "response", "communication"]
+    },
+    {
+      "name": "knowledge-doc-guard",
+      "path": "skills/knowledge-doc-guard",
+      "summary": "约束知识文档的内容完整性、Markdown 格式和质量检查",
+      "tags": ["documentation", "markdown", "quality"]
+    }
+  ]
+}

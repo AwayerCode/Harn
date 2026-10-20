@@ -104,7 +104,7 @@ chmod +x "$bin_dir/harn"
 
 printf 'installed %s\n' "$bin_dir/harn"
 if [ -n "$version" ]; then
-  printf 'next: %s install --source https://github.com/%s --version tag:%s --path Skills/swe\n' \
+  printf 'next: %s search --source https://github.com/%s --version tag:%s\n' \
     "$bin_dir/harn" "$repo" "$version"
 else
   printf 'next: %s version\n' "$bin_dir/harn"
