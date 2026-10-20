@@ -121,6 +121,27 @@ func TestFetchSelectsPathsAndPreservesExecutableMode(t *testing.T) {
 	}
 }
 
+func TestFetchIgnoresTopLevelArchiveMetadata(t *testing.T) {
+	t.Parallel()
+	archive := testArchive(t, []testFile{
+		{name: "pax_global_header", body: "github archive metadata", mode: 0o644},
+		{name: "Harness-main/Skills/swe/SKILL.md", body: "skill", mode: 0o644},
+	})
+
+	destination := t.TempDir()
+	err := Fetch(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", []string{"Skills/swe"}, destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(destination, "Skills", "swe", "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "skill" {
+		t.Fatalf("unexpected content %q", body)
+	}
+}
+
 func TestFetchRejectsUnsafeArchivePath(t *testing.T) {
 	t.Parallel()
 	archive := testArchive(t, []testFile{
