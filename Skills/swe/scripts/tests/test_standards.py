@@ -85,19 +85,20 @@ class StandardsTests(unittest.TestCase):
             protocol.write_text(protocol.read_text().replace('| 调用方 | Order |', '| 调用方 | Unknown |'))
             self.assertTrue(design.check(system, protocol))
 
-    def test_new_and_legacy_entrypoints(self):
+    def test_shared_validator_cli_and_no_module_wrappers(self):
         with tempfile.TemporaryDirectory() as tmp:
             system, protocol = fixture(Path(tmp))
-            for name in ['swe-code-impl', 'swe-system-design', 'swe-business-impl', 'swe-infrastructure-impl', 'swe-runtime-impl', 'swe-module-design']:
-                script = ROOT / name / 'scripts/validate_documents.py'
-                command = [sys.executable, '-B', str(script), '--kind', 'interface-protocol', '--file', str(protocol)]
-                good = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
-                self.assertEqual(good.returncode, 0, good.stdout + good.stderr)
-                text = protocol.read_text()
-                protocol.write_text(text.replace('| 调用方 | Order |\n', ''))
-                bad = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
-                self.assertEqual(bad.returncode, 1, bad.stdout + bad.stderr)
-                protocol.write_text(text)
+            script = ROOT / 'scripts/validate_documents.py'
+            command = [sys.executable, '-B', str(script), '--kind', 'interface-protocol', '--file', str(protocol)]
+            good = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(good.returncode, 0, good.stdout + good.stderr)
+            text = protocol.read_text()
+            protocol.write_text(text.replace('| 调用方 | Order |\n', ''))
+            bad = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(bad.returncode, 1, bad.stdout + bad.stderr)
+            protocol.write_text(text)
+            for module in ROOT.glob('swe-*'):
+                self.assertFalse((module / 'scripts/validate_documents.py').exists(), str(module))
             missing = subprocess.run([sys.executable, '-B', str(ROOT / 'scripts/validate_documents.py'), '--kind', 'system-design', '--file', str(Path(tmp)/'missing.md')], capture_output=True, text=True)
             self.assertEqual(missing.returncode, 1)
 
@@ -133,7 +134,7 @@ class StandardsTests(unittest.TestCase):
             shutil.copytree(ROOT / 'references/artifact-schemas', root / 'references/artifact-schemas')
             for kind in ['system-design', 'interface-protocol']:
                 (root / 'references/artifact-schemas' / (kind + '.json')).write_text('invalid json')
-            fixture = ROOT / 'swe-testing-design/scripts/tests/fixtures/test-design.md'
+            fixture = ROOT / 'scripts/tests/fixtures/test-design.md'
             for args in [
                 [str(root / 'scripts/validate_documents.py'), '--kind', 'test-design', '--file', str(fixture)],
                 [str(root / 'scripts/check_artifacts.py'), '--kind', 'test', '--file', str(fixture)],

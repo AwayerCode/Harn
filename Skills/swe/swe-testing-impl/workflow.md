@@ -48,7 +48,7 @@ description: 用于依据已有测试设计编写、修正和运行测试，只�
 
 | 检查执行 | 作用与条件 |
 |---|---|
-| [本模块格式规则](references/document-format.md)与 [validate_documents.py](scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
+| [本模块格式规则](references/document-format.md)与 [validate_documents.py](../scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
 | [check_scope.py](../scripts/check_scope.py) | 核对实际写入范围或只读结果；Python 3 标准库和 Git，属于规则的检查执行，不是业务资源 |
 | 内容审查、项目检查与实际验证 | 按下面保留的专业要求和完成标准确认内容与行为；涉及运行先确认工具、环境、权限、输出位置和副作用 |
 
@@ -87,11 +87,11 @@ python3 -B <SWE目录>/scripts/check_scope.py snapshot --root <目标Git根目�
 业务模型及其他文档格式统一由[共同产物规范](../references/standards/artifacts.md)维护。按声明的输入类型使用共享校验器，仅读取相关专业依据，不要求加载生产方工作流。命令使用实际安装路径，条件性文档只在对应范围需要时检查：
 
 ```bash
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind test-design --file <文档路径>
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind test-design --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
 python3 -B <SWE目录>/scripts/validate_documents.py --kind business-model --file <文档路径>
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
 ```
 
 ### 工作方法

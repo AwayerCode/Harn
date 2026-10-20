@@ -104,7 +104,6 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 	for _, target := range targets {
 		selected[target] = true
 	}
-	archiveRoot := ""
 	fileCount := 0
 	var extractedBytes int64
 
@@ -128,17 +127,7 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 			continue
 		}
 
-		parts := strings.Split(name, "/")
-		if len(parts) == 1 {
-			continue
-		}
-		if archiveRoot == "" {
-			archiveRoot = parts[0]
-		}
-		if parts[0] != archiveRoot {
-			return fmt.Errorf("archive has multiple root directories %q and %q", archiveRoot, parts[0])
-		}
-		relative := strings.Join(parts[1:], "/")
+		relative := selectedArchivePath(name, selected)
 		if !isSelected(relative, selected) {
 			continue
 		}
@@ -218,6 +207,16 @@ func isSelected(relative string, selected map[string]bool) bool {
 	return false
 }
 
+func selectedArchivePath(name string, selected map[string]bool) string {
+	if isSelected(name, selected) {
+		return name
+	}
+	if _, stripped, found := strings.Cut(name, "/"); found && isSelected(stripped, selected) {
+		return stripped
+	}
+	return name
+}
+
 func cleanArchiveName(name string) (string, error) {
 	name = strings.TrimPrefix(name, "./")
 	if name == "" || name == "." {
@@ -242,5 +241,6 @@ func isArchiveMetadata(name string) bool {
 			return true
 		}
 	}
-	return name == "__MACOSX" || strings.HasPrefix(name, "__MACOSX/")
+	return name == "pax_global_header" || strings.HasPrefix(name, "pax_global_header/") ||
+		name == "__MACOSX" || strings.HasPrefix(name, "__MACOSX/")
 }

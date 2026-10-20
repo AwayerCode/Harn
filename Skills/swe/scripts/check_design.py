@@ -31,7 +31,7 @@ def rows(body, columns, errors, label, optional=False):
         return []
     found = [data for head, data in tables(body) if head == columns]
     if len(found) != 1:
-        errors.append(f'{label}: 缺少可检查的结构化表格；旧格式需补齐当前范围依据')
+        errors.append(f'{label}: 缺少可检查的结构化表格；需补齐当前范围依据')
         return []
     return [dict(zip(columns, row)) for row in found[0] if len(row) == len(columns)]
 

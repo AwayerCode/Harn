@@ -41,7 +41,7 @@ description: 用于依据交互规范审查实际界面的信息层级、视觉�
 
 | 检查执行 | 作用与条件 |
 |---|---|
-| [本模块格式规则](references/document-format.md)与 [validate_documents.py](scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
+| [本模块格式规则](references/document-format.md)与 [validate_documents.py](../scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
 | [check_scope.py](../scripts/check_scope.py) | 核对实际写入范围或只读结果；Python 3 标准库和 Git，属于规则的检查执行，不是业务资源 |
 | 内容审查、项目检查与实际验证 | 按下面保留的专业要求和完成标准确认内容与行为；涉及运行先确认工具、环境、权限、输出位置和副作用 |
 
@@ -78,9 +78,9 @@ python3 -B <SWE目录>/scripts/check_scope.py readonly --root <目标Git根目�
 按用户路径、项目索引及实际引用定位权威文档，使用本目录的[输入契约](references/input-contract.json)、[校验规则](references/document-format.md)及脚本。缺失、格式不合格、规则冲突或不足以支持当前范围时停止相关检查；不自行补建设计，也不要求运行其他阶段；基本检查使用 SWE 包内共享脚本。
 
 ```bash
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
 ```
 
 系统设计和协议只在上述条件成立时校验，不要求无关文档齐备。

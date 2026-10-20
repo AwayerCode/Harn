@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[2]
-SCRIPT = SKILL / 'scripts/validate_documents.py'
+SCRIPT = SKILL.parent / 'scripts/validate_documents.py'
 SPEC = importlib.util.spec_from_file_location('validator', SCRIPT)
 validator = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validator)
@@ -28,7 +28,7 @@ class DocumentValidationTests(unittest.TestCase):
         self.text = self.fixture(self.kind)
 
     def fixture(self, kind):
-        return (SKILL / 'scripts/tests/fixtures' / (kind + '.md')).read_text()
+        return (SKILL.parent / 'scripts/tests/fixtures' / (kind + '.md')).read_text()
 
     def check(self, text, kind=None):
         self.path.write_text(text)
@@ -80,7 +80,7 @@ class DocumentValidationTests(unittest.TestCase):
             self.skipTest('本 Skill 不接受接口协议')
         text = self.fixture('interface-protocol')
         self.assertEqual(self.check(text, 'interface-protocol'), [])
-        self.assertTrue(self.check(text.replace('| 生命周期与资源 | 具体内容 |\n', ''), 'interface-protocol'))
+        self.assertTrue(self.check(text.replace('| 演进规则 | 具体内容 |\n', ''), 'interface-protocol'))
 
     def test_cli_from_unrelated_directory(self):
         self.path.write_text(self.text)

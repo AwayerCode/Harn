@@ -142,6 +142,54 @@ func TestFetchIgnoresTopLevelArchiveMetadata(t *testing.T) {
 	}
 }
 
+func TestFetchSupportsRootlessArchive(t *testing.T) {
+	t.Parallel()
+	archive := testArchive(t, []testFile{
+		{name: "Skills/swe/SKILL.md", body: "skill", mode: 0o644},
+		{name: "Skills/swe/scripts/check.py", body: "#!/usr/bin/env python3\n", mode: 0o755},
+	})
+
+	destination := t.TempDir()
+	err := Fetch(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", []string{"Skills/swe"}, destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(destination, "Skills", "swe", "SKILL.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "skill" {
+		t.Fatalf("unexpected content %q", body)
+	}
+	info, err := os.Stat(filepath.Join(destination, "Skills", "swe", "scripts", "check.py"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if info.Mode().Perm()&0o111 == 0 {
+		t.Fatalf("expected executable mode, got %o", info.Mode().Perm())
+	}
+}
+
+func TestFetchSupportsSingleFileArchive(t *testing.T) {
+	t.Parallel()
+	archive := testArchive(t, []testFile{
+		{name: "HARNESS.md", body: "# Harness", mode: 0o644},
+	})
+
+	destination := t.TempDir()
+	err := Fetch(context.Background(), archiveClient(archive), "https://example.test/archive.tar.gz", []string{"HARNESS.md"}, destination)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := os.ReadFile(filepath.Join(destination, "HARNESS.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != "# Harness" {
+		t.Fatalf("unexpected content %q", body)
+	}
+}
+
 func TestFetchRejectsUnsafeArchivePath(t *testing.T) {
 	t.Parallel()
 	archive := testArchive(t, []testFile{
