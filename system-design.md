@@ -1,6 +1,6 @@
 # Harness 系统设计
 
-Harness 集中维护可供不同项目使用的 Skills、CLI 等内容。Agent 阅读使用说明，按项目需要下载和使用；Go 二进制只负责分发。当前仅设计，暂不实现。
+Harness 集中维护可供不同项目使用的 Skills、CLI 等内容。Agent 阅读使用说明，按项目需要下载和使用；Go 二进制只负责分发。当前已实现首个 CLI：`harness`。
 
 ## 入口
 
@@ -18,13 +18,37 @@ Harness 仓库的 `AGENTS.md` 保留为维护本仓库的约定，不承担对�
 
 新增资源或调整使用方法时，更新仓库内容和 `HARNESS.md` 即可；只有分发能力变化时才需要修改工具。
 
+发布页直接提供各平台原生二进制，不再套一层压缩包；安装只需下载、校验并设置执行权限。
+
+## 源码组织
+
+根目录的 `CLI/` 只作为所有 CLI 的容器。每个 CLI 在 `CLI/` 下拥有自己的目录、Go module、实现、构建脚本和本地产物。
+
+```tree
+Harness/
+├── CLI/
+│   └── harness/             # 第一个 CLI，完整且自包含
+│       ├── go.mod
+│       ├── main.go
+│       ├── internal/        # 当前 CLI 的共享实现，不对外暴露
+│       ├── scripts/         # 当前 CLI 的构建与发布脚本
+│       └── dist/            # 当前 CLI 的本机构建产物，Git 忽略
+├── Skills/
+├── HARNESS.md
+└── system-design.md
+```
+
+后续 CLI 按同样的边界新增，例如 `CLI/<name>/`。每个 CLI 独立维护自己的 `go.mod`、`internal`、脚本和产物，避免多个 CLI 的 module 配置与构建流程混在 `CLI/` 根层。
+
+Release 工作流从 `CLI/harness/` 构建各平台二进制，并把二进制和 `SHA256SUMS` 上传到 GitHub Releases。二进制和本机 `dist/` 产物不提交到源码仓库。
+
 ## 目录
 
 下载内容统一放在业务项目的 `.harness/` 中，保留 Harness 仓库原有的相对路径，不重新分类或增加 `resources/` 层。
 
 例如，仓库里的 `Skills/swe/` 下载到项目的 `.harness/Skills/swe/`。其他内容同样按原路径放置，打开目录就能看到项目下载了什么。
 
-```text
+```tree
 业务项目/
 └── .harness/
     ├── bin/harness          # 分发工具，Windows 为 harness.exe
