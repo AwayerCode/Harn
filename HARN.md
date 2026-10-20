@@ -1,6 +1,6 @@
-# Harn
+# Harn 使用指南
 
-Harn 集中维护可复制到不同项目的 Agent Skills 和附属内容。用户或 Agent 先阅读本文件，选择当前项目需要的资源，再通过 Go 分发工具下载到项目自己的 `.harness/`。
+在项目中选择、接入和更新 Harn 能力：按需下载资源到 `.harness/`，让 Agent 从对应入口加载方法、约束和工具。
 
 > 不要把整个仓库直接复制进业务项目，也不要让业务项目依赖某个全局 Harn 安装。下载记录保存在项目内，随项目一起提交。
 
@@ -28,11 +28,13 @@ Harn 集中维护可复制到不同项目的 Agent Skills 和附属内容。用�
 curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
 ```
 
-需要逐步审计下载过程时使用手动流程。
+需要逐步审计下载过程时使用手动流程。macOS/Linux 示例在子 Shell 中执行，下载或校验失败即停止，校验通过后才复制二进制。
 
 macOS 和 Linux：
 
 ```bash
+(
+set -eu
 repo="AwayerCode/Harn"
 version="v0.2.1"
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -45,19 +47,23 @@ asset="harn_${os}_${arch}"
 base="https://github.com/${repo}/releases/download/${version}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
-mkdir -p .harness/bin
 curl -fsSL "$base/$asset" -o "$tmp/$asset"
 curl -fsSL "$base/SHA256SUMS" -o "$tmp/SHA256SUMS"
-(
-  cd "$tmp"
-  if command -v sha256sum >/dev/null 2>&1; then
-    grep "  $asset$" SHA256SUMS | sha256sum -c -
-  else
-    grep "  $asset$" SHA256SUMS | shasum -a 256 -c -
-  fi
-)
+expected="$(awk -v asset="$asset" '$2 == asset { print $1; count++ } END { if (count != 1) exit 1 }' "$tmp/SHA256SUMS")"
+if command -v sha256sum >/dev/null 2>&1; then
+  actual="$(sha256sum "$tmp/$asset")"
+else
+  actual="$(shasum -a 256 "$tmp/$asset")"
+fi
+actual="${actual%% *}"
+if [ "$actual" != "$expected" ]; then
+  echo "SHA256 mismatch for $asset" >&2
+  exit 1
+fi
+mkdir -p .harness/bin
 cp "$tmp/$asset" .harness/bin/harn
 chmod +x .harness/bin/harn
+)
 ```
 
 Windows PowerShell：
@@ -69,15 +75,17 @@ $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" 
 $asset = "harn_windows_$arch.exe"
 $base = "https://github.com/$repo/releases/download/$version"
 $tmp = Join-Path $env:TEMP ("harn-" + [guid]::NewGuid())
-New-Item -ItemType Directory -Path $tmp | Out-Null
+New-Item -ItemType Directory -Path $tmp -ErrorAction Stop | Out-Null
 try {
-  Invoke-WebRequest "$base/$asset" -OutFile (Join-Path $tmp $asset)
-  Invoke-WebRequest "$base/SHA256SUMS" -OutFile (Join-Path $tmp "SHA256SUMS")
-  $expected = ((Get-Content (Join-Path $tmp "SHA256SUMS")) | Where-Object { $_ -match "  $asset$" }).Split()[0]
-  $actual = (Get-FileHash (Join-Path $tmp $asset) -Algorithm SHA256).Hash.ToLower()
+  Invoke-WebRequest "$base/$asset" -OutFile (Join-Path $tmp $asset) -ErrorAction Stop
+  Invoke-WebRequest "$base/SHA256SUMS" -OutFile (Join-Path $tmp "SHA256SUMS") -ErrorAction Stop
+  $entries = @(Get-Content (Join-Path $tmp "SHA256SUMS") -ErrorAction Stop | Where-Object { $_ -match ("  " + [regex]::Escape($asset) + "$") })
+  if ($entries.Count -ne 1) { throw "Expected one checksum for $asset" }
+  $expected = ($entries[0] -split "\s+")[0]
+  $actual = (Get-FileHash (Join-Path $tmp $asset) -Algorithm SHA256 -ErrorAction Stop).Hash.ToLower()
   if ($actual -ne $expected.ToLower()) { throw "SHA256 mismatch for $asset" }
-  New-Item -ItemType Directory -Path ".harness/bin" -Force | Out-Null
-  Copy-Item (Join-Path $tmp $asset) -Destination ".harness/bin/harn.exe" -Force
+  New-Item -ItemType Directory -Path ".harness/bin" -Force -ErrorAction Stop | Out-Null
+  Copy-Item (Join-Path $tmp $asset) -Destination ".harness/bin/harn.exe" -Force -ErrorAction Stop
 } finally {
   Remove-Item -Recurse -Force $tmp
 }
@@ -136,7 +144,7 @@ Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用
 .harness/bin/harn update --path Skills/swe --version tag:<目标版本>
 ```
 
-更新前会核对所有已记录文件。任一文件被修改、删除或权限改变时，整次更新在写入前失败；新增的本地文件不会被删除，遇到同路径上游文件也会拒绝覆盖。失败后先处理本地修改，或由用户决定保留本地版本。
+更新前会核对本次选中资源的所有记录文件；使用 `--all` 时才检查全部已记录资源。选中资源的文件内容改变、缺失或可执行状态改变时，整次更新在写入资源前失败；新增的本地文件不会被删除，遇到同路径上游文件也会拒绝覆盖。失败后先处理本地修改，或由用户决定保留本地版本。
 
 一次更新全部记录，或先看会改什么：
 
@@ -152,7 +160,9 @@ Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用
 .harness/bin/harn status
 ```
 
-`status` 逐文件比对哈希和权限，`ok` 之外的状态会以非零退出码结束，可用于脚本检查。
+`status` 逐文件比对哈希和可执行状态，`ok` 之外的状态会以非零退出码结束，可用于脚本检查。
+
+更新、状态检查和移除采用相同的权限比较规则：非 Windows 平台仅区分可执行与不可执行文件，不比较全部权限位；Windows 跳过权限比较。
 
 ## 移除资源
 
@@ -160,7 +170,7 @@ Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用
 .harness/bin/harn remove --path Skills/swe
 ```
 
-`remove` 只删除仍与记录一致的文件。目录里的本地新增文件会保留，任一记录文件被修改时整次移除失败。
+`remove` 只删除仍与记录一致的文件。目录里的本地新增文件会保留，本次选中资源中任一记录文件内容改变、缺失或可执行状态改变时，整次移除失败。
 
 查看当前项目记录：
 
@@ -176,4 +186,4 @@ Windows 可使用 `Get-Content .harness/downloads.json`。
 
 不同操作系统和架构需要各自的工具二进制。切换平台时按本文重新下载对应版本；应用资源和 `downloads.json` 保持原路径。提交、推送和软链接接入遵循业务项目自己的授权。
 
-分发工具只下载和更新显式指定的资源，不选择资源、不解释 Skill、不自动提交，也不修改业务项目的 `.gitignore`。
+Harn 不替 Agent 选择或解释 Skill，不自动提交，也不修改业务项目的 `.gitignore`。
