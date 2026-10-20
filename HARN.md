@@ -1,95 +1,102 @@
 # Harn 使用指南
 
+本指南以 SWE 代码审查为例，介绍能力安装、项目接入和日常管理。命令的工作目录为目标项目，无需克隆 Harn 仓库。
+
 ## 安装
 
-在目标项目目录执行（macOS / Linux）：
+macOS / Linux：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
 .harness/bin/harn version
 ```
 
-脚本校验后将工具安装到 `.harness/bin/`。Windows 从 [Releases](https://github.com/AwayerCode/Harn/releases/latest) 下载对应架构的二进制，校验后保存为 `.harness/bin/harn.exe`；下文命令相应使用 `.exe`，多行命令合并为一行。
+工具安装在项目的 `.harness/bin/`，`version` 输出当前工具版本。
 
-## 接入项目
+Windows 从 [Releases](https://github.com/AwayerCode/Harn/releases/latest) 下载对应架构的二进制，用同页的 `SHA256SUMS` 校验后保存为 `.harness/bin/harn.exe`。下文命令相应使用 `.exe`。
 
-先选择需要的能力，可用 `search` 查看或搜索：
+## 代码审查示例
 
-```bash
-.harness/bin/harn search
-.harness/bin/harn search review
-```
-
-| 路径 | 用途 |
-| --- | --- |
-| `Skills/swe` | 软件设计、实现、测试与审查。 |
-| `Skills/concise-response` | 简洁表达，保留完整交付内容。 |
-| `Skills/knowledge-doc-guard` | 知识文档整理与质量检查。 |
-
-以 SWE 和 `v0.2.1` 为例，版本可按需替换：
+SWE 包含软件设计、实现、测试和审查方法，安装命令为：
 
 ```bash
-.harness/bin/harn install \
-  --source https://github.com/AwayerCode/Harn \
-  --version tag:v0.2.1 \
-  --path Skills/swe
+.harness/bin/harn install --source https://github.com/AwayerCode/Harn --version tag:v0.2.1 --path Skills/swe
 ```
 
-`--path` 可重复，一次安装多个资源。`--version` 支持 `tag:<版本>`、`commit:<SHA>` 和 `branch:<分支>`；需要固定版本时使用标签或提交。`search` 默认搜索主分支索引，可加 `--version tag:v0.2.1` 与安装版本保持一致。
+示例固定使用 `v0.2.1`。安装后的入口位于 `.harness/Skills/swe/SKILL.md`，支持读取项目文件的 Agent 可使用以下任务指令：
 
-`--source` 支持 GitHub 仓库或直接 `.tar.gz` URL；归档需包含所选路径，可带或不带顶层目录。安装前可加 `--dry-run` 下载并验证，不写入项目资源和下载记录。
+> 先读取 `.harness/Skills/swe/SKILL.md`，选择代码审查方法，审查当前项目尚未提交的代码改动。只报告有依据的问题，说明文件位置、影响和原因，不修改文件。缺少必要依据时明确说明。
 
-下载后，让 Agent 读取入口：
+审查对象也可以是具体文件或模块。审查结果包含问题依据及未验证项；具体任务由 Agent 读取方法后执行。
 
-> 读取 `.harness/Skills/swe/SKILL.md`，按其中适用的方法审查当前项目，先给出发现，不修改文件。
+## 项目接入
 
-需要持续使用时，将该入口写入项目的 Agent 配置。Agent 按入口中的相对引用加载方法、模板和脚本；Harn 不自动修改配置或建立软链接。
+项目约定文件可以保存能力入口，供 Agent 在后续任务中读取。对于支持 `AGENTS.md` 的 Agent，接入内容可追加到项目根目录的 `AGENTS.md`，与已有规则共存：
 
-## 日常管理
+```markdown
+## Harn
 
-查看已安装资源和本地修改：
+执行软件设计、实现、测试或审查任务前，先读取 `.harness/Skills/swe/SKILL.md`，按当前任务加载相关方法。
+
+沿用本项目已有约定；只修改任务涉及的文件，保留已有改动。完成后说明结果、实际验证和未验证项。
+```
+
+该配置由项目维护，Harn 不自动写入。具体任务仍通过会话指定，例如“审查登录模块的错误处理，不修改代码”。
+
+下载的能力文件和记录可随项目纳入 Git：
 
 ```bash
-.harness/bin/harn list
-.harness/bin/harn status
+git add .harness/Skills/swe .harness/downloads.json
 ```
 
-`status` 检查记录文件，发现修改或缺失时返回非零退出码。
-
-先预演，再更新全部资源：
-
-```bash
-.harness/bin/harn update --all --dry-run
-.harness/bin/harn update --all
-```
-
-只更新某项时，用 `--path Skills/swe` 替代 `--all`。更新默认沿用记录中的来源和版本，不会自动将固定标签升级到最新版本。切换版本时显式指定：
-
-```bash
-.harness/bin/harn update --path Skills/swe --version tag:<目标版本>
-```
-
-将 `<目标版本>` 替换为实际发布标签后执行。`--dry-run` 下载并验证更新，不写入项目资源和下载记录。
-
-移除不再需要的能力：
-
-```bash
-.harness/bin/harn remove --path Skills/swe
-```
-
-更新和移除只检查本次选中资源的记录文件；文件内容改变、缺失或可执行状态改变时，整次操作在修改资源前失败。先处理本地修改再重试。本地新增文件会保留，更新也会拒绝覆盖与上游同路径的本地新增文件。
-
-权限检查仅区分可执行与不可执行文件，Windows 跳过权限比较；`status` 使用相同规则。
-
-## 保存到 Git
-
-提交下载的资源目录和 `.harness/downloads.json`。记录文件保存来源、版本、文件哈希和权限，资源保留仓库中的相对路径。
-
-在项目 `.gitignore` 中加入：
+接入约定文件一并纳入版本管理；工具二进制与运行时锁文件由项目 `.gitignore` 排除：
 
 ```gitignore
 .harness/bin/
 .harness/.lock
 ```
 
-克隆项目后，Agent 可直接读取已保存的能力；需要下载或更新时，再安装当前平台的工具。Harn 不自动提交，也不修改 `.gitignore`。
+忽略范围仅包含上述两项，能力目录和下载记录仍保留在 Git 中。项目克隆到其他机器后，Agent 可直接读取能力；下载或更新时需要安装对应平台的工具。
+
+## 日常管理
+
+`list` 列出已安装资源，`status` 检查资源与下载记录是否一致：
+
+```bash
+.harness/bin/harn list
+.harness/bin/harn status
+```
+
+更新通过 `--version` 指定目标版本，发布标签见 [Releases](https://github.com/AwayerCode/Harn/releases)。以下以 `v0.2.1` 为目标，分别展示预演与实际更新：
+
+```bash
+.harness/bin/harn update --path Skills/swe --version tag:v0.2.1 --dry-run
+.harness/bin/harn update --path Skills/swe --version tag:v0.2.1
+```
+
+`--dry-run` 会下载并检查资源，不改写项目资源和记录。不指定 `--version` 时沿用原版本，不会自动升级到最新标签；更新全部已安装能力可用 `--all` 替代 `--path Skills/swe`。
+
+本地修改会阻止更新，`status` 可显示存在变化的资源。本地新增文件会保留，与上游文件路径冲突时拒绝覆盖。
+
+SWE 的移除命令：
+
+```bash
+.harness/bin/harn remove --path Skills/swe
+```
+
+移除同样检查本地修改，并保留本地新增文件。项目约定中的接入文字需同步移除，Harn 不自动修改该文件。
+
+`search` 用于查找其他能力。安装命令通过 `--path` 选择资源，重复该参数可一次下载多个能力：
+
+```bash
+.harness/bin/harn search
+```
+
+<details>
+<summary>版本与检查规则</summary>
+
+- 版本支持 `tag:<标签>`、`commit:<SHA>` 和 `branch:<分支>`。搜索默认读取主分支索引，可加 `--version tag:v0.2.1` 与安装版本保持一致。
+- 来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选路径。
+- 更新和移除检查本次选中资源的记录文件。内容改变、文件缺失或可执行状态改变时停止操作；Windows 不比较权限，其他平台仅区分是否可执行。
+
+</details>
