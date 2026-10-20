@@ -18,7 +18,7 @@ Skills 承载方法与工具，CLI 将这些能力按版本带入项目。
 curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
 ```
 
-Windows 安装方式见 [使用指南](HARN.md#下载工具)。
+Windows 安装方式见 [使用指南](HARN.md#安装)。
 
 下载所需能力：
 

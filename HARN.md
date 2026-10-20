@@ -1,36 +1,20 @@
 # Harn 使用指南
 
-在项目中选择、接入和更新 Harn 能力：按需下载资源到 `.harness/`，让 Agent 从对应入口加载方法、约束和工具。
+## 安装
 
-> 不要把整个仓库直接复制进业务项目，也不要让业务项目依赖某个全局 Harn 安装。下载记录保存在项目内，随项目一起提交。
-
-## 资源
-
-| 路径 | 使用时机 |
-| --- | --- |
-| `Skills/swe` | 软件设计、实现、测试和审查任务；按当前层与模块选择专业工作流，不默认执行全流程。 |
-| `Skills/concise-response` | 每轮对话和最终回复；控制表达密度，但不得削减任务交付内容。 |
-| `Skills/knowledge-doc-guard` | 读取、整理、写入或检查知识文档时；约束内容完整性、Markdown 格式和质量检查。 |
-
-资源的具体用法以各自 `SKILL.md` 及其相对引用为准。本文件负责资源选择和使用，不复制 Skill 的专业方法。
-
-机器可读索引位于 `Skills/index.json`，`harn search` 读取它列出可用 Skill；新增 Skill 时同步登记，规范见 [Skills/authoring.md](Skills/authoring.md)。
-
-## 下载工具
-
-工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.2.1` 为例，并把工具放在当前项目的 `.harness/bin/`。
-
-示例使用 `AwayerCode/Harn` 作为仓库地址；Agent 应根据实际收到的 Harn 仓库链接替换 `repo`。
-
-日常安装只需一行，脚本会按平台选择资产并校验 `SHA256SUMS`：
+在目标项目目录执行（macOS / Linux）：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
+.harness/bin/harn version
 ```
 
-需要逐步审计下载过程时使用手动流程。macOS/Linux 示例在子 Shell 中执行，下载或校验失败即停止，校验通过后才复制二进制。
+脚本下载最新发布的工具，校验 `SHA256SUMS` 后安装到 `.harness/bin/`。工具支持 macOS、Linux、Windows 的 amd64 和 arm64。手动安装与下文资源下载以 `v0.2.1` 为例，可替换为所需的发布版本。
 
-macOS 和 Linux：
+<details>
+<summary>macOS / Linux 手动安装</summary>
+
+在子 Shell 中执行，下载或校验失败即停止，校验通过后才复制二进制。
 
 ```bash
 (
@@ -66,7 +50,10 @@ chmod +x .harness/bin/harn
 )
 ```
 
-Windows PowerShell：
+</details>
+
+<details>
+<summary>Windows PowerShell 安装</summary>
 
 ```powershell
 $repo = "AwayerCode/Harn"
@@ -89,101 +76,92 @@ try {
 } finally {
   Remove-Item -Recurse -Force $tmp
 }
+.harness/bin/harn.exe version
 ```
 
-确认工具可用：
+</details>
 
-```bash
-.harness/bin/harn version
-```
+Windows 使用 `.harness/bin/harn.exe` 替代下文的 `.harness/bin/harn`；多行命令请合并为一行执行。
 
-Windows 使用 `.harness/bin/harn.exe` 替代本文命令中的 `.harness/bin/harn`。
+## 接入项目
 
-## 下载资源
-
-`--version` 使用 `branch:<name>`、`tag:<name>` 或 `commit:<sha>` 标识来源版本。为保持项目可复现，优先使用发布标签；需要跟踪更新时使用分支。`--path` 可重复，工具不会替 Agent 判断应该下载哪些资源。`--source` 支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；直接归档需包含所选路径，可带或不带顶层目录。
-
-```bash
-.harness/bin/harn install \
-  --source https://github.com/AwayerCode/Harn \
-  --version tag:v0.2.1 \
-  --path Skills/concise-response \
-  --path Skills/knowledge-doc-guard \
-  --path Skills/swe
-```
-
-下载保留 Harn 仓库中的相对路径，因此 `Skills/swe` 位于 `.harness/Skills/swe`。工具自动创建 `.harness/downloads.json`，记录来源、版本、文件哈希和权限。
-
-不确定路径时先搜索索引：
+先选择需要的能力，可用 `search` 查看或搜索：
 
 ```bash
 .harness/bin/harn search
 .harness/bin/harn search review
 ```
 
-首次安装前可用 `--dry-run` 下载并验证资源，不写入项目资源和下载记录：
+| 路径 | 用途 |
+| --- | --- |
+| `Skills/swe` | 软件设计、实现、测试与审查。 |
+| `Skills/concise-response` | 简洁表达，保留完整交付内容。 |
+| `Skills/knowledge-doc-guard` | 知识文档整理与质量检查。 |
+
+以 SWE 为例：
 
 ```bash
-.harness/bin/harn install --source https://github.com/AwayerCode/Harn \
-  --version tag:v0.2.1 --path Skills/swe --dry-run
+.harness/bin/harn install \
+  --source https://github.com/AwayerCode/Harn \
+  --version tag:v0.2.1 \
+  --path Skills/swe
 ```
 
-## 使用资源
+`--path` 可重复，一次安装多个资源。`--version` 支持 `tag:<版本>`、`commit:<SHA>` 和 `branch:<分支>`；需要固定版本时使用标签或提交。`search` 默认搜索主分支索引，可加 `--version tag:v0.2.1` 与安装版本保持一致。
 
-Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用加载配套方法、模板和脚本。需要稳定入口时，由 Agent 按业务项目约定建立相对软链接或修改项目级 Agent 配置；Harn 工具不建立软链接，也不修改包管理配置。
+`--source` 支持 GitHub 仓库或直接 `.tar.gz` URL；归档需包含所选路径，可带或不带顶层目录。安装前可加 `--dry-run` 下载并验证，不写入项目资源和下载记录。
 
-## 更新资源
+下载后，让 Agent 读取入口：
 
-```bash
-.harness/bin/harn update --path Skills/swe
-```
+> 读取 `.harness/Skills/swe/SKILL.md`，按其中适用的方法审查当前项目，先给出发现，不修改文件。
 
-`update` 读取 `.harness/downloads.json` 的来源和版本并重新下载。需要切换版本时显式指定：
+需要持续使用时，将该入口写入项目的 Agent 配置。Agent 按入口中的相对引用加载方法、模板和脚本；Harn 不自动修改配置或建立软链接。
 
-```bash
-.harness/bin/harn update --path Skills/swe --version tag:<目标版本>
-```
+## 日常管理
 
-更新前会核对本次选中资源的所有记录文件；使用 `--all` 时才检查全部已记录资源。选中资源的文件内容改变、缺失或可执行状态改变时，整次更新在写入资源前失败；新增的本地文件不会被删除，遇到同路径上游文件也会拒绝覆盖。失败后先处理本地修改，或由用户决定保留本地版本。
-
-一次更新全部记录，或先看会改什么：
-
-```bash
-.harness/bin/harn update --all --dry-run
-.harness/bin/harn update --all
-```
-
-查看记录与本地文件是否一致：
+查看已安装资源和本地修改：
 
 ```bash
 .harness/bin/harn list
 .harness/bin/harn status
 ```
 
-`status` 逐文件比对哈希和可执行状态，`ok` 之外的状态会以非零退出码结束，可用于脚本检查。
+`status` 检查记录文件，发现修改或缺失时返回非零退出码。
 
-更新、状态检查和移除采用相同的权限比较规则：非 Windows 平台仅区分可执行与不可执行文件，不比较全部权限位；Windows 跳过权限比较。
+先预演，再更新全部资源：
 
-## 移除资源
+```bash
+.harness/bin/harn update --all --dry-run
+.harness/bin/harn update --all
+```
+
+只更新某项时，用 `--path Skills/swe` 替代 `--all`。更新默认沿用记录中的来源和版本，不会自动将固定标签升级到最新版本。切换版本时显式指定：
+
+```bash
+.harness/bin/harn update --path Skills/swe --version tag:<目标版本>
+```
+
+将 `<目标版本>` 替换为实际发布标签后执行。`--dry-run` 下载并验证更新，不写入项目资源和下载记录。
+
+移除不再需要的能力：
 
 ```bash
 .harness/bin/harn remove --path Skills/swe
 ```
 
-`remove` 只删除仍与记录一致的文件。目录里的本地新增文件会保留，本次选中资源中任一记录文件内容改变、缺失或可执行状态改变时，整次移除失败。
+更新和移除只检查本次选中资源的记录文件；文件内容改变、缺失或可执行状态改变时，整次操作在修改资源前失败。先处理本地修改再重试。本地新增文件会保留，更新也会拒绝覆盖与上游同路径的本地新增文件。
 
-查看当前项目记录：
+权限检查仅区分可执行与不可执行文件，Windows 跳过权限比较；`status` 使用相同规则。
 
-```bash
-cat .harness/downloads.json
+## 保存到 Git
+
+提交下载的资源目录和 `.harness/downloads.json`。记录文件保存来源、版本、文件哈希和权限，资源保留仓库中的相对路径。
+
+在项目 `.gitignore` 中加入：
+
+```gitignore
+.harness/bin/
+.harness/.lock
 ```
 
-Windows 可使用 `Get-Content .harness/downloads.json`。
-
-## 保存
-
-提交 `.harness/downloads.json` 和下载后的资源目录。`.harness/bin/` 是按平台重新下载的本地工具目录，`.harness/.lock` 是运行时锁文件，两者都不应提交。克隆项目后，资源记录和内容可直接继续使用，不需要全局安装。
-
-不同操作系统和架构需要各自的工具二进制。切换平台时按本文重新下载对应版本；应用资源和 `downloads.json` 保持原路径。提交、推送和软链接接入遵循业务项目自己的授权。
-
-Harn 不替 Agent 选择或解释 Skill，不自动提交，也不修改业务项目的 `.gitignore`。
+克隆项目后，Agent 可直接读取已保存的能力；需要下载或更新时，再安装当前平台的工具。Harn 不自动提交，也不修改 `.gitignore`。
