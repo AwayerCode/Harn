@@ -4,3 +4,5 @@ __pycache__/
 *.tgz
 .DS_Store
 cli/harn/dist/
+
+cli/swe-cli/dist/
