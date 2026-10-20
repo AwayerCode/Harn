@@ -1,58 +1,82 @@
 # SWE CLI
 
-[系统设计](../../docs/system-design.md)中的 Go 单次校验核心。现有文档检查已从 Node 原型迁移，Node 打包、TS 扩展宿主和扩展协议已移除。方法与项目适配放在 Skill 中，Agent 按 Skill 调用项目测试和构建。
+[系统设计](../../docs/system-design.md)中的 Go 单次校验核心。Skill 保存方法与规范，CLI 执行确定性检查；业务测试和构建仍由 Agent 按项目约定调用。
 
-## 当前能力
+## 检查能力
 
-- documents 校验文档格式、局部 architecture 模式与本地链接，不判断语义正确性或任务是否完成。
-- JSON 请求与结果，退出码 0 表示通过、1 表示违规、2 表示不可检查。必需检查不可用优先于违规；可选检查问题保留在 warnings。
-- schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入二进制。生成文件不可手改，测试检查其与来源一致。
-- 结果包含 runId、核心版本、规则与输入摘要；结束前复核已观察文件的内容、路径解析和链接存在性。不是文件系统原子快照。
-- 检查不写项目文件，不加载外部脚本，不依赖系统 Node、TS、Python 或 Go。
+| 入口 | 覆盖 |
+| --- | --- |
+| documents | 五类文档格式、表格、枚举、本地链接与 architecture 局部模式 |
+| design | 模块依赖、协议索引与定义、所有权、代码映射及双向文档引用 |
+| artifacts | UI 与协议、风险与场景的显式对应关系 |
+| structure | 设计声明的代码位置、入口文件和范围映射 |
+| scope snapshot/check/readonly | 可写范围基线、工作区变更和只读指纹，含子模块 |
 
-## 开发与构建
+检查不判断任务整体完成，不解析源码依赖，不替代人工语义审查。结果保留已检查证据和未覆盖项。只有 scope snapshot 创建全新的项目外基线；其他检查不写项目。
 
-使用 Go 1.24 或更高版本，在本目录执行：
+## 使用
 
 ```bash
-go generate ./...
-go test -race ./...
-go vet ./...
-scripts/build-release.sh 0.2.0-dev
+swe-cli documents --root /absolute/project --kind system-design --file docs/system-design.md
+swe-cli design --root /absolute/project --system-design docs/system-design.md --interface-protocol docs/interface-protocol.md
+swe-cli artifacts --root /absolute/project --kind test --file docs/test-design.md
+swe-cli structure --root /absolute/project --design docs/system-design.md --scope src
+swe-cli scope snapshot --root /absolute/project --baseline /tmp/new-baseline.json --allow-dir src
+swe-cli scope check --root /absolute/project --baseline /tmp/new-baseline.json
+swe-cli scope readonly --root /absolute/project
 ```
 
-无第三方 Go 依赖。生成与构建需要完整源码仓；运行二进制不需要源码。迁移对照测试在存在 Python 时运行原检查器，缺少 Python 会明确跳过该组测试；正式校验不会回退 Python。
+完整参数与边界见 [SWE CLI 入口](../../skills/swe/references/cli.md)。readonly 的 sha256 字段含格式前缀，保存后原样传给 expected。旧脚本基线和指纹明确拒绝，不自动重建或迁移正在使用的基线。
 
-构建输出在忽略的 dist 目录，包括 macOS、Linux、Windows 的 amd64/arm64 二进制及 SHA256SUMS。独立运行测试将二进制置于含中文和空格的临时目录，在没有语言运行时的 PATH 下，从不同工作目录执行 Review 并检查无项目写入。六平台交叉构建不替代各系统实际运行验收；当前只在 macOS arm64 实测。
 
-## 请求与结果
+## JSON 协议
 
-原型协议升级到 2，旧版本及 extensions 字段明确拒绝，不静默忽略旧扩展。projectRoot 使用真实的绝对项目路径；文件路径可相对于它。
+普通检查支持 `swe-cli check --request <file|-> --format json`。协议版本 2，旧扩展字段拒绝。退出码 0 为全部必需检查通过，1 为违规，2 为不可检查；不可检查优先，所有诊断仍保留。至少包含一个必需检查，同一请求不能重复 checkId。
 
 ```json
 {
   "protocolVersion": 2,
   "taskId": "document-check",
   "round": 1,
-  "mode": "design",
+  "mode": "review",
   "projectRoot": "/absolute/project",
   "checks": [
     {
-      "checkId": "documents",
+      "checkId": "design",
       "required": true,
       "input": {
-        "kind": "business-model",
-        "file": "docs/business-model.md"
+        "systemDesign": "docs/system-design.md",
+        "protocol": "docs/interface-protocol.md"
       }
     }
   ]
 }
 ```
 
-调用 `swe-cli check --request - --format json` 从 stdin 读取，或将短横线替换为请求文件路径。请求上限 1 MiB，至少包含一个必需检查，不允许重复 checkId。version 输出核心、协议和 Go 运行时版本。
+各 input 字段：documents 使用 kind/file/profile；design 使用 systemDesign/protocol；artifacts 使用 kind/file/protocol；structure 使用 design/scopes。范围操作独立于 check，因为 snapshot 有明确写入副作用。
 
-支持 business-model、system-design、interface-protocol、interaction-standards、test-design；system-design 可指定 profile 为 architecture。缺失文件、无效 UTF-8、越出项目的真实路径、未知检查或无效请求返回不可检查。只支持每次一个 documents 检查，多文档需分别调用；未实现的检查不会报告通过。
+结果包含 runId、核心版本、规则与输入摘要，并复核观察到的文件变化。不是文件系统原子快照。scope 另使用版本化 Git 工作区清单与摘要。
 
-## 后续边界
+## 开发与构建
 
-其余 Python 检查、范围基线、资源绑定、安装读写锁、恢复事务、项目配置及 harn 配套安装仍待实现。现有 SWE 工作流继续使用原 Python 检查器，待完整迁移与验证后接入 Go CLI。当前版本不是完整 SWE 发行包；核心通过不能替代业务验收或 Agent 的完成判断。
+需要 Go 1.24+；Git 用于范围检查。运行普通文档关系检查不需要 Git。二进制不依赖 Python、Node 或 Go 运行环境，无第三方 Go 依赖。
+
+```bash
+go generate ./...
+go test -race ./...
+go vet ./...
+scripts/build-release.sh 0.3.0-alpha.1
+go run ./internal/genbinding --version 0.3.0-alpha.1 --dist dist --root ../..
+```
+
+schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入二进制；测试检查来源一致性、模块契约引用和 Skill 链接。生成文件不可手改。
+
+迁移用例保存在 internal/app/testdata，包含由旧 Python 检查器生成的 95 个正反例及预期退出码，执行不需要 Python。另有显式场景引用、权限、符号链接、子模块、基线保护、工具版本与摘要回归测试。独立二进制测试使用无语言运行时 PATH。
+
+## 配套分发
+
+构建输出 macOS、Linux、Windows 的 amd64/arm64 二进制及 SHA256SUMS。genbinding 将确切发行版本与六平台摘要写入 SWE 的 runtime.json。上传发行物时必须使用生成清单所对应的原始二进制，重新构建后需重新生成清单。
+
+支持配套清单的 harn 将工具暂存于所选 Skill 的 bin 目录，摘要通过后与资源一起提交；缺平台、下载或摘要失败不启用新资源。更新保护本地修改，status 检查二进制内容。CLI 在 bin 目录运行时核对旁边清单的版本与自身摘要。
+
+当前清单绑定 0.3.0-alpha.1，尚需单独发布对应资产；旧 0.2.0-alpha.1 不包含这些检查。发布前可在本地使用构建产物验收，不应将未发布清单推送给业务项目使用。崩溃恢复、配套修复命令、安装读锁和最低系统版本验收仍待完成。六平台构建不等于跨平台运行验证，当前实际运行覆盖 macOS arm64。

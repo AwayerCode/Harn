@@ -35,7 +35,7 @@ description: 确定系统层次、依赖与运行边界，维护架构章节，�
 局部检查命令：
 
 ```bash
-python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --profile architecture --file <系统设计路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind system-design --profile architecture --file <系统设计路径>
 ```
 
 检查失败只修正本职责产物；依据不足或涉及契约变更时反馈对应责任方。交付实际改动、检查证据、未验证项和阻塞；提交、推送、发布另循用户授权。

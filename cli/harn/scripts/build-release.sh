@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-version="${1:-$(git -C "$root" describe --tags --always --dirty 2>/dev/null || printf 'dev')}"
+version="${1:-$(git -C "$root" describe --tags --match 'v[0-9]*' --always --dirty 2>/dev/null || printf 'dev')}"
 dist="${DIST_DIR:-$root/dist}"
 mkdir -p "$dist"
 dist="$(cd "$dist" && pwd)"

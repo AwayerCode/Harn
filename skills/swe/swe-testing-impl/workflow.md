@@ -40,7 +40,7 @@ description: 用于依据已有测试设计编写、修正和运行测试，只�
 
 ### 写入结果核对
 
-遵守[共同执行规范](../references/standards/execution.md#范围与授权)，使用包内 `scripts/check_scope.py` 固定本次范围并核对实际改动。
+遵守[共同执行规范](../references/standards/execution.md#范围与授权)，使用包内 `swe-cli scope` 固定本次范围并核对实际改动。
 
 ### 检查要求与执行
 
@@ -48,8 +48,8 @@ description: 用于依据已有测试设计编写、修正和运行测试，只�
 
 | 检查执行 | 作用与条件 |
 |---|---|
-| [本模块格式规则](references/document-format.md)与 [validate_documents.py](../scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
-| [check_scope.py](../scripts/check_scope.py) | 核对实际写入范围或只读结果；Python 3 标准库和 Git，属于规则的检查执行，不是业务资源 |
+| [本模块格式规则](references/document-format.md)与 [documents 检查](../references/cli.md) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
+| [scope 检查](../references/cli.md) | 核对实际写入范围或只读结果；Go CLI 和 Git，属于规则的检查执行，不是业务资源 |
 | 内容审查、项目检查与实际验证 | 按下面保留的专业要求和完成标准确认内容与行为；涉及运行先确认工具、环境、权限、输出位置和副作用 |
 
 检查执行、范围覆盖、退出码及失败处理统一遵守[执行规范](../references/standards/execution.md)。
@@ -73,7 +73,7 @@ description: 用于依据已有测试设计编写、修正和运行测试，只�
 先确认任务、权威输入和实际可写文件，在首次写入前固定范围：
 
 ```bash
-python3 -B <SWE目录>/scripts/check_scope.py snapshot --root <目标Git根目录> --baseline <项目外全新临时文件> --allow-file <允许文件相对路径>
+<SWE目录>/bin/swe-cli scope snapshot --root <目标Git根目录> --baseline <项目外全新临时文件> --allow-file <允许文件相对路径>
 ```
 
 多个文件重复 `--allow-file`；只有明确职责独立的目录才可用 `--allow-dir`。运行产物也要事先限定；混合源码目录和整个仓库不能当作可写范围。默认只维护自己负责的产物，不因为检查失败修正其他模块产物。
@@ -87,11 +87,11 @@ python3 -B <SWE目录>/scripts/check_scope.py snapshot --root <目标Git根目�
 业务模型及其他文档格式统一由[共同产物规范](../references/standards/artifacts.md)维护。按声明的输入类型使用共享校验器，仅读取相关专业依据，不要求加载生产方工作流。命令使用实际安装路径，条件性文档只在对应范围需要时检查：
 
 ```bash
-python3 -B <SWE目录>/scripts/validate_documents.py --kind test-design --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind business-model --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind test-design --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind system-design --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind interface-protocol --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind business-model --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind interaction-standards --file <文档路径>
 ```
 
 ### 工作方法
@@ -111,7 +111,7 @@ python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standard
 ### 结束核对与覆盖确认
 
 ```bash
-python3 -B <SWE目录>/scripts/check_scope.py check --root <原Git根目录> --baseline <原临时基线文件>
+<SWE目录>/bin/swe-cli scope check --root <原Git根目录> --baseline <原临时基线文件>
 ```
 
 格式或本模块产物错误在允许范围内修正后，重新执行相关检查和范围核对；内容审查产生新改动时同样重查。上游缺口、越界、生产缺陷或环境阻塞按职责反馈，不以弱化检查取得通过。

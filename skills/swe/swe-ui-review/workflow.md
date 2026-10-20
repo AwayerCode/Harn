@@ -22,7 +22,7 @@ description: 用于依据交互规范审查实际界面的信息层级、视觉�
 
 本 Skill 只做 Review，禁止新增、修改、删除、移动或重命名任何文件，包括设计、源码、测试、配置、快照、报告、日志与缓存。只能读取已有产物并在回复中交付结论，不自动修正，也不在 Review 中调用其他 Skill 执行修改。
 
-检查命令必须确定无文件写入、副作用或自动修复。文档校验使用 Python `-B` 禁用字节码缓存；测试、构建、格式化和代码生成若会写文件就不得执行，说明未执行及原因。不能通过先写后删除、临时副本或事后恢复绕过只读边界。
+检查命令必须确定无文件写入、副作用或自动修复。文档校验使用配套 CLI，不写项目缓存；测试、构建、格式化和代码生成若会写文件就不得执行，说明未执行及原因。不能通过先写后删除、临时副本或事后恢复绕过只读边界。
 
 发现问题时仅说明证据、位置、影响与建议归属。即使任务同时要求修复，也先完成并结束 Review，再切换到相应 Design 或 Implementation Skill；该 Skill 自行检查输入和写入范围，Review 不承担修复。
 
@@ -41,8 +41,8 @@ description: 用于依据交互规范审查实际界面的信息层级、视觉�
 
 | 检查执行 | 作用与条件 |
 |---|---|
-| [本模块格式规则](references/document-format.md)与 [validate_documents.py](../scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
-| [check_scope.py](../scripts/check_scope.py) | 核对实际写入范围或只读结果；Python 3 标准库和 Git，属于规则的检查执行，不是业务资源 |
+| [本模块格式规则](references/document-format.md)与 [documents 检查](../references/cli.md) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
+| [scope 检查](../references/cli.md) | 核对实际写入范围或只读结果；Go CLI 和 Git，属于规则的检查执行，不是业务资源 |
 | 内容审查、项目检查与实际验证 | 按下面保留的专业要求和完成标准确认内容与行为；涉及运行先确认工具、环境、权限、输出位置和副作用 |
 
 检查执行、范围覆盖、退出码及失败处理统一遵守[执行规范](../references/standards/execution.md)。
@@ -66,7 +66,7 @@ description: 用于依据交互规范审查实际界面的信息层级、视觉�
 先确认对象、比较基线、实施阶段与适用风险，然后在其他检查前记录只读指纹：
 
 ```bash
-python3 -B <SWE目录>/scripts/check_scope.py readonly --root <目标Git根目录>
+<SWE目录>/bin/swe-cli scope readonly --root <目标Git根目录>
 ```
 
 将输出 `sha256` 保存在执行上下文；后续输入检查失败也必须在交付前完成结束核对。
@@ -78,9 +78,9 @@ python3 -B <SWE目录>/scripts/check_scope.py readonly --root <目标Git根目�
 按用户路径、项目索引及实际引用定位权威文档，使用本目录的[输入契约](references/input-contract.json)、[校验规则](references/document-format.md)及脚本。缺失、格式不合格、规则冲突或不足以支持当前范围时停止相关检查；不自行补建设计，也不要求运行其他阶段；基本检查使用 SWE 包内共享脚本。
 
 ```bash
-python3 -B <SWE目录>/scripts/validate_documents.py --kind interaction-standards --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --file <文档路径>
-python3 -B <SWE目录>/scripts/validate_documents.py --kind interface-protocol --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind interaction-standards --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind system-design --file <文档路径>
+<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind interface-protocol --file <文档路径>
 ```
 
 系统设计和协议只在上述条件成立时校验，不要求无关文档齐备。
@@ -109,7 +109,7 @@ python3 -B <SWE目录>/scripts/validate_documents.py --kind interface-protocol -
 ### 结束核对与覆盖确认
 
 ```bash
-python3 -B <SWE目录>/scripts/check_scope.py readonly --root <原Git根目录> --expected <原sha256>
+<SWE目录>/bin/swe-cli scope readonly --root <原Git根目录> --expected <原sha256>
 ```
 
 逐项核对本轮适用对象和风险：已检查项有依据及证据，待确认项有缺失信息，未检查项有原因。不适用有明确理由。审查发现问题无需修复或重跑到全绿；运行失败只说明相应验证状态，不能直接当成产品缺陷。结论限于实际覆盖，不能据此宣布产品整体完成。

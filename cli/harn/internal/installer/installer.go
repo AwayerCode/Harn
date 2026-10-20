@@ -126,6 +126,9 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 	staged := make(map[string]stagedTarget, len(targets))
 	plans := make([]targetPlan, 0, len(targets))
 	for _, target := range targets {
+		if err := m.stageRuntime(ctx, contentRoot, target); err != nil {
+			return nil, fmt.Errorf("prepare companion for %q: %w", target, err)
+		}
 		download, writes, err := snapshotTarget(contentRoot, target)
 		if err != nil {
 			return nil, fmt.Errorf("read downloaded resource %q: %w", target, err)
@@ -259,6 +262,9 @@ func (m *Manager) Update(ctx context.Context, requested []string, versionOverrid
 			return nil, err
 		}
 		for _, target := range item.targets {
+			if err := m.stageRuntime(ctx, contentRoot, target); err != nil {
+				return nil, fmt.Errorf("prepare companion for %q: %w", target, err)
+			}
 			download, writes, err := snapshotTarget(contentRoot, target)
 			if err != nil {
 				return nil, fmt.Errorf("read downloaded resource %q: %w", target, err)

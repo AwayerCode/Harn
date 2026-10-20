@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -24,7 +23,7 @@ func fixture(t *testing.T) (string, string) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	b, e := os.ReadFile(filepath.Join(repository(t), "skills/swe/scripts/tests/fixtures/business-model.md"))
+	b, e := os.ReadFile(filepath.Join(repository(t), "cli/swe-cli/internal/app/testdata/documents/business-model.md"))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -125,54 +124,10 @@ func TestObserver(t *testing.T) {
 		t.Fatal("invalid utf8 accepted")
 	}
 }
-func TestPythonParity(t *testing.T) {
-	python, e := exec.LookPath("python3")
-	if e != nil {
-		t.Skip("Python only required for migration parity tests")
-	}
-	root, text := fixture(t)
-	repo := repository(t)
-	variants := []string{text, strings.TrimRight(text, "\n"), text + "\n", strings.Replace(text, "# 业务模型", "# 错误标题", 1), strings.Replace(text, "## 业务行为", "## 未知章节", 1), text + "\n```\nx\n```\n", text + "\n[缺失](missing.md)\n"}
-	for _, v := range variants {
-		write(t, filepath.Join(root, "model.md"), v)
-		cmd := exec.Command(python, "-B", filepath.Join(repo, "skills/swe/scripts/validate_documents.py"), "--kind", "business-model", "--file", filepath.Join(root, "model.md"))
-		output, err := cmd.CombinedOutput()
-		expected := 0
-		if err != nil {
-			if ex, ok := err.(*exec.ExitError); ok {
-				expected = ex.ExitCode()
-			} else {
-				t.Fatal(err)
-			}
-		}
-		if c, result := run(t, request(root)); c != expected {
-			t.Fatalf("parity: %d != %d: %s %v", c, expected, output, result)
-		}
-	}
-	for _, kind := range []string{"business-model", "system-design", "interface-protocol", "interaction-standards", "test-design"} {
-		r := request(repo)
-		file := "skills/swe/scripts/tests/fixtures/" + kind + ".md"
-		r["checks"].([]any)[0].(map[string]any)["input"] = map[string]any{"kind": kind, "file": file}
-		cmd := exec.Command(python, "-B", filepath.Join(repo, "skills/swe/scripts/validate_documents.py"), "--kind", kind, "--file", filepath.Join(repo, file))
-		output, err := cmd.CombinedOutput()
-		expected := 0
-		if err != nil {
-			if ex, ok := err.(*exec.ExitError); ok {
-				expected = ex.ExitCode()
-			} else {
-				t.Fatal(err)
-			}
-		}
-		if c, result := run(t, r); c != expected {
-			t.Fatalf("%s: %d != %d %s %v", kind, c, expected, output, result)
-		}
-	}
-}
-
 func TestArchitectureProfileAndLinks(t *testing.T) {
 	root, text := fixture(t)
 	repo := repository(t)
-	b, e := os.ReadFile(filepath.Join(repo, "skills/swe/scripts/tests/fixtures/system-design.md"))
+	b, e := os.ReadFile(filepath.Join(repo, "cli/swe-cli/internal/app/testdata/documents/system-design.md"))
 	if e != nil {
 		t.Fatal(e)
 	}
