@@ -42,7 +42,7 @@ Harness 把 Agent Skills 当作可版本化的项目依赖：Skill 源码集中�
 
 ## CLI
 
-`CLI/harness/` 是第一个独立 CLI，使用自己的 Go module，不依赖仓库根目录的 `go.mod`。后续 CLI 放在 `CLI/<name>/`。
+`CLI/harness/` 是第一个独立 CLI，使用自己的 Go module；仓库根目录不放置 Go module。后续 CLI 放在 `CLI/<name>/`。
 
 ```bash
 harness install --source <url> --version <ref> --path <path> [--path <path>...]
