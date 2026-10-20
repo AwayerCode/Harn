@@ -60,7 +60,7 @@ func ResolveArchiveURL(rawSource, version string) (string, error) {
 	case strings.HasPrefix(version, "commit:"):
 		refPath = strings.TrimPrefix(version, "commit:")
 	default:
-		return "", fmt.Errorf("version %q must use branch:, tag:, or commit:", version)
+		return "", fmt.Errorf("version %q must use branch:, tag: or commit: prefix", version)
 	}
 	if refPath == "" || strings.HasSuffix(refPath, "/") {
 		return "", fmt.Errorf("invalid version %q", version)
@@ -137,7 +137,7 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 			if err := os.MkdirAll(filepath.Join(destination, filepath.FromSlash(relative)), 0o755); err != nil {
 				return fmt.Errorf("create archive directory: %w", err)
 			}
-		case tar.TypeReg, tar.TypeRegA:
+		case tar.TypeReg, 0: // 0 is the legacy regular-file flag still present in old archives.
 			fileCount++
 			if fileCount > maxFiles {
 				return fmt.Errorf("archive contains more than %d selected files", maxFiles)

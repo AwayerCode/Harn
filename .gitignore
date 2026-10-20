@@ -4,3 +4,4 @@ __pycache__/
 *.tgz
 .DS_Store
 CLI/harn/dist/
+CLI/harn/cover.out

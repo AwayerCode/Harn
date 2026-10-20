@@ -11,7 +11,9 @@
 - [ ] `(cd CLI/harn && go test -race ./...)`
 - [ ] `(cd CLI/harn && go vet ./...)`
 - [ ] `python3 -B Skills/swe/scripts/tests/test_standards.py`
+- [ ] `python3 -B Skills/tests/test_index.py`
 - [ ] `python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --all`
+- [ ] `bash scripts/test-install.sh`（改动安装脚本时）
 - [ ] `git diff --check`
 
 ## 风险
