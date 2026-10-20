@@ -2,6 +2,10 @@
 
 Harn 的版本记录以 GitHub Releases 为准；本文件保留主要变更的可读摘要。
 
+## v0.2.1
+
+- 修复 `go install` 安装的二进制把版本显示为 `dev`，改为回退到模块版本。
+
 ## v0.2.0
 
 - 项目更名为 Harn，CLI 命令、Go module 路径和发布资产统一使用 `harn`。

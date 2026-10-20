@@ -18,7 +18,7 @@ Harn 集中维护可复制到不同项目的 Agent Skills 和附属内容。用�
 
 ## 下载工具
 
-工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.2.0` 为例，并把工具放在当前项目的 `.harness/bin/`。
+工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.2.1` 为例，并把工具放在当前项目的 `.harness/bin/`。
 
 示例使用 `AwayerCode/Harn` 作为仓库地址；Agent 应根据实际收到的 Harn 仓库链接替换 `repo`。
 
@@ -34,7 +34,7 @@ macOS 和 Linux：
 
 ```bash
 repo="AwayerCode/Harn"
-version="v0.2.0"
+version="v0.2.1"
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 case "$(uname -m)" in
   arm64|aarch64) arch="arm64" ;;
@@ -64,7 +64,7 @@ Windows PowerShell：
 
 ```powershell
 $repo = "AwayerCode/Harn"
-$version = "v0.2.0"
+$version = "v0.2.1"
 $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
 $asset = "harn_windows_$arch.exe"
 $base = "https://github.com/$repo/releases/download/$version"
@@ -98,7 +98,7 @@ Windows 使用 `.harness/bin/harn.exe` 替代本文命令中的 `.harness/bin/ha
 ```bash
 .harness/bin/harn install \
   --source https://github.com/AwayerCode/Harn \
-  --version tag:v0.2.0 \
+  --version tag:v0.2.1 \
   --path Skills/concise-response \
   --path Skills/knowledge-doc-guard \
   --path Skills/swe
@@ -117,7 +117,7 @@ Windows 使用 `.harness/bin/harn.exe` 替代本文命令中的 `.harness/bin/ha
 
 ```bash
 .harness/bin/harn install --source https://github.com/AwayerCode/Harn \
-  --version tag:v0.2.0 --path Skills/swe --dry-run
+  --version tag:v0.2.1 --path Skills/swe --dry-run
 ```
 
 ## 使用资源

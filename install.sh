@@ -4,7 +4,7 @@ set -eu
 # Install the Harn binary for the current platform.
 #
 #   curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
-#   curl -fsSL .../install.sh | sh -s -- --version v0.2.0 --root ./my-project
+#   curl -fsSL .../install.sh | sh -s -- --version v0.2.1 --root ./my-project
 
 repo="AwayerCode/Harn"
 version="${HARN_VERSION:-}"
