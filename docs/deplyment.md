@@ -4,7 +4,7 @@
 
 Harn 将共同工作方法打包为可版本化的 Skill，并通过Skill 与项目配置适配不同项目。用户先安装项目内的 harn，再由 harn 安装所选 Skill 及配套 CLI；无需克隆整个源码仓，也无需全局安装。
 
-当前 swe-cli 仍是已提交的 Node 原型，Go 迁移尚未实施；本设计取消随包 TS 与扩展执行器。本文描述分发与使用方案，配套下载、自动 Agent 接入及项目配置初始化尚待实现。当前可执行操作见根目录 [HARN.md](../HARN.md)，模块边界见[系统设计](system-design.md)，版本与失败语义见[接口协议](interface-protocol.md)。本文不另行定义机器字段协议。
+当前 swe-cli 文档检查已迁为 Go，Node 原型与 TS 扩展执行器已移除；其余检查仍待迁移。本文描述分发与使用方案，配套下载、自动 Agent 接入及项目配置初始化尚待实现。当前可执行操作见根目录 [HARN.md](../HARN.md)，模块边界见[系统设计](system-design.md)，版本与失败语义见[接口协议](interface-protocol.md)。本文不另行定义机器字段协议。
 
 ## 分发对象与职责
 
@@ -101,6 +101,6 @@ macOS/Linux 已有 Shell 安装器，Windows 当前通过 Releases 手动下载�
 
 Harn 源码在本仓维护，本地运行测试与构建，手动上传 GitHub Releases。harn 和 swe-cli 均采用 Go，按配套版本关系交付；不要求两者版本号完全相同。
 
-交付目标覆盖 macOS、Linux、Windows 的 amd64/arm64。六平台构建与实际运行验证分开记录；Go swe-cli 迁移与最低系统要求尚需构建和运行验证。
+交付目标覆盖 macOS、Linux、Windows 的 amd64/arm64。六平台构建与实际运行验证分开记录；Go swe-cli 提供六平台构建脚本；最低系统要求及各平台实际运行仍需发行验收。
 
 发布前验证：无系统 Go/Node/TS/Python 的环境能运行 SWE 核心；只下载所选资源和匹配平台资产；校验失败不启用安装；更新故障可恢复；克隆后按绑定补装；项目定制保留；Agent 能实际加载入口并完成一次任务内校验闭环。

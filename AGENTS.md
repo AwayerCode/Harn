@@ -27,9 +27,13 @@ find cli/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l
 (cd cli/harn && go test -race ./...)
 (cd cli/harn && go vet ./...)
 cli/harn/scripts/build-release.sh
+find cli/swe-cli -name '*.go' -type f -print0 | xargs -0 gofmt -l
+(cd cli/swe-cli && go test -race ./...)
+(cd cli/swe-cli && go vet ./...)
+cli/swe-cli/scripts/build-release.sh
 ```
 
-`gofmt -l` 应无输出。构建产物位于 `cli/harn/dist/`，不提交。交叉编译不代替 Windows 实际运行验证；在 Windows 上进入 `cli/harn` 执行 `go test -race ./...` 和 `go vet ./...`。
+`gofmt -l` 应无输出。构建产物位于 `cli/harn/dist/` 和 `cli/swe-cli/dist/`，不提交。交叉编译不代替 Windows 实际运行验证；在 Windows 上进入 `cli/harn` 执行 `go test -race ./...` 和 `go vet ./...`。
 
 修改 Skill 时，按涉及范围运行：
 
@@ -45,6 +49,7 @@ done
 ```bash
 sh -n install.sh
 bash -n cli/harn/scripts/build-release.sh
+bash -n cli/swe-cli/scripts/build-release.sh
 ```
 
 修改文档后运行：

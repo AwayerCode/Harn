@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+version="${1:-$(git -C "$root" describe --tags --always --dirty 2>/dev/null || printf 'dev')}"
+dist="${DIST_DIR:-$root/dist}"
+mkdir -p "$dist"
+dist="$(cd "$dist" && pwd)"
+
+(cd "$root" && go generate ./...)
+
+targets=(
+  "linux/amd64"
+  "linux/arm64"
+  "darwin/amd64"
+  "darwin/arm64"
+  "windows/amd64"
+  "windows/arm64"
+)
+assets=()
+
+for target in "${targets[@]}"; do
+  goos="${target%/*}"
+  goarch="${target#*/}"
+  asset="swe-cli_${goos}_${goarch}"
+  if [[ "$goos" == "windows" ]]; then
+    asset="${asset}.exe"
+  fi
+
+  (
+    cd "$root"
+    CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build \
+      -trimpath \
+      -ldflags "-s -w -X github.com/AwayerCode/Harn/cli/swe-cli/internal/app.Version=${version}" \
+      -o "$dist/$asset" \
+      .
+  )
+  assets+=("$asset")
+done
+
+(
+  cd "$dist"
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "${assets[@]}" >SHA256SUMS
+  else
+    shasum -a 256 "${assets[@]}" >SHA256SUMS
+  fi
+)
+
+printf 'built SWE CLI %s in %s\n' "$version" "$dist"
