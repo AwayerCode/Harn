@@ -12,7 +12,7 @@ body:
     attributes:
       label: 版本
       description: 输出来自 `harn version` 的版本号
-      placeholder: v0.2.0
+      placeholder: v0.2.1
     validations:
       required: true
   - type: input

@@ -28,7 +28,7 @@ The script verifies `SHA256SUMS` and installs the binary to `.harness/bin/harn`.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh \
-  | sh -s -- --version v0.2.0 --root .
+  | sh -s -- --version v0.2.1 --root .
 ```
 
 If you prefer to install by hand, `HARN.md` contains the step-by-step download and verification commands for macOS, Linux and Windows PowerShell.
@@ -43,7 +43,7 @@ harn search review
 # Download the paths this project needs
 harn install \
   --source https://github.com/AwayerCode/Harn \
-  --version tag:v0.2.0 \
+  --version tag:v0.2.1 \
   --path Skills/concise-response \
   --path Skills/knowledge-doc-guard \
   --path Skills/swe
@@ -65,7 +65,7 @@ Downloaded entry points live at `.harness/Skills/<name>/SKILL.md`. An agent read
 If you already have Go installed, install from the tagged submodule. The release workflow creates `CLI/harn/vX.Y.Z` alongside each release:
 
 ```bash
-go install github.com/AwayerCode/Harn/CLI/harn@v0.2.0
+go install github.com/AwayerCode/Harn/CLI/harn@v0.2.1
 ```
 
 ## Migrating from Harness
@@ -127,7 +127,7 @@ python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --all
 Build the six release assets:
 
 ```bash
-CLI/harn/scripts/build-release.sh v0.2.0
+CLI/harn/scripts/build-release.sh v0.2.1
 ```
 
 ## Contributing and security

@@ -32,7 +32,7 @@ curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | s
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh \
-  | sh -s -- --version v0.2.0 --root .
+  | sh -s -- --version v0.2.1 --root .
 ```
 
 需要自行审计下载过程时，从 [最新 Release](https://github.com/AwayerCode/Harn/releases/latest) 手动下载：
@@ -49,7 +49,7 @@ curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh \
 .harness/bin/harn search
 .harness/bin/harn install \
   --source https://github.com/AwayerCode/Harn \
-  --version tag:v0.2.0 \
+  --version tag:v0.2.1 \
   --path Skills/concise-response \
   --path Skills/knowledge-doc-guard \
   --path Skills/swe
@@ -80,7 +80,7 @@ harn version
 已安装 Go 时也可以直接用子模块标签安装。Release workflow 会随版本自动创建 `CLI/harn/vX.Y.Z`：
 
 ```bash
-go install github.com/AwayerCode/Harn/CLI/harn@v0.2.0
+go install github.com/AwayerCode/Harn/CLI/harn@v0.2.1
 ```
 
 ## 从 Harness 迁移
@@ -127,7 +127,7 @@ python3 -B Skills/knowledge-doc-guard/scripts/knowledge_lint.py --all
 构建六平台发布产物：
 
 ```bash
-CLI/harn/scripts/build-release.sh v0.2.0
+CLI/harn/scripts/build-release.sh v0.2.1
 ```
 
 ## 贡献与安全
