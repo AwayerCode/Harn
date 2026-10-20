@@ -3,6 +3,7 @@ package installer
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
@@ -40,10 +41,10 @@ func (m Manager) Search(ctx context.Context, rawSource, version, query string) (
 	}
 	defer os.RemoveAll(stage)
 	contentRoot := filepath.Join(stage, "content")
-	if err := source.FetchSkillEntries(ctx, m.Client, archiveURL, contentRoot); err != nil {
-		return nil, fmt.Errorf("read skill entries: %w", err)
+	if err := source.Fetch(ctx, m.Client, archiveURL, []string{"skills/index.json"}, contentRoot); err != nil {
+		return nil, fmt.Errorf("read skills/index.json: %w", err)
 	}
-	skills, err := scanSkills(contentRoot)
+	skills, err := readCatalog(contentRoot)
 	if err != nil {
 		return nil, err
 	}
@@ -61,31 +62,38 @@ func (m Manager) Search(ctx context.Context, rawSource, version, query string) (
 	return matches, nil
 }
 
-func scanSkills(root string) ([]Skill, error) {
-	files, err := filepath.Glob(filepath.Join(root, "skills", "*", "SKILL.md"))
+// Search reads only the catalog; repository tests verify it against SKILL.md.
+func readCatalog(root string) ([]Skill, error) {
+	data, err := os.ReadFile(filepath.Join(root, "skills", "index.json"))
 	if err != nil {
 		return nil, err
 	}
-	skills := make([]Skill, 0, len(files))
-	seen := make(map[string]bool)
-	for _, file := range files {
-		directory := filepath.Base(filepath.Dir(file))
-		if strings.HasPrefix(directory, "_") || strings.HasPrefix(directory, ".") {
-			continue
+	var catalog struct {
+		SchemaVersion int `json:"schema_version"`
+		Skills        []struct {
+			Name        string `json:"name"`
+			Path        string `json:"path"`
+			Description string `json:"description"`
+		} `json:"skills"`
+	}
+	if err := json.Unmarshal(data, &catalog); err != nil {
+		return nil, fmt.Errorf("parse skills/index.json: %w", err)
+	}
+	if catalog.SchemaVersion != 1 || catalog.Skills == nil {
+		return nil, errors.New("skills/index.json requires schema_version 1 and a skills array")
+	}
+	skills := make([]Skill, 0, len(catalog.Skills))
+	names, paths := map[string]bool{}, map[string]bool{}
+	for _, entry := range catalog.Skills {
+		parts := strings.Split(entry.Path, "/")
+		if strings.TrimSpace(entry.Name) == "" || strings.TrimSpace(entry.Description) == "" || len(parts) != 2 || parts[0] != "skills" || parts[1] == "" || strings.HasPrefix(parts[1], ".") || strings.HasPrefix(parts[1], "_") || strings.Contains(entry.Path, "\\") {
+			return nil, fmt.Errorf("invalid skill entry %q: name, description and public top-level skills path required", entry.Name)
 		}
-		data, err := os.ReadFile(file)
-		if err != nil {
-			return nil, err
+		if names[entry.Name] || paths[entry.Path] {
+			return nil, fmt.Errorf("duplicate skill name or path %q", entry.Name)
 		}
-		skill, err := parseSkill(data, "skills/"+directory)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", file, err)
-		}
-		if seen[skill.Name] {
-			return nil, fmt.Errorf("duplicate skill name %q", skill.Name)
-		}
-		seen[skill.Name] = true
-		skills = append(skills, skill)
+		names[entry.Name], paths[entry.Path] = true, true
+		skills = append(skills, Skill{Name: entry.Name, Path: entry.Path, Summary: strings.Join(strings.Fields(entry.Description), " ")})
 	}
 	return skills, nil
 }

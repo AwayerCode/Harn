@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "name": "concise-response",
+      "path": "skills/concise-response",
+      "version": "0.1.0",
+      "registered_at": "2026-10-20T13:34:22Z",
+      "updated_at": "2026-10-20T20:15:58+08:00",
+      "source": {
+        "type": "internal",
+        "repository": "https://github.com/AwayerCode/Harn",
+        "path": "skills/concise-response"
+      },
+      "description": "控制所有分析与用户可见回复的立场和表达方式：默认站在用户已经形成的认知立场内部思考，直接揭示问题本质，不用中立化或主流叙事稀释核心判断；对话说明保持简洁，但不得把简洁原则用于压缩用户要求保存、整理或交付的完整知识与成品。每次对话、所有任务类型和所有最终回复都使用此规则。"
+    },
+    {
+      "name": "knowledge-doc-guard",
+      "path": "skills/knowledge-doc-guard",
+      "version": "0.1.0",
+      "registered_at": "2026-10-20T13:34:22Z",
+      "updated_at": "2026-10-20T20:15:58+08:00",
+      "source": {
+        "type": "internal",
+        "repository": "https://github.com/AwayerCode/Harn",
+        "path": "skills/knowledge-doc-guard"
+      },
+      "description": "约束 Knowledge 仓的 Markdown 文档读取、写入、整理、更新、归档和质量检查；对已有完整知识默认执行无损整理，完整保留有效知识中的框架、独立判断、推导过程、细节、案例、方法和重要表达，排除无认知价值内容和解释性铺垫，防止中立化、过度压缩、内容丢失或事实修订造成语义漂移。当用户要求分析、保存、记录、整理、更新、归档、修改或检查 Knowledge 文档时使用。"
+    },
+    {
+      "name": "swe",
+      "path": "skills/swe",
+      "version": "0.1.0",
+      "registered_at": "2026-10-20T13:34:22Z",
+      "updated_at": "2026-10-20T21:32:28+08:00",
+      "source": {
+        "type": "internal",
+        "repository": "https://github.com/AwayerCode/Harn",
+        "path": "skills/swe"
+      },
+      "description": "按工程对象、共同标准、系统与模块契约组织软件设计、实现和验收；选择相关专业模块，不默认执行完整工作流程。"
+    }
+  ]
+}

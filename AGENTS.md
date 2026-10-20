@@ -55,3 +55,5 @@ bash -n cli/swe-cli/scripts/build-release.sh
 python3 -B skills/knowledge-doc-guard/scripts/knowledge_lint.py --changed
 git diff --check
 ```
+
+Skill 登记表为 `skills/index.json`。新增、更新或引入 Skill 时同步维护简介、独立版本、时间与来源，规则见 `HARN.md` 的 Skill 版本登记。运行 `(cd cli/harn && go test ./internal/installer -run Catalog)` 检查索引结构与 `SKILL.md` 的目录、名称和简介一致性。

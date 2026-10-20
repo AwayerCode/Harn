@@ -9,11 +9,8 @@ import (
 func TestSearchFiltersCatalog(t *testing.T) {
 	t.Parallel()
 	archive := newArchiveServer(t, archiveFiles{
-		"skills/swe/SKILL.md":              {body: "---\nname: swe\ndescription: >-\n  engineering design\n  review\n---\n", mode: 0o644},
-		"skills/concise-response/SKILL.md": {body: "---\nname: 'concise-response'\ndescription: writing style\n---\n", mode: 0o644},
-		"skills/_template/SKILL.md":        {body: "invalid", mode: 0o644},
-		"skills/swe/nested/SKILL.md":       {body: "invalid", mode: 0o644},
-		"skills/swe/script.py":             {body: "ignored", mode: 0o644},
+		"skills/index.json":   {body: `{"schema_version":1,"skills":[{"name":"swe","path":"skills/swe","description":"engineering design review"},{"name":"concise-response","path":"skills/concise-response","description":"writing style"}]}`, mode: 0o644},
+		"skills/swe/SKILL.md": {body: "invalid: search must not parse this", mode: 0o644},
 	})
 	manager := Manager{Client: archive.Client()}
 
@@ -64,13 +61,25 @@ func TestParseSkill(t *testing.T) {
 	}
 }
 
-func TestSearchRejectsDuplicateNames(t *testing.T) {
-	archive := newArchiveServer(t, archiveFiles{
-		"skills/a/SKILL.md": {body: "---\nname: same\ndescription: one\n---", mode: 0o644},
-		"skills/b/SKILL.md": {body: "---\nname: same\ndescription: two\n---", mode: 0o644},
-	})
-	_, err := (Manager{Client: archive.Client()}).Search(context.Background(), archive.URL, "tag:v1", "")
-	if err == nil || !strings.Contains(err.Error(), "duplicate") {
-		t.Fatalf("got %v", err)
+func TestSearchRejectsInvalidCatalog(t *testing.T) {
+	for _, body := range []string{
+		`invalid`,
+		`{"schema_version":2,"skills":[]}`,
+		`{"schema_version":1}`,
+		`{"schema_version":1,"skills":[{"name":"a","path":"skills/a"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a","path":"skills/../x","description":"a"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a","path":"skills/a","description":"a"},{"name":"a","path":"skills/b","description":"b"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a","path":"skills/a","description":"a"},{"name":"b","path":"skills/a","description":"b"}]}`,
+	} {
+		t.Run(body, func(t *testing.T) {
+			archive := newArchiveServer(t, archiveFiles{"skills/index.json": {body: body, mode: 0o644}})
+			if _, err := (Manager{Client: archive.Client()}).Search(context.Background(), archive.URL, "tag:v1", ""); err == nil {
+				t.Fatal("expected invalid catalog error")
+			}
+		})
+	}
+	archive := newArchiveServer(t, archiveFiles{"skills/a/SKILL.md": {body: "---\nname: a\ndescription: a\n---", mode: 0o644}})
+	if _, err := (Manager{Client: archive.Client()}).Search(context.Background(), archive.URL, "tag:v1", ""); err == nil {
+		t.Fatal("missing index must fail without scanning fallback")
 	}
 }
