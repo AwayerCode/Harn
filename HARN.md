@@ -103,24 +103,19 @@ SWE 的移除命令：
 
 ## Skill 版本登记
 
-[skills/index.json](skills/index.json) 记录仓库中每个顶层 Skill 的独立版本和来源，`schema_version` 表示登记表结构版本。名称与目录中的 `SKILL.md` 一致，每个目录只登记一次。搜索只读取登记表的名称、路径和 `description`。名称和简介与入口文件同步维护；构建测试检查公开顶层 Skill 是否完整登记，以及目录、名称、简介是否一致（简介比较忽略换行与重复空白）。
+[skills/index.json](skills/index.json) 记录仓库中每个顶层 Skill 的独立版本和来源，`schema_version` 表示登记表结构版本。名称与目录中的 `SKILL.md` 一致，每个目录只登记一次。本仓目录由 `skills/<name>` 推导；搜索读取登记表的名称和 `description`，并支持匹配推导出的路径。名称和简介与入口文件同步维护；构建测试检查公开顶层 Skill 是否完整登记，以及目录、名称、简介是否一致（简介比较忽略换行与重复空白）。
 
 | 字段 | 含义 |
 | --- | --- |
-| `name`、`path` | Skill 名称及本仓库相对目录 |
+| `name` | 唯一名称，与目录名一致，使用小写字母、数字和单连字符，最长 64 字符 |
 | `description` | 与 `SKILL.md` frontmatter 一致的简介，用于搜索 |
 | `version` | 本仓库维护的 Skill 版本，与 Harn 和 SWE CLI 版本独立 |
-| `registered_at` | 首次纳入登记表的时间，后续更新保留 |
 | `updated_at` | 当前 Skill 内容的更新时间；已有内容初始化时取最近一次目录提交时间 |
-| `source.type` | 自有 Skill 为 `internal`，外部引入为 `external` |
-| `source.repository`、`source.path` | 原始仓库 URL 和该仓库内的 Skill 目录 |
-| `source.revision` | 外部 Skill 必填，实际导入内容对应的完整 commit SHA |
-| `source.version` | 外部上游发布版本；上游无版本时为 `null`，不能用分支名代替版本 |
-| `source.synced_at` | 外部 Skill 最近一次实际导入或同步的时间 |
+| `source.repository`、`source.path` | 自有 Skill 均为 `null`；外部 Skill 填上游仓库 URL 和目录，仓库根目录为 `"."` |
 
 时间使用带时区的 RFC 3339 格式。现有三个 Skill 从 `0.1.0` 建立独立版本基线，不代表追溯认定历史发布版本。后续内容修正递增 PATCH、兼容能力增加递增 MINOR、不兼容的使用契约变化递增 MAJOR；内容与版本、`updated_at` 同次提交。只修订登记信息时不改变内容版本或内容更新时间。历史记录由 Git 保存。
 
-引入外部 Skill 时，将内容放入独立目录并登记来源与固定 commit；保留原有许可文件和署名，确认许可允许分发。本地修改只递增本仓库的 `version` 和 `updated_at`，保留原始上游版本、commit 和同步时间；再次同步上游时才更新来源记录，并核对本地修改。
+所有 Skill 使用相同字段结构。首次登记时填写 `updated_at`，后续内容修改或同步上游时更新。引入外部 Skill 时保留原有许可文件和署名，确认许可允许分发；同步时核对本地修改，并递增本仓维护的 `version`。索引不记录上游版本或 commit，首次加入时间、导入内容及变更历史由本仓 Git 保存。
 
 CLI 使用登记表搜索，但尚不按这些独立版本解析安装目标，也不能用它们替代安装命令的 `--version`：安装仍选择仓库标签或 commit。SWE 配套二进制版本继续由其 `runtime.json` 固定。
 
