@@ -45,7 +45,7 @@ jobs:
       - name: Verify release bundle
         run: test "$(find dist -maxdepth 1 -type f | wc -l | tr -d ' ')" -eq 8
       - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2.4.0
+        uses: actions/attest-build-provenance@v4.2.2
         with:
           subject-path: |
             ${{ github.workspace }}/CLI/harn/dist/harn_linux_amd64
