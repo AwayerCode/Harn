@@ -28,9 +28,9 @@ SWE 是 Harn 面向软件工程的能力，覆盖设计、实现、测试和审�
 
 Skill 定义方法与流程，工具提供可执行的检查和反馈。校验通过只证明已检查的要求满足，Agent 仍需结合任务目标确认是否完成。
 
-SWE 的演进方案是将稳定校验逻辑放入 Node 独立可执行文件 `swe-cli`，减少 Agent 对工具源码的局部误改；外围 TS 脚本负责项目适配和补充检查，Skill 的方法流程根据执行经验持续改进。外围扩展不能将核心校验失败改为通过，改进方法也不能顺带降低验收标准。
+SWE 采用 Go CLI + Skill 的演进方案：稳定校验放入 Go 独立可执行文件 `swe-cli`，方法、流程与项目适配由 Skill、项目约定和配置承担。项目已有测试、lint 和构建由 Agent 按 Skill 调用，不设置 TS 扩展层。改进方法不能顺带降低验收标准。
 
-当前仓库以 Skills、Python 校验脚本和项目内资源分发工具 `harn` 提供能力。上述分层与执行闭环的实施由 [Issue #6](https://github.com/AwayerCode/Harn/issues/6) 跟踪，首版计划由 Agent 按 Skill 驱动；独立的任务分发调度器不在该 Issue 范围内。
+当前仓库包含 Skills、Python 校验脚本、Go 分发工具 `harn` 和 Node swe-cli 原型。Go 校验核心及配套安装尚待迁移实现，目标方案以系统设计和接口协议为准；任务分发调度器不在本阶段范围。
 
 本阶段聚焦独立任务：闭环统一放在 SWE 的共享执行规范中，Agent 执行循环，swe-cli 提供单次校验。目标架构、模块边界及迁移安排见[系统设计](docs/system-design.md)，数据与失败语义见[接口协议](docs/interface-protocol.md)；两份文档描述待实施方案。
 
