@@ -167,6 +167,27 @@ class StandardsTests(unittest.TestCase):
             invalid = subprocess.run(command, cwd=tmp, capture_output=True, text=True)
             self.assertEqual(invalid.returncode, 1)
 
+    def test_structure_checker_runs_directly_outside_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            system, _ = fixture(root)
+            for module in ['order', 'store']:
+                entry = root / 'src' / module / 'index.py'
+                entry.parent.mkdir(parents=True)
+                entry.write_text('')
+            script = ROOT / 'swe-system-review/scripts/check_structure.py'
+            command = [sys.executable, '-I', '-B', str(script)]
+            help_result = subprocess.run(command + ['--help'], cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(help_result.returncode, 0, help_result.stderr)
+            args = ['--root', tmp, '--design', str(system)]
+            good = subprocess.run(command + args, cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(good.returncode, 0, good.stdout + good.stderr)
+            self.assertEqual(len(json.loads(good.stdout)['checked']), 4)
+            (root / 'src/order/index.py').unlink()
+            bad = subprocess.run(command + args, cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(bad.returncode, 1, bad.stdout + bad.stderr)
+            self.assertTrue(any('公开入口文件不存在' in item for item in json.loads(bad.stdout)['findings']))
+
     def test_document_links(self):
         for path in ROOT.rglob('*.md'):
             if 'tests' in path.parts:

@@ -165,3 +165,56 @@ func TestRemoveRejectsUnrecordedPath(t *testing.T) {
 		t.Fatal("expected unrecorded path error")
 	}
 }
+
+func TestRemoveAllowsReinstall(t *testing.T) {
+	t.Parallel()
+	archive := newArchiveServer(t, archiveFiles{
+		"Skills/swe/SKILL.md":                    {body: "one", mode: 0o644},
+		"Skills/swe/references/nested/method.md": {body: "method", mode: 0o644},
+		"Skills/other/SKILL.md":                  {body: "other", mode: 0o644},
+	})
+	project := t.TempDir()
+	manager := Manager{ProjectRoot: project, Client: archive.Client()}
+	if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"Skills/swe", "Skills/other"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := manager.Remove([]string{"Skills/swe"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(project, ".harness", "Skills", "swe")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("resource directory remains: %v", err)
+	}
+	assertFile(t, project, "Skills/other/SKILL.md", "other")
+	if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"Skills/swe"}); err != nil {
+		t.Fatalf("reinstall: %v", err)
+	}
+	assertFile(t, project, "Skills/swe/references/nested/method.md", "method")
+}
+
+func TestRemovePreservesLocalDirectories(t *testing.T) {
+	t.Parallel()
+	archive := newArchiveServer(t, archiveFiles{
+		"Skills/swe/SKILL.md":             {body: "one", mode: 0o644},
+		"Skills/swe/references/method.md": {body: "method", mode: 0o644},
+	})
+	project := t.TempDir()
+	manager := Manager{ProjectRoot: project, Client: archive.Client()}
+	if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"Skills/swe"}); err != nil {
+		t.Fatal(err)
+	}
+	writeProjectFile(t, project, "Skills/swe/references/LOCAL.md", "keep", 0o644)
+	empty := filepath.Join(project, ".harness", "Skills", "swe", "local-empty")
+	if err := os.Mkdir(empty, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := manager.Remove([]string{"Skills/swe"}); err != nil {
+		t.Fatal(err)
+	}
+	assertFile(t, project, "Skills/swe/references/LOCAL.md", "keep")
+	if info, err := os.Stat(empty); err != nil || !info.IsDir() {
+		t.Fatalf("local directory lost: %v", err)
+	}
+	if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"Skills/swe"}); err == nil {
+		t.Fatal("reinstall must protect remaining local files")
+	}
+}

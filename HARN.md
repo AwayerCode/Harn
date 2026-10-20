@@ -23,11 +23,7 @@ SWE 包含软件设计、实现、测试和审查方法，安装命令为：
 .harness/bin/harn install --source https://github.com/AwayerCode/Harn --version tag:v0.2.1 --path Skills/swe
 ```
 
-示例固定使用 `v0.2.1`。安装后的入口位于 `.harness/Skills/swe/SKILL.md`，支持读取项目文件的 Agent 可使用以下任务指令：
-
-> 先读取 `.harness/Skills/swe/SKILL.md`，选择代码审查方法，审查当前项目尚未提交的代码改动。只报告有依据的问题，说明文件位置、影响和原因，不修改文件。缺少必要依据时明确说明。
-
-审查对象也可以是具体文件或模块。审查结果包含问题依据及未验证项；具体任务由 Agent 读取方法后执行。
+示例固定使用 `v0.2.1`，入口位于 `.harness/Skills/swe/SKILL.md`。[README 的任务指令](README.md#使用示例)可用于首次审查；审查对象也可以是具体文件或模块。Agent 读取对应方法后执行任务，报告问题依据和未验证项。
 
 ## 项目接入
 
@@ -67,7 +63,7 @@ git add .harness/Skills/swe .harness/downloads.json
 .harness/bin/harn status
 ```
 
-更新通过 `--version` 指定目标版本，发布标签见 [Releases](https://github.com/AwayerCode/Harn/releases)。以下以 `v0.2.1` 为目标，分别展示预演与实际更新：
+切换版本时使用 `--version` 指定目标版本，发布标签见 [Releases](https://github.com/AwayerCode/Harn/releases)。以下以 `v0.2.1` 为目标演示预演与实际更新；与安装示例版本相同，不代表升级到新版本：
 
 ```bash
 .harness/bin/harn update --path Skills/swe --version tag:v0.2.1 --dry-run
