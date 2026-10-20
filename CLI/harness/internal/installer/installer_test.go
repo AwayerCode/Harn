@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/AwayerCode/Harness/CLI/harness/internal/state"
 )
@@ -187,6 +189,114 @@ func TestInstallAndUpdateSingleFile(t *testing.T) {
 	assertFile(t, project, "HARNESS.md", "# Harness v2")
 }
 
+func TestConcurrentInstallIsRejectedByProjectLock(t *testing.T) {
+	t.Parallel()
+	archive := newArchiveServer(t, archiveFiles{
+		"Skills/swe/SKILL.md":   {body: "swe", mode: 0o644},
+		"Skills/other/SKILL.md": {body: "other", mode: 0o644},
+	})
+	project := t.TempDir()
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var startOnce sync.Once
+	blockingClient := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		startOnce.Do(func() { close(started) })
+		<-release
+		return archive.Client().Transport.RoundTrip(request)
+	})}
+
+	firstResult := make(chan error, 1)
+	go func() {
+		_, err := (&Manager{ProjectRoot: project, Client: blockingClient}).Install(
+			context.Background(), archive.URL, "tag:v1", []string{"Skills/swe"},
+		)
+		firstResult <- err
+	}()
+	waitForSignal(t, started, release)
+
+	_, err := (&Manager{ProjectRoot: project, Client: archive.Client()}).Install(
+		context.Background(), archive.URL, "tag:v1", []string{"Skills/other"},
+	)
+	if !errors.Is(err, ErrOperationInProgress) {
+		close(release)
+		<-firstResult
+		t.Fatalf("expected lock conflict, got %v", err)
+	}
+	close(release)
+	if err := <-firstResult; err != nil {
+		t.Fatal(err)
+	}
+
+	record, err := state.Load(filepath.Join(project, ".harness"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := record.Downloads["Skills/swe"]; !exists {
+		t.Fatal("first install was not recorded")
+	}
+	if _, exists := record.Downloads["Skills/other"]; exists {
+		t.Fatal("lock-conflicting install changed the record")
+	}
+}
+
+func TestConcurrentUpdateIsRejectedAndCanBeRetried(t *testing.T) {
+	t.Parallel()
+	archive := newArchiveServer(t, archiveFiles{
+		"Skills/swe/SKILL.md":   {body: "one", mode: 0o644},
+		"Skills/other/SKILL.md": {body: "one", mode: 0o644},
+	})
+	project := t.TempDir()
+	manager := &Manager{ProjectRoot: project, Client: archive.Client()}
+	if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"Skills/swe", "Skills/other"}); err != nil {
+		t.Fatal(err)
+	}
+	archive.Set(archiveFiles{
+		"Skills/swe/SKILL.md":   {body: "two", mode: 0o644},
+		"Skills/other/SKILL.md": {body: "two", mode: 0o644},
+	})
+
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var startOnce sync.Once
+	blockingClient := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		startOnce.Do(func() { close(started) })
+		<-release
+		return archive.Client().Transport.RoundTrip(request)
+	})}
+	firstResult := make(chan error, 1)
+	go func() {
+		_, err := (&Manager{ProjectRoot: project, Client: blockingClient}).Update(
+			context.Background(), []string{"Skills/swe"}, "tag:v2",
+		)
+		firstResult <- err
+	}()
+	waitForSignal(t, started, release)
+
+	_, err := manager.Update(context.Background(), []string{"Skills/other"}, "tag:v2")
+	if !errors.Is(err, ErrOperationInProgress) {
+		close(release)
+		<-firstResult
+		t.Fatalf("expected lock conflict, got %v", err)
+	}
+	close(release)
+	if err := <-firstResult; err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := manager.Update(context.Background(), []string{"Skills/other"}, "tag:v2"); err != nil {
+		t.Fatalf("retry after lock release: %v", err)
+	}
+	record, err := state.Load(filepath.Join(project, ".harness"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, target := range []string{"Skills/swe", "Skills/other"} {
+		if record.Downloads[target].Version != "tag:v2" {
+			t.Fatalf("%s version = %q", target, record.Downloads[target].Version)
+		}
+	}
+}
+
 func TestNormalizeTargetsAcceptsWindowsSeparators(t *testing.T) {
 	t.Parallel()
 	targets, err := normalizeTargets([]string{`Skills\swe`, "Skills/swe/"})
@@ -314,5 +424,15 @@ func writeProjectFile(t *testing.T, project, name, body string, mode os.FileMode
 	}
 	if err := os.WriteFile(target, []byte(body), mode); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func waitForSignal(t *testing.T, signal <-chan struct{}, release chan<- struct{}) {
+	t.Helper()
+	select {
+	case <-signal:
+	case <-time.After(5 * time.Second):
+		close(release)
+		t.Fatal("timed out waiting for the first operation to hold the project lock")
 	}
 }

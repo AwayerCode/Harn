@@ -88,7 +88,7 @@ description: 用于业务需求梳理、业务建模和模型调整。从核心�
 
 | 检查执行 | 作用与条件 |
 |---|---|
-| [本模块格式规则](references/document-format.md)与 [validate_documents.py](scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
+| [本模块格式规则](references/document-format.md)与 [validate_documents.py](../scripts/validate_documents.py) | 检查必要输入及本模块设计产物的格式和引用；不证明专业内容或运行行为正确 |
 | [check_scope.py](../scripts/check_scope.py) | 核对实际写入范围或只读结果；Python 3 标准库和 Git，属于规则的检查执行，不是业务资源 |
 | 内容审查、项目检查与实际验证 | 按下面保留的专业要求和完成标准确认内容与行为；涉及运行先确认工具、环境、权限、输出位置和副作用 |
 
@@ -108,7 +108,7 @@ description: 用于业务需求梳理、业务建模和模型调整。从核心�
 
 ### 输入与现状
 
-读取用户目标、具体任务、已确认规则及必要现状。首次建模不要求已有模型。修改已有模型时先读懂其内容；旧格式不合格不能阻止用户明确要求的模型重构。格式通过也不能使旧实体划分成为权威。
+读取用户目标、具体任务、已确认规则及必要现状。首次建模不要求已有模型。修改已有模型时先读懂其内容；格式不合格不能阻止用户明确要求的模型重构。格式通过也不能使既有实体划分成为权威。
 
 ## 路径
 
@@ -128,10 +128,10 @@ python3 -B <SWE目录>/scripts/check_scope.py snapshot --root <目标Git根目�
 
 再检查是否按功能或页面划边界、核心是否足以创造核心价值、扩展是否围绕核心组合，以及是否混入实现细节或遗漏影响业务正确性的规则。自检直接用于修正模型，不额外生成报告或章节。
 
-[格式契约](references/artifact-contract.json)只检查三层文档结构和基本 Markdown，不判断实体抽象是否成立。旧四层或附带说明的文档会报错；下游 Skill 应按业务模型重构处理，不能为绕过校验保留旧格式。
+[格式契约](references/artifact-contract.json)只检查三层文档结构和基本 Markdown，不判断实体抽象是否成立。其他结构会报错；下游 Skill 应按业务模型重构处理，不能为绕过校验保留第二套结构。
 
 ```bash
-python3 -B <本 Skill 目录>/scripts/validate_documents.py --kind business-model --file <业务模型路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind business-model --file <业务模型路径>
 ```
 
 其他 Skill 通过共同 schema 与共享校验器读取格式要求，不复制契约或校验逻辑。检查工具不得写入目标项目，Python 使用 `-B` 避免缓存。

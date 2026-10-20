@@ -45,7 +45,7 @@ description: 对照系统设计只读审查目录、文件归属、公开入口�
 
 | 执行方式 | 输入、作用与边界 |
 |---|---|
-| [validate_documents.py](scripts/validate_documents.py) | 按契约检查必要输入文档的格式与引用；Python 3 标准库，只读；不证明设计或实现正确 |
+| [validate_documents.py](../scripts/validate_documents.py) | 按契约检查必要输入文档的格式与引用；Python 3 标准库，只读；不证明设计或实现正确 |
 | [check_structure.py](scripts/check_structure.py) | 输入目标根目录、系统设计及可选相对范围；检查显式代码位置、公开入口文件与映射缺口；Python 3 标准库，只读；不解析源码依赖或导出语义 |
 | [check_readonly.py](scripts/check_readonly.py) | 输入 Git 根目录，输出文件指纹，结束时与原指纹比较；Python 3 标准库和 Git，只读；不创建基线文件、不读取文件内容到输出 |
 | 项目只读结构检查器及人工审查 | 按项目语言与解析规则检查文件归属、导出和依赖；列明实际覆盖、证据与无法确认的关系 |
@@ -83,8 +83,8 @@ python3 -B <本模块>/scripts/check_readonly.py --root <Git根目录>
 定位系统设计与必要的条件性文档，运行格式校验并核对相关内容确实提供本次结构依据。每个条件性文档只有涉及时才校验。
 
 ```bash
-python3 -B <本模块>/scripts/validate_documents.py --kind system-design --file <系统设计路径>
-python3 -B <本模块>/scripts/validate_documents.py --kind <必要补充文档类型> --file <文档路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind system-design --file <系统设计路径>
+python3 -B <SWE目录>/scripts/validate_documents.py --kind <必要补充文档类型> --file <文档路径>
 ```
 
 输入缺失、格式不合格或依据冲突时停止依赖它的检查，交付缺口；可以列出已取得的事实，不能自动补建或改写设计。即使提前结束，已取得指纹也要执行结束核对。

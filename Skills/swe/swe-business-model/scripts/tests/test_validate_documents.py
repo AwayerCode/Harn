@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 SKILL = Path(__file__).resolve().parents[2]
-SCRIPT = SKILL / 'scripts/validate_documents.py'
+SCRIPT = SKILL.parent / 'scripts/validate_documents.py'
 SPEC = importlib.util.spec_from_file_location('validator', SCRIPT)
 validator = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(validator)
@@ -19,7 +19,7 @@ class DocumentValidationTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.path = Path(self.tmp.name) / 'model.md'
         self.contract = json.loads((SKILL / 'references/artifact-contract.json').read_text())
-        self.text = (SKILL / 'scripts/tests/fixtures/business-model.md').read_text()
+        self.text = (SKILL.parent / 'scripts/tests/fixtures/business-model.md').read_text()
 
     def check(self, text, kind='business-model'):
         self.path.write_text(text)

@@ -83,7 +83,6 @@ def validate(path, kind, contract, profile=None):
             raise ValueError(f'文档类型 {kind} 不支持局部校验 {profile}')
         spec = dict(spec)
         spec['sections'] = [section for section in spec['sections'] if section['heading'] in owned]
-        spec.pop('accepted_variants', None)
         # Project the owned sections in memory; no writes or temporary document.
         raw = text.splitlines()
         visible = outside_code(text, errors)
@@ -119,36 +118,6 @@ def validate(path, kind, contract, profile=None):
             errors.append(f'{i + 1}: 标题后缺少空行')
     if [title for _, level, title in headings if level == 1] != [spec['title']]:
         errors.append(f'必须只有一个一级标题：{spec["title"]}')
-    actual_sections = [title for _, level, title in headings if level == 2]
-    # Formats may share headings while differing in table columns or protocol fields.
-    candidates = [candidate for candidate in [spec, *spec.get('accepted_variants', [])]
-                  if actual_sections == [s['heading'] for s in candidate['sections']]]
-    if candidates:
-        section_bodies = {}
-        starts = [(i, title) for i, level, title in headings if level == 2]
-        for index, (start, title) in enumerate(starts):
-            end = starts[index + 1][0] if index + 1 < len(starts) else len(lines)
-            section_bodies[title] = lines[start + 1:end]
-
-        def matches(candidate):
-            for section in candidate['sections']:
-                body = section_bodies.get(section['heading'], [])
-                if '\n'.join(body).strip().startswith('不适用：'):
-                    continue
-                if 'columns' in section and not any(head == section['columns'] for head, _ in tables(body)):
-                    return False
-            fields = candidate.get('record_fields')
-            if fields:
-                body = section_bodies.get('协议定义', [])
-                records = [(i, line) for i, line in enumerate(body) if line.startswith('### ')]
-                for index, (start, _) in enumerate(records):
-                    end = records[index + 1][0] if index + 1 < len(records) else len(body)
-                    if not any(head == ['字段', '值'] and [row[0] for row in rows if row] == fields
-                               for head, rows in tables(body[start + 1:end])):
-                        return False
-            return True
-
-        spec = next((candidate for candidate in candidates if matches(candidate)), candidates[0])
     expected = [s['heading'] for s in spec['sections']]
     if [title for _, level, title in headings if level == 2] != expected:
         errors.append(f'二级章节必须完整且按此顺序：{expected}')

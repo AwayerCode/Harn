@@ -64,6 +64,12 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 		return nil, errors.New("version is required")
 	}
 
+	lock, err := acquireProjectLock(m.ProjectRoot)
+	if err != nil {
+		return nil, err
+	}
+	defer lock.Close()
+
 	harnessRoot := filepath.Join(m.ProjectRoot, ".harness")
 	current, err := state.Load(harnessRoot)
 	if err != nil {
@@ -163,6 +169,12 @@ func (m *Manager) Update(ctx context.Context, requested []string, versionOverrid
 	if err != nil {
 		return nil, err
 	}
+
+	lock, err := acquireProjectLock(m.ProjectRoot)
+	if err != nil {
+		return nil, err
+	}
+	defer lock.Close()
 
 	harnessRoot := filepath.Join(m.ProjectRoot, ".harness")
 	current, err := state.Load(harnessRoot)

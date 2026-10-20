@@ -16,7 +16,7 @@ Harness 集中维护可复制到不同项目的 Agent Skills 和附属内容。�
 
 ## 下载工具
 
-工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.1.1` 为例，并把工具放在当前项目的 `.harness/bin/`。
+工具提供 `linux`、`darwin` 和 `windows` 的 `amd64`、`arm64` 原生二进制，发布页直接提供可执行文件，不需要解压。以下命令以 `v0.1.2` 为例，并把工具放在当前项目的 `.harness/bin/`。
 
 示例使用 `AwayerCode/Harness` 作为仓库地址；Agent 应根据实际收到的 Harness 仓库链接替换 `repo`。
 
@@ -24,7 +24,7 @@ macOS 和 Linux：
 
 ```bash
 repo="AwayerCode/Harness"
-version="v0.1.1"
+version="v0.1.2"
 os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 case "$(uname -m)" in
   arm64|aarch64) arch="arm64" ;;
@@ -54,7 +54,7 @@ Windows PowerShell：
 
 ```powershell
 $repo = "AwayerCode/Harness"
-$version = "v0.1.1"
+$version = "v0.1.2"
 $arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" } else { "amd64" }
 $asset = "harness_windows_$arch.exe"
 $base = "https://github.com/$repo/releases/download/$version"
@@ -88,7 +88,7 @@ Windows 使用 `.harness/bin/harness.exe` 替代本文命令中的 `.harness/bin
 ```bash
 .harness/bin/harness install \
   --source https://github.com/AwayerCode/Harness \
-  --version tag:v0.1.1 \
+  --version tag:v0.1.2 \
   --path Skills/concise-response \
   --path Skills/knowledge-doc-guard \
   --path Skills/swe
@@ -109,7 +109,7 @@ Agent 直接读取 `.harness/<原路径>/SKILL.md`，并按其中的相对引用
 `update` 读取 `.harness/downloads.json` 的来源和版本并重新下载。需要切换版本时显式指定：
 
 ```bash
-.harness/bin/harness update --path Skills/swe --version tag:v0.2.0
+.harness/bin/harness update --path Skills/swe --version tag:<目标版本>
 ```
 
 更新前会核对所有已记录文件。任一文件被修改、删除或权限改变时，整次更新在写入前失败；新增的本地文件不会被删除，遇到同路径上游文件也会拒绝覆盖。失败后先处理本地修改，或由用户决定保留本地版本。
@@ -124,7 +124,7 @@ Windows 可使用 `Get-Content .harness/downloads.json`。
 
 ## 保存
 
-把整个 `.harness/` 提交到业务项目的 Git 仓库。克隆项目后可直接继续使用原有内容，不需要全局安装。
+提交 `.harness/downloads.json` 和下载后的资源目录。`.harness/bin/` 是按平台重新下载的本地工具目录，`.harness/.lock` 是运行时锁文件，两者都不应提交。克隆项目后，资源记录和内容可直接继续使用，不需要全局安装。
 
 不同操作系统和架构需要各自的工具二进制。切换平台时按本文重新下载对应版本；应用资源和 `downloads.json` 保持原路径。提交、推送和软链接接入遵循业务项目自己的授权。
 
