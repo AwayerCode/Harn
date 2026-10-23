@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"io"
@@ -12,12 +13,22 @@ import (
 
 // Architecture keeps rendering separate from checks: HTML is written to stdout only after validation.
 func Architecture(args []string, out io.Writer) int {
-	if len(args) == 0 {
-		return unavailable(out, errors.New("architecture requires validate, check or render"))
+	mode := ""
+	if len(args) > 0 {
+		mode = args[0]
 	}
-	mode := args[0]
+	fail := func(err error) int {
+		r := architecture.NewReport(mode, Version, nil)
+		r.Digest = "" // No complete design was read.
+		r.Status = "unavailable"
+		r.Diagnostics = append(r.Diagnostics, architecture.Diagnostic{Rule: "architecture.unavailable", Message: err.Error()})
+		return encode(out, r, 2)
+	}
+	if len(args) == 0 {
+		return fail(errors.New("architecture requires validate, check or render"))
+	}
 	if mode != "validate" && mode != "check" && mode != "render" {
-		return unavailable(out, errors.New("unknown architecture mode"))
+		return fail(errors.New("unknown architecture mode"))
 	}
 	f := flag.NewFlagSet("architecture", flag.ContinueOnError)
 	f.SetOutput(io.Discard)
@@ -25,13 +36,13 @@ func Architecture(args []string, out io.Writer) int {
 	file := f.String("file", "", "architecture YAML")
 	profile := f.String("profile", "", "architecture partial design (validate only)")
 	if e := f.Parse(args[1:]); e != nil {
-		return unavailable(out, e)
+		return fail(e)
 	}
 	if *file == "" || f.NArg() != 0 {
-		return unavailable(out, errors.New("architecture requires --file and no positional arguments"))
+		return fail(errors.New("architecture requires --file and no positional arguments"))
 	}
 	if *profile != "" && (*profile != "architecture" || mode != "validate") {
-		return unavailable(out, errors.New("--profile architecture is only valid with validate"))
+		return fail(errors.New("--profile architecture is only valid with validate"))
 	}
 	p := *file
 	if !filepath.IsAbs(p) {
@@ -39,12 +50,12 @@ func Architecture(args []string, out io.Writer) int {
 	}
 	input, e := os.Open(p)
 	if e != nil {
-		return unavailable(out, e)
+		return fail(e)
 	}
 	defer input.Close()
 	data, e := io.ReadAll(io.LimitReader(input, 1024*1024+1))
 	if e != nil {
-		return unavailable(out, e)
+		return fail(e)
 	}
 	r := architecture.NewReport(mode, Version, data)
 	d := architecture.ParseProfile(data, &r, *profile == "architecture")
@@ -62,7 +73,13 @@ func Architecture(args []string, out io.Writer) int {
 		return encode(out, r, 1)
 	}
 	if mode == "render" {
-		if e = architecture.Render(out, d, r); e != nil {
+		var html bytes.Buffer
+		if e = architecture.Render(&html, d, r); e != nil {
+			r.Status = "unavailable"
+			r.Diagnostics = append(r.Diagnostics, architecture.Diagnostic{Rule: "render.unavailable", Message: e.Error()})
+			return encode(out, r, 2)
+		}
+		if _, e = out.Write(html.Bytes()); e != nil {
 			return 2
 		}
 		return 0
