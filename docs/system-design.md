@@ -14,7 +14,7 @@
 
 ### 核心判断
 
-Harn 分为 Agent 层与 Harness 层。Agent 是外部执行主体；Harness 以 Skill 为核心，提供方法、标准与工具。Skill 连接两层，指导 Agent 完成一个独立任务。Harness 内采用 Go CLI + Skill：Skill 承载方法与项目适配，CLI 承担确定性校验，不设置可编程扩展层。
+Harn 是面向 SWE 的 Harness。Agent 是外部执行主体；Harn 通过 Skill 提供专业方法与任务边界，以 YAML 声明模块架构，并用 CLI 校验设计与实现。Harness 内采用 Go CLI + Skill：Skill 承载方法与项目适配，CLI 承担确定性校验，不设置可编程扩展层。
 
 > Skill 定义执行—校验—反馈—修正流程；Agent 执行循环；swe-cli 完成一次确定性校验并返回结果。
 
@@ -42,9 +42,9 @@ Harn 分为 Agent 层与 Harness 层。Agent 是外部执行主体；Harness 以
 
 ## 责任分层
 
-### 两层系统边界
+### Agent 与工具的职责
 
-Agent 层负责理解目标、执行专业判断、修改授权产物、调用工具并确认整体完成。Harness 不自行调用模型。用户或宿主通过项目约定、明确任务指令或原生 Skill 机制使 Agent 读取 SWE 入口；harn 不自动改写业务项目的 AGENTS.md。
+Agent 负责理解目标、执行专业判断、修改授权产物、调用工具并确认整体完成。Harness 不自行调用模型。用户或宿主通过项目约定、明确任务指令或原生 Skill 机制使 Agent 读取 SWE 入口；harn 不自动改写业务项目的 AGENTS.md。
 
 Harness 的中心是 Skill：总入口选择专业方法，共享执行规范承载任务内闭环，专业 workflow 引用它并说明本专业的输入、动作和完成条件。swe-cli 和分发工具围绕该流程服务。
 
@@ -169,7 +169,7 @@ SHA-256 校验下载资产与发行清单的一致性，不防止有写权限者
 
 | 技术项 | 选择 | 理由与取舍 | 决策状态 |
 |---|---|---|---|
-| 系统边界 | Agent / Harness 两层，以 Skill 连接 | 与用户框架一致，不实现 Agent 本体 | 用户已确认 |
+| 系统边界 | 面向 SWE，通过 Skill 指导 Agent，YAML 定义架构，CLI 执行校验 | 不实现 Agent 本体 | 用户已确认 |
 | 当前范围 | 独立任务，循环位于 Skill 内 | 先闭合任务验收，不引入任务编排 | 用户已确认 |
 | 校验与方法 | Go swe-cli + Skill | 核心稳定校验，Skill 与项目配置承担定制，取消 TS 扩展 | 用户已确认 |
 | 分发工具 | 继续 Go harn | 沿用现有能力，与 Go swe-cli 分工协作 | 用户已确认 |
