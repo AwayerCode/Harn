@@ -62,7 +62,7 @@ func run(t *testing.T, runner *Runner, args ...string) (int, string, string) {
 	return code, stdout.String(), stderr.String()
 }
 
-func TestInstallListStatusRemoveFlow(t *testing.T) {
+func TestSearchInstallListFlow(t *testing.T) {
 	t.Parallel()
 	server := newArchiveServer(t, map[string]archiveEntry{
 		"skills/index.json":   {body: `{"schema_version":1,"skills":[{"name":"swe","description":"engineering review"}]}`, mode: 0o644},
@@ -86,7 +86,7 @@ func TestInstallListStatusRemoveFlow(t *testing.T) {
 	if code != 0 || !strings.Contains(stdout, "would download") {
 		t.Fatalf("dry-run failed: %d %q %q", code, stdout, stderr)
 	}
-	if _, err := os.Stat(filepath.Join(project, ".harness")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(project, ".agents")); !os.IsNotExist(err) {
 		t.Fatalf("dry-run wrote state: %v", err)
 	}
 
@@ -100,61 +100,8 @@ func TestInstallListStatusRemoveFlow(t *testing.T) {
 	}
 
 	code, stdout, _ = run(t, runner, "list", "--root", project)
-	if code != 0 || !strings.Contains(stdout, "skills/swe") || !strings.Contains(stdout, "tag:v0.2.0") {
+	if code != 0 || !strings.Contains(stdout, "skills/swe") || strings.Contains(stdout, "tag:v0.2.0") {
 		t.Fatalf("list failed: %d %q", code, stdout)
 	}
 
-	code, stdout, _ = run(t, runner, "status", "--root", project)
-	if code != 0 || !strings.Contains(stdout, "ok skills/swe") {
-		t.Fatalf("status failed: %d %q", code, stdout)
-	}
-
-	target := filepath.Join(project, ".harness", "skills", "swe", "SKILL.md")
-	if err := os.WriteFile(target, []byte("local"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	code, stdout, _ = run(t, runner, "status", "--root", project)
-	if code != 1 || !strings.Contains(stdout, "modified skills/swe") {
-		t.Fatalf("status should report a change: %d %q", code, stdout)
-	}
-
-	code, _, stderr = run(t, runner, "remove", "--path", "skills/swe", "--root", project)
-	if code != 1 || !strings.Contains(stderr, "local changes prevent removal") {
-		t.Fatalf("remove should refuse local changes: %d %q", code, stderr)
-	}
-
-	if err := os.WriteFile(target, []byte("---\nname: swe\ndescription: engineering review\n---\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	code, stdout, stderr = run(t, runner, "remove", "--path", "skills/swe", "--root", project)
-	if code != 0 || !strings.Contains(stdout, "removed skills/swe") {
-		t.Fatalf("remove failed: %d %q %q", code, stdout, stderr)
-	}
-}
-
-func TestUpdateAllDryRun(t *testing.T) {
-	t.Parallel()
-	server := newArchiveServer(t, map[string]archiveEntry{
-		"skills/swe/SKILL.md":   {body: "one", mode: 0o644},
-		"skills/other/SKILL.md": {body: "one", mode: 0o644},
-	})
-	project := t.TempDir()
-	runner := New(Options{Version: "v0.2.0", Client: server.Client()})
-	code, _, stderr := run(t, runner, "install",
-		"--source", server.URL+"/archive.tar.gz",
-		"--version", "tag:v0.2.0",
-		"--path", "skills/swe",
-		"--path", "skills/other",
-		"--root", project)
-	if code != 0 {
-		t.Fatalf("install failed: %s", stderr)
-	}
-
-	code, stdout, stderr := run(t, runner, "update", "--all", "--dry-run", "--root", project)
-	if code != 0 {
-		t.Fatalf("update --all failed: %s", stderr)
-	}
-	if strings.Count(stdout, "unchanged") != 2 {
-		t.Fatalf("expected two unchanged entries: %q", stdout)
-	}
 }

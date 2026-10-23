@@ -1,6 +1,6 @@
 # Harn 协作约定
 
-本仓是 Harn 的完整源码位置：`docs/` 保存系统设计，根目录 `HARN.md` 保存使用指南，`skills/` 保存可版本化的 Agent 能力，`cli/harn/` 保存项目内资源分发工具，测试与构建在本地执行，二进制手动发布到 GitHub Releases。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
+本仓是 Harn 的完整源码位置：`docs/` 保存系统设计，根目录 `README.md` 保存项目介绍、使用指南与 Skill 版本登记规则，`skills/` 保存可版本化的 Agent 能力，`cli/harn/` 保存临时 Skill 分发工具，测试与构建在本地执行，二进制手动发布到 GitHub Releases。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
 
 ## Skill 入口
 
@@ -56,4 +56,4 @@ python3 -B skills/knowledge-doc-guard/scripts/knowledge_lint.py --changed
 git diff --check
 ```
 
-Skill 登记表为 `skills/index.json`。新增、更新或引入 Skill 时同步维护简介、独立版本、时间与来源，规则见 `HARN.md` 的 Skill 版本登记。运行 `(cd cli/harn && go test ./internal/installer -run Catalog)` 检查索引结构与 `SKILL.md` 的目录、名称和简介一致性。
+Skill 登记表为 `skills/index.json`。新增、更新或引入 Skill 时同步维护简介、独立版本、时间与来源，规则见 [README 的 Skill 版本登记](README.md#skill-版本登记)。运行 `(cd cli/harn && go test ./internal/installer -run Catalog)` 检查索引结构与 `SKILL.md` 的目录、名称和简介一致性。
