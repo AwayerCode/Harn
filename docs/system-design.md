@@ -158,12 +158,12 @@ SHA-256 校验下载资产与发行清单的一致性，不防止有写权限者
 | 设计责任 | 代码位置 | 公开入口 | 依赖约束 |
 |---|---|---|---|
 | skill-flow | skills/swe/SKILL.md、references/standards/execution.md、各专业 workflow.md | 现有 SWE 入口 | 单一共享循环；不内嵌机器规则实现 |
-| check-entry | 计划 cli/swe-cli/internal/app/ | swe-cli | 不调用模型、不持有跨任务调度状态 |
-| rules | 计划 cli/swe-cli/internal/checks/ | 核心检查注册接口 | 不依赖安装器；schema 引用唯一来源 |
-| workspace | 计划 cli/swe-cli/internal/workspace/ | workspace.read | 不修改业务文件；仅显式创建基线 |
-| distribution | cli/harn/internal/app/、internal/installer/ | 现有 harn 命令 | 沿用 CLI，新增配套能力不分叉安装器 |
-| delivery-io | cli/harn/internal/source/、internal/installer/ 的文件操作 | release.fetch、install.commit | 校验后安装到空目录，不维护项目记录或锁 |
-| runtime | 计划 cli/swe-cli/main.go 与构建配置 | 二进制 main | 只组装依赖，核心源码不随业务资源展开 |
+| check-entry | 计划 apps/swe-cli/internal/app/ | swe-cli | 不调用模型、不持有跨任务调度状态 |
+| rules | 计划 apps/swe-cli/internal/checks/ | 核心检查注册接口 | 不依赖安装器；schema 引用唯一来源 |
+| workspace | 计划 apps/swe-cli/internal/workspace/ | workspace.read | 不修改业务文件；仅显式创建基线 |
+| distribution | apps/harn/internal/app/、internal/installer/ | 现有 harn 命令 | 沿用 CLI，新增配套能力不分叉安装器 |
+| delivery-io | apps/harn/internal/source/、internal/installer/ 的文件操作 | release.fetch、install.commit | 校验后安装到空目录，不维护项目记录或锁 |
+| runtime | 计划 apps/swe-cli/main.go 与构建配置 | 二进制 main | 只组装依赖，核心源码不随业务资源展开 |
 
 ## 技术选型
 

@@ -22,8 +22,8 @@ CLI 使用登记表搜索，但尚不按这些独立版本解析安装目标，�
 
 ## 开发版配套检查工具
 
-仓库只创建 Harn Release。`cli/harn/scripts/build-release.sh <版本>` 构建六平台 harn，并调用 SWE 打包脚本，将六个 `swe_<系统>_<架构>.tar.gz` 与 harn 一起放入 `cli/harn/dist/`，生成统一 `SHA256SUMS`。SWE CLI 只存在于 Skill 包内部，不发布裸二进制或 `swe-cli-v*` 标签。
+仓库只创建 Harn Release。`apps/harn/scripts/build-release.sh <版本>` 构建六平台 harn，并调用 SWE 打包脚本，将六个 `swe_<系统>_<架构>.tar.gz` 与 harn 一起放入 `apps/harn/dist/`，生成统一 `SHA256SUMS`。SWE CLI 只存在于 Skill 包内部，不发布裸二进制或 `swe-cli-v*` 标签。
 
-`cli/swe-cli/scripts/build-package.sh <版本>` 可独立用于本地打包验收；中间二进制位于其 `dist/bin/`。打包从 SWE 源码复制方法与资源，加入对应平台 CLI，并生成不含下载地址的 `runtime.json`。构建不修改 Skill 源码；完整包发布前不能承诺远端安装可用。
+`apps/swe-cli/scripts/build-package.sh <版本>` 可独立用于本地打包验收；中间二进制位于其 `dist/bin/`。打包从 SWE 源码复制方法与资源，加入对应平台 CLI，并生成不含下载地址的 `runtime.json`。构建不修改 Skill 源码；完整包发布前不能承诺远端安装可用。
 
-跨平台构建不替代实机验收。完整开发验证见[本地验证](AGENTS.md#本地验证)，检查核心的开发说明见 [SWE CLI](cli/swe-cli/README.md)。
+跨平台构建不替代实机验收。完整开发验证见[本地验证](AGENTS.md#本地验证)，检查核心的开发说明见 [SWE CLI](apps/swe-cli/README.md)。

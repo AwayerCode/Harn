@@ -3,6 +3,6 @@ __pycache__/
 *.py[cod]
 *.tgz
 .DS_Store
-cli/harn/dist/
+apps/harn/dist/
 
-cli/swe-cli/dist/
+apps/swe-cli/dist/

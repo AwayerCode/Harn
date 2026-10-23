@@ -81,8 +81,8 @@ modules:
 在本仓库根目录执行，构建六平台完整 Skill 包并选择本机平台：
 
 ```bash
-cli/swe-cli/scripts/build-package.sh
-harn_package="$PWD/cli/swe-cli/dist/swe_$(go env GOOS)_$(go env GOARCH).tar.gz"
+apps/swe-cli/scripts/build-package.sh
+harn_package="$PWD/apps/swe-cli/dist/swe_$(go env GOOS)_$(go env GOARCH).tar.gz"
 harn_demo="$(mktemp -d)"
 mkdir -p "$harn_demo/.agents"
 tar -xzf "$harn_package" -C "$harn_demo/.agents"
@@ -111,17 +111,17 @@ printf 'package payments\n' > src/application/payments/service.go
 
 > 读取 `.agents/skills/swe/SKILL.md`，按当前 `system-design.yaml` 实现订单调用支付的最小示例，并补充测试。修改范围为 `src/`，保持现有架构约束，运行实现检查和 Go 测试，报告结果与未验证项。
 
-接入已有项目时，按 SWE 的系统设计方法建立或修订 YAML，再检查实现。现有设计仍是权威依据，不从代码自动覆盖重建。
+接入已有项目时，使用包内的 [adoption](skills/swe/adoption/SKILL.md) 组织 YAML 建立、修订和检查接入。现有设计仍是权威依据，不从代码自动覆盖重建。
 
 实际业务项目的安装、Windows 使用、版本管理与旧安装迁移见[使用指南](docs/usage.md)。
 
 ## 能力与当前范围
 
-SWE 统一安装，按任务选择业务模型、系统设计、代码实现、测试或发布交付五个领域；它们表示职责与产物边界，不要求顺序执行。
+SWE 统一安装，按任务选择业务模型、系统设计、代码实现、测试或发布交付五个领域；它们表示职责与产物边界，不要求顺序执行。接入、更新和退出由同包的 adoption 组织。
 
 `swe-cli` 提供 YAML 架构、文档、产物关系、目录结构和改动范围检查。当前 YAML 源码依赖检查针对 Go，检查导入关系，不验证函数调用、类型语义或业务行为；Go workspace、replace 等限制见 [YAML 规范](skills/swe/references/system-design/guide.md#依赖与验收语义)。
 
-`harn` 负责查找与分发选定的 Skill，`swe-cli` 随 SWE 包交付。Harn 不接管 Agent 运行时；当前聚焦独立任务，不提供任务调度器，流程类 Skill 暂未建设。
+`harn` 负责查找与分发选定的 Skill，`swe-cli` 随 SWE 包交付。Harn 不接管 Agent 运行时；当前聚焦独立任务，不提供任务调度器，Bug 修复与需求开发等专门流程暂未建设。
 
 ## 文档与贡献
 
