@@ -6,7 +6,7 @@ YAML 是采用本规范的项目在层、模块、目录、必要文件和允许
 
 文件名统一为 `system-design.yaml`。CLI 以 YAML 所在目录为作用域根，`source_root`、层、模块及必要文件均相对此处解析，不能用 `..` 或符号链接越界。`--root` 仅用于发现起点或解析相对 `--file`，不会扩大 YAML 管理范围。Git 根目录仅用于变更范围检查和 Go 模块定位。
 
-`list --root` 递归查找并按路径排序；仅排除 `.git` 元数据，显式 `--file` 也拒绝其中的设计；隐藏目录、`node_modules`、`vendor` 内的设计参与发现和作用域接管。不跟随目录符号链接，不使用 Git ignore 过滤目录。`--file` 指定单份设计；`validate/check --all --root` 逐份检查，任一设计失败仍继续其他设计。`render` 只支持单份。没有发现设计返回退出码 2，不能声称检查通过。
+`list --root` 只发现作用域，递归查找并按路径排序，不解析或校验 YAML 内容；成功不表示设计合法。仅排除 `.git` 元数据，显式 `--file` 也拒绝其中的设计；隐藏目录、`node_modules`、`vendor` 内的设计参与发现和作用域接管。递归遍历不跟随遇到的目录符号链接；显式 `--root` 及 `--file` 的父目录会先解析到真实目录，报告使用真实路径。YAML 文件本身仍须是普通文件，不能是符号链接；源码路径仍禁止通过符号链接越界。不使用 Git ignore 过滤目录。`--file` 指定单份设计；`validate/check --all --root` 逐份检查，任一设计失败仍继续其他设计。`render` 只支持单份。没有发现设计返回退出码 2，不能声称检查通过。
 
 每份设计接管自己所在目录及子目录，遇到下级 `system-design.yaml` 则交由子设计负责，父级报告列出 `excluded_scopes`。父级不得声明位于子作用域内的源码根、层、模块或必要文件；父模块下面可以包含独立子作用域，其子树不计入父模块。子 YAML 内容错误也不会使父级重新接管，批量检查会报告子设计错误。单份检查不会验证被排除子设计的内容。
 
@@ -21,7 +21,7 @@ swe-cli system-design check --root /absolute/repo --all
 swe-cli system-design check --file /absolute/repo/apps/api/system-design.yaml
 ```
 
-单份结果格式为 `swe-system-design-v1`，含 `scope.file`、`scope.root`、`scope.excluded_scopes`；列表和批量结果为 `swe-system-design-batch-v1`，含 `scopes` 与逐份 `results`。批量退出码优先级为无法检查 2、违规 1、全部通过 0。无法发现或命令参数错误使用单份错误报告。批量结果不能只读取最后一份状态。
+单份结果格式为 `swe-system-design-v1`，含 `scope.file`、`scope.root`、`scope.excluded_scopes`；列表和批量结果为 `swe-system-design-batch-v1`，其中 `scopes` 列出作用域，`list` 的 `results` 固定为空数组；`validate/check --all` 的 `results` 与 `scopes` 数量、顺序及作用域身份一一对应，失败报告也占对应位置。批量退出码优先级为无法检查 2、违规 1、全部通过 0。无法发现或命令参数错误使用单份错误报告。批量结果不能只读取最后一份状态。
 
 ## 数据与文件结构
 
