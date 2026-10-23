@@ -14,8 +14,8 @@
     {
       "name": "diagram-design",
       "description": "Create branded architecture, architecture delta, IT current-state, flowchart, sequence, state machine, ER/data model, timeline, swimlane, quadrant, radar/spider, polar chart (polar/radial lollipop), loop/flywheel, nested, tree, org chart, layer stack, exploded axonometric, axonometric plan, Venn, pyramid/funnel, treemap and marimekko, heatmap, bar and dumbbell, waterfall, line (slopegraph, ridgeline, streamgraph, bump), Gantt and scatter charts (bubble, beeswarm), high-level, process, medallion, data flow, DP integration, DP security matrix, Sankey, fishbone, Wardley map, kanban, user journey, service blueprint, deployment, dependency graph, UML class, story map, or database schema diagrams as HTML/SVG/PNG, with .drawio, Mermaid, and .excalidraw import, plus lifecycle phase maps, block decomposition trees, and onboarding guidance.",
-      "version": "0.1.0",
-      "updated_at": "2026-10-20T13:48:31Z",
+      "version": "0.1.1",
+      "updated_at": "2026-10-23T17:55:51+08:00",
       "source": {
         "repository": "https://github.com/cathrynlavery/diagram-design",
         "path": "skills/diagram-design"
@@ -44,8 +44,8 @@
     {
       "name": "swe",
       "description": "提供业务模型、系统设计、代码实现、测试与发布交付五个领域能力，包含项目接入、更新和退出能力，统一共享规范、Schema 和 CLI，按任务选用。",
-      "version": "2.2.1",
-      "updated_at": "2026-10-23T17:41:38+08:00",
+      "version": "2.2.2",
+      "updated_at": "2026-10-23T17:55:51+08:00",
       "source": {
         "repository": null,
         "path": null

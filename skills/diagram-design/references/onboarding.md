@@ -95,7 +95,7 @@ Prefer CSS custom properties when the site exposes them (`:root { --accent: …;
 Read the rendered `font-family` stack of:
 
 - `<h1>` → `title` family
-- `<body>` → `node-name` family  
+- `<body>` → `node-name` family
 - `<code>`, `<pre>`, or any mono-styled element → `sublabel` family
 
 If the site has only one family, keep the schematic defaults for the missing roles (Instrument Serif for title, Geist Mono for mono). Don't force-pick a mono font that isn't on the site.

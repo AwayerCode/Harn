@@ -30,6 +30,15 @@ func verifyBinding(executable string) error {
 	}
 	data, e := os.ReadFile(filepath.Join(filepath.Dir(filepath.Dir(executable)), "runtime.json"))
 	if os.IsNotExist(e) {
+		root := filepath.Dir(filepath.Dir(executable))
+		_, entryErr := os.Lstat(filepath.Join(root, "SKILL.md"))
+		installed := filepath.Base(filepath.Dir(root)) == "skills" && filepath.Base(filepath.Dir(filepath.Dir(root))) == ".agents"
+		if entryErr == nil || installed {
+			return fmt.Errorf("missing companion runtime.json in %s; reinstall the complete Skill package", root)
+		}
+		if !os.IsNotExist(entryErr) {
+			return entryErr
+		}
 		return nil
 	}
 	if e != nil {

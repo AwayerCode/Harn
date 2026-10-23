@@ -43,7 +43,7 @@ SWE 使用包含 CLI 的平台 Skill 包。以下示例的 `vX.Y.Z` 需替换为
 
 harn 只下载所选 Skill 归档，将包内文件原样安装，不解释 `runtime.json` 或额外下载 CLI。SWE 包已经包含本平台 `bin/swe-cli` 和打包生成的本地摘要清单；CLI 启动时核对自身版本和摘要。安装前可用发行页 `SHA256SUMS` 验证整个包，选择正确平台。版本支持 `tag:<标签>`、`commit:<SHA>` 和 `branch:<分支>`；需要可复现安装时使用固定标签或 commit。
 
-`--dry-run` 会下载、检查 Skill 包结构，但不写业务项目。来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选 Skill 目录。
+`--dry-run` 会下载、检查 Skill 包结构，但不写业务项目。来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选 Skill 目录。下载上限为 128 MiB，整个解压流（含未选中内容、元数据与尾部填充）上限为 512 MiB，归档条目最多 100000 个；选中文件单个最多 32 MiB。安装前会完整读取 gzip 流并校验尾部，损坏或超限的包不会进入项目安装阶段。
 
 ## 项目接入
 
@@ -104,9 +104,11 @@ harn 不再提供 `update`、`status`、`remove`。没有持久记录，就不�
 3. 确认 Skill 和配套 CLI 可用后，移入需保留的自有内容并更新旧路径引用。
 4. 确认旧目录无独有数据后，由项目维护者清理 `.harness/` 及其旧忽略规则。
 
-## 五个领域与共享配套
+## 接入、五个领域与共享配套
 
 SWE 统一安装 `skills/swe`，内部包含 `business-model/`、`system-design/`、`implementation/`、`testing/`、`delivery/` 五个领域入口。它们代表责任与改动范围，不代表执行顺序。顶层入口按任务加载内部 Skill，不依赖宿主发现嵌套目录。旧设计／实现／Review 和交互目录已删除，有效专业方法已迁入新领域。
+
+[adoption](../skills/swe/adoption/SKILL.md) 是同包内的项目接入能力，负责已有项目 YAML 的建立与修订组织，以及更新和退出；它按需使用五个领域，不独立安装或登记版本。退出先解除检查入口和指引引用，默认保留项目设计、代码与测试。
 
 安装时只传入 `--path skills/swe`，使用包含新结构的 commit 或后续标签。五个领域不单独安装、更新或登记版本；`skills/index.json` 只登记一个 SWE 版本。此前试用的同级 `swe-*` 领域包应在核对并保留本地修改后移除，避免旧入口继续被发现。
 

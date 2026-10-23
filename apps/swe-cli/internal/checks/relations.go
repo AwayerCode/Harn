@@ -351,6 +351,10 @@ func Artifacts(kind, file, protocol string, schemas map[string]Schema, read Read
 				continue
 			}
 			for _, row := range t.Rows {
+				if len(row) != len(t.Head) {
+					r.Errors = append(r.Errors, "用户操作表格列数错误")
+					continue
+				}
 				ability, label := row[1], row[0]
 				before := len(r.Errors)
 				refs := references(ability, "协议", label, &r.Errors)
