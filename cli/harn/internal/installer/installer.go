@@ -77,9 +77,6 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 		if skill.Name != path.Base(target) {
 			return nil, fmt.Errorf("Skill name %q does not match directory %q", skill.Name, target)
 		}
-		if err := m.stageRuntime(ctx, content, target); err != nil {
-			return nil, fmt.Errorf("prepare companion for %q: %w", target, err)
-		}
 		files := 0
 		if err := filepath.WalkDir(root, func(name string, entry fs.DirEntry, err error) error {
 			if err != nil {

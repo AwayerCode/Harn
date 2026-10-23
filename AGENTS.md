@@ -30,10 +30,10 @@ cli/harn/scripts/build-release.sh
 find cli/swe-cli -name '*.go' -type f -print0 | xargs -0 gofmt -l
 (cd cli/swe-cli && go test -race ./...)
 (cd cli/swe-cli && go vet ./...)
-cli/swe-cli/scripts/build-release.sh
+cli/swe-cli/scripts/build-package.sh
 ```
 
-`gofmt -l` 应无输出。构建产物位于 `cli/harn/dist/` 和 `cli/swe-cli/dist/`，不提交。交叉编译不代替 Windows 实际运行验证；在 Windows 上分别进入 `cli/harn` 和 `cli/swe-cli` 执行 `go test -race ./...` 和 `go vet ./...`。
+`gofmt -l` 应无输出。构建产物位于 `cli/harn/dist/` 和 `cli/swe-cli/dist/`，不提交。仓库只发布 Harn：其发行目录含 harn 二进制、六平台完整 SWE Skill 包与统一摘要；swe-cli 仅作为 Skill 包内文件，不单独发布。交叉编译不代替 Windows 实际运行验证；在 Windows 上分别进入 `cli/harn` 和 `cli/swe-cli` 执行 `go test -race ./...` 和 `go vet ./...`。
 
 修改 Skill 时，按涉及范围运行：
 
@@ -46,7 +46,7 @@ cli/swe-cli/scripts/build-release.sh
 ```bash
 sh -n install.sh
 bash -n cli/harn/scripts/build-release.sh
-bash -n cli/swe-cli/scripts/build-release.sh
+bash -n cli/swe-cli/scripts/build-package.sh
 ```
 
 修改文档后运行：
