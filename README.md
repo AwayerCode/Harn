@@ -34,7 +34,7 @@ SWE 采用 Go CLI + Skill 的演进方案：稳定校验放入 Go 独立可执�
 
 开发版增加可选的 [YAML 模块架构](skills/swe/references/system-design/guide.md)：以层目录和模块目录落实设计，校验 Go 模块依赖并生成只读 HTML；需要新版配套检查器，尚待发布。
 
-本阶段聚焦独立任务：领域 Skill 按范围执行与检查，Agent 负责专业判断，swe-cli 提供单次确定性校验；流程类 Skill 暂不建设。目标架构、模块边界及迁移安排见[系统设计](docs/system-design.md)，数据与失败语义见[接口协议](docs/interface-protocol.md)；两份文档描述待实施方案。
+本阶段聚焦独立任务：领域 Skill 按范围执行与检查，Agent 负责专业判断，swe-cli 提供单次确定性校验；接入、更新和退出由包内 adoption 组织，Bug 修复和需求开发等流程暂不建设。目标架构、模块边界及迁移安排见[系统设计](docs/system-design.md)，数据与失败语义见[接口协议](docs/interface-protocol.md)；两份文档描述待实施方案。
 
 ## 使用指南
 
@@ -157,9 +157,11 @@ CLI 使用登记表搜索，但尚不按这些独立版本解析安装目标，�
 
 `cli/swe-cli/scripts/build-package.sh <版本>` 可独立用于本地打包验收；中间二进制位于其 `dist/bin/`。打包从 SWE 源码复制方法与资源，加入对应平台 CLI，并生成不含下载地址的 `runtime.json`。构建不修改 Skill 源码；完整包发布前不能承诺远端安装可用。
 
-## 五个领域与共享配套
+## 接入、五个领域与共享配套
 
 SWE 统一安装 `skills/swe`，内部包含 `business-model/`、`system-design/`、`implementation/`、`testing/`、`delivery/` 五个领域入口。它们代表责任与改动范围，不代表执行顺序。顶层入口按任务加载内部 Skill，不依赖宿主发现嵌套目录。旧设计／实现／Review 和交互目录已删除，有效专业方法已迁入新领域。
+
+[adoption](skills/swe/adoption/SKILL.md) 是同包内的项目接入能力，组织已有项目 YAML 的建立与修订，以及更新和退出；按需使用五个领域，统一安装和版本。退出先解除接线，保留原版工具完成验证，默认保留项目设计、代码与测试。
 
 安装时只传入 `--path skills/swe`，使用包含新结构的 commit 或后续标签。五个领域不单独安装、更新或登记版本；`skills/index.json` 只登记一个 SWE 版本。此前试用的同级 `swe-*` 领域包应移除，避免旧入口继续被发现。
 

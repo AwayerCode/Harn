@@ -27,6 +27,8 @@ func TestPlatformPackagesContainCompleteSkillAndLocalCLI(t *testing.T) {
 	}
 	write(filepath.Join(skill, "SKILL.md"), "---\nname: swe\ndescription: test\n---\n")
 	write(filepath.Join(skill, "testing", "SKILL.md"), "testing entry")
+	write(filepath.Join(skill, "adoption", "SKILL.md"), "adoption entry")
+	write(filepath.Join(skill, "adoption", "references", "lifecycle.md"), "lifecycle")
 	write(filepath.Join(skill, "references", "rule.md"), "rule")
 	write(filepath.Join(skill, "runtime.json"), `{"url":"https://old-release.invalid"}`)
 	write(filepath.Join(skill, "bin", "stale"), "must not ship")
@@ -78,7 +80,7 @@ func TestPlatformPackagesContainCompleteSkillAndLocalCLI(t *testing.T) {
 			if string(files[executable]) != "binary "+platform || modes[executable]&0111 == 0 {
 				t.Fatal("missing executable or mode")
 			}
-			if len(files) != 5 || string(files["skills/swe/testing/SKILL.md"]) != "testing entry" || string(files["skills/swe/references/rule.md"]) != "rule" {
+			if len(files) != 7 || string(files["skills/swe/adoption/SKILL.md"]) != "adoption entry" || string(files["skills/swe/adoption/references/lifecycle.md"]) != "lifecycle" || string(files["skills/swe/testing/SKILL.md"]) != "testing entry" || string(files["skills/swe/references/rule.md"]) != "rule" {
 				t.Fatalf("incomplete package: %v", files)
 			}
 			var binding struct {

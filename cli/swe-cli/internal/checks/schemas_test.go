@@ -95,8 +95,16 @@ func TestSkillLinksResolve(t *testing.T) {
 func TestUnifiedSWERuntimeAndEntries(t *testing.T) {
 	root := "../../../../skills/swe"
 	entries, err := filepath.Glob(filepath.Join(root, "*", "SKILL.md"))
-	if err != nil || len(entries) != 5 {
-		t.Fatalf("expected five domain entries, got %v: %v", entries, err)
+	if err != nil || len(entries) != 6 {
+		t.Fatalf("expected five domains and adoption, got %v: %v", entries, err)
+	}
+	want := []string{"adoption", "business-model", "delivery", "implementation", "system-design", "testing"}
+	var got []string
+	for _, entry := range entries {
+		got = append(got, filepath.Base(filepath.Dir(entry)))
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("unexpected package entries: %v", got)
 	}
 	runtimes := []string{}
 	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
