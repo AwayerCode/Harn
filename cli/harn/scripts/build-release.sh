@@ -36,6 +36,16 @@ for target in "${targets[@]}"; do
   assets+=("$asset")
 done
 
+# One Harn release carries the installer and complete platform Skill packages.
+package_stage="$(mktemp -d)"
+trap 'rm -rf "$package_stage"' EXIT
+DIST_DIR="$package_stage" "$root/../swe-cli/scripts/build-package.sh" "$version"
+for target in "${targets[@]}"; do
+  package="swe_${target%/*}_${target#*/}.tar.gz"
+  cp "$package_stage/$package" "$dist/$package"
+  assets+=("$package")
+done
+
 (
   cd "$dist"
   if command -v sha256sum >/dev/null 2>&1; then

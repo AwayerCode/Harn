@@ -30,7 +30,7 @@ Skill 定义方法与流程，工具提供可执行的检查和反馈。校验�
 
 SWE 采用 Go CLI + Skill 的演进方案：稳定校验放入 Go 独立可执行文件 `swe-cli`，方法、流程与项目适配由 Skill、项目约定和配置承担。项目已有测试、lint 和构建由 Agent 按 Skill 调用，不设置 TS 扩展层。改进方法不能顺带降低验收标准。
 
-当前仓库包含 Skills、Go 分发工具 `harn` 和 Go swe-cli 检查核心；knowledge-doc-guard 独立使用 Python 检查。现有 SWE 检查已迁入 Go，harn 已支持按清单安装配套工具；发行资产及跨平台运行验收需另行完成，目标方案以系统设计和接口协议为准；任务分发调度器不在本阶段范围。
+当前仓库包含 Skills、Go 分发工具 `harn` 和 Go swe-cli 检查核心；knowledge-doc-guard 独立使用 Python 检查。现有 SWE 检查已迁入 Go，harn 已支持安装内含 CLI 的完整 Skill 包；发行资产及跨平台运行验收需另行完成，目标方案以系统设计和接口协议为准；任务分发调度器不在本阶段范围。
 
 开发版增加可选的 [YAML 模块架构](skills/swe/references/architecture/guide.md)：以层目录和模块目录落实设计，校验 Go 模块依赖并生成只读 HTML；需要新版配套检查器，尚待发布。
 
@@ -61,17 +61,18 @@ curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | s
 
 ## 安装 Skill
 
-以下示例固定使用历史 SWE 资源 `v0.2.2`；安装新领域结构须选择包含该结构且配套 CLI 资产已发布的 commit 或标签：
+SWE 使用包含 CLI 的平台 Skill 包。以下示例的 `vX.Y.Z` 需替换为实际 Harn 发行标签，平台名按本机选择；新打包方式尚未发布：
 
 ```bash
-/tmp/harn install --source https://github.com/AwayerCode/Harn --version tag:v0.2.2 --path skills/swe
+/tmp/harn install --source https://github.com/AwayerCode/Harn/releases/download/vX.Y.Z/swe_darwin_arm64.tar.gz --version tag:vX.Y.Z --path skills/swe
 ```
 
+无需 CLI 的 Skill 仍可从仓库标签或 commit 安装。SWE 源码目录不包含构建产物，直接安装源码归档不会自动获得 CLI；应选择完整平台包。
 安装只接受 `skills/<名称>` 目录，历史路径 `Skills/<名称>` 也映射到 `.agents/skills/<名称>/`。入口必须是具有名称与简介的 `SKILL.md`，名称须与目录一致；不再分发普通文件或整个仓库。可重复 `--path` 选择多个 Skill。
 
-配套 `runtime.json` 存在时，harn 按其中固定的版本与平台下载 CLI，校验 SHA256 后一并安装到 Skill 的 `bin/`。缺少平台资产或摘要不符会终止安装。版本支持 `tag:<标签>`、`commit:<SHA>` 和 `branch:<分支>`；需要可复现安装时使用固定标签或 commit。
+harn 只下载所选 Skill 归档，将包内文件原样安装，不解释 `runtime.json` 或额外下载 CLI。SWE 包已经包含本平台 `bin/swe-cli` 和打包生成的本地摘要清单；CLI 启动时核对自身版本和摘要。安装前可用发行页 `SHA256SUMS` 验证整个包，选择正确平台。版本支持 `tag:<标签>`、`commit:<SHA>` 和 `branch:<分支>`；需要可复现安装时使用固定标签或 commit。
 
-`--dry-run` 会下载、检查 Skill 和配套资产，但不写业务项目。来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选 Skill 目录。
+`--dry-run` 会下载、检查 Skill 包结构，但不写业务项目。来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选 Skill 目录。
 
 ## 项目接入
 
@@ -91,17 +92,18 @@ curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | s
   bin/swe-cli
 ```
 
-Skill 文本和发行清单可随项目保存，平台二进制由 `.gitignore` 排除：
+Skill 文本可随项目保存；本平台二进制及随包生成的本地摘要清单由 `.gitignore` 排除：
 
 ```gitignore
 .agents/skills/swe/bin/
+.agents/skills/swe/runtime.json
 ```
 
 ```bash
 git add .agents/skills/swe
 ```
 
-配套 CLI 跟随 Skill 使用和替换。跨平台克隆后，二进制补装目前需先向临时项目安装相同修订，再核对 `runtime.json` 并复制对应 `bin/`；没有专用修复命令。
+配套 CLI 跟随 Skill 使用和替换。跨平台克隆后，二进制补装目前需先向临时项目安装相同修订，对比 Skill 文本后，将该平台 `bin/` 与 `runtime.json` 一起复制；没有专用修复命令。
 
 ## 查找与查看
 
@@ -120,7 +122,7 @@ harn 不再提供 `update`、`status`、`remove`。没有持久记录，就不�
 
 `install` 遇到已有目标目录一律拒绝覆盖。换版时先向另一临时项目安装指定版本，对比现有 Skill、保留本地修改，再显式替换整个 Skill 目录。移除时先核对并备份自有内容，再删除该 Skill 目录；配套 CLI 随之移除。项目 Git 负责历史与差异追踪。
 
-安装先暂存并校验全部所选 Skill，再独占创建各目标目录，完整复制资源和 CLI 后发布顶层 `SKILL.md`。普通错误会清理本次创建的目录，不覆盖并发安装者的目录。没有持久事务日志或崩溃自动恢复；异常终止留下的不完整目录需人工核对清理后重装。不要在安装期间编辑目标目录或运行尚未完成的 Skill。
+安装先暂存并检查全部所选 Skill 入口，再独占创建各目标目录，完整复制资源和 CLI 后发布顶层 `SKILL.md`。普通错误会清理本次创建的目录，不覆盖并发安装者的目录。没有持久事务日志或崩溃自动恢复；异常终止留下的不完整目录需人工核对清理后重装。不要在安装期间编辑目标目录或运行尚未完成的 Skill。
 
 ## 旧安装迁移
 
@@ -151,9 +153,9 @@ CLI 使用登记表搜索，但尚不按这些独立版本解析安装目标，�
 
 ## 开发版配套检查工具
 
-当前源码中的 harn 支持 Skill 的 runtime.json：安装 SWE 时下载清单固定版本的 swe-cli，验证 SHA256 后与资源一起写入 Skill 的 bin 目录。该能力尚未包含在 harn v0.2.2 中；当前绑定的 SWE CLI 0.4.0-alpha.1 也需单独发布。发布前按 CLI README 构建并本地验收，不能使用旧工具解释新清单。
+仓库只创建 Harn Release。`cli/harn/scripts/build-release.sh <版本>` 构建六平台 harn，并调用 SWE 打包脚本，将六个 `swe_<系统>_<架构>.tar.gz` 与 harn 一起放入 `cli/harn/dist/`，生成统一 `SHA256SUMS`。SWE CLI 只存在于 Skill 包内部，不发布裸二进制或 `swe-cli-v*` 标签。
 
-业务项目应忽略 `.agents/skills/swe/bin/` 中的平台二进制。跨平台补装与专用修复命令尚未完成；不要把某个平台的二进制提交为通用资源。
+`cli/swe-cli/scripts/build-package.sh <版本>` 可独立用于本地打包验收；中间二进制位于其 `dist/bin/`。打包从 SWE 源码复制方法与资源，加入对应平台 CLI，并生成不含下载地址的 `runtime.json`。构建不修改 Skill 源码；完整包发布前不能承诺远端安装可用。
 
 ## 五个领域与共享配套
 
@@ -161,7 +163,7 @@ SWE 统一安装 `skills/swe`，内部包含 `business-model/`、`system-design/
 
 安装时只传入 `--path skills/swe`，使用包含新结构的 commit 或后续标签。五个领域不单独安装、更新或登记版本；`skills/index.json` 只登记一个 SWE 版本。此前试用的同级 `swe-*` 领域包应移除，避免旧入口继续被发现。
 
-共享规则、Schema 和唯一的 `runtime.json` 位于包内，五个领域共用 `bin/swe-cli`。各领域的 `contract.json` 仅描述包内 Schema 引用，由测试检查完整性，不控制安装与权限。配套 CLI 发行资产尚未发布，开发环境可使用本仓构建产物。
+共享规则、Schema 和唯一的 `runtime.json` 位于包内，五个领域共用 `bin/swe-cli`。各领域的 `contract.json` 仅描述包内 Schema 引用，由测试检查完整性，不控制安装与权限。完整平台 Skill 包随 Harn 发布，开发环境可使用本仓打包产物。
 
 领域负责专业判断与产物边界，CLI 检查已编码规则，项目测试与运行工具提供行为证据。文件范围检查不替代共享文件内部条目的差异复核。
 

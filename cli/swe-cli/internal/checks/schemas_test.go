@@ -114,8 +114,8 @@ func TestUnifiedSWERuntimeAndEntries(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(runtimes, []string{filepath.Join(root, "runtime.json")}) {
-		t.Fatalf("expected one root runtime binding: %v", runtimes)
+	if len(runtimes) != 0 {
+		t.Fatalf("runtime bindings are generated only inside platform Skill packages, found in source: %v", runtimes)
 	}
 }
 

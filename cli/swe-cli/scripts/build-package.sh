@@ -2,12 +2,12 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-version="${1:-$(git -C "$root" describe --tags --always --dirty 2>/dev/null || printf 'dev')}"
+version="${1:-$(git -C "$root" describe --tags --match 'v[0-9]*' --always --dirty 2>/dev/null || printf 'dev')}"
 dist="${DIST_DIR:-$root/dist}"
 mkdir -p "$dist"
 dist="$(cd "$dist" && pwd)"
 
-(cd "$root" && go generate ./...)
+mkdir -p "$dist/bin"
 
 targets=(
   "linux/amd64"
@@ -17,7 +17,6 @@ targets=(
   "windows/amd64"
   "windows/arm64"
 )
-assets=()
 
 for target in "${targets[@]}"; do
   goos="${target%/*}"
@@ -32,19 +31,14 @@ for target in "${targets[@]}"; do
     CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build \
       -trimpath \
       -ldflags "-s -w -X github.com/AwayerCode/Harn/cli/swe-cli/internal/app.Version=${version}" \
-      -o "$dist/$asset" \
+      -o "$dist/bin/$asset" \
       .
   )
-  assets+=("$asset")
 done
 
 (
-  cd "$dist"
-  if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum "${assets[@]}" >SHA256SUMS
-  else
-    shasum -a 256 "${assets[@]}" >SHA256SUMS
-  fi
+  cd "$root"
+  go run ./internal/skillpackage --version "$version" --dist "$dist/bin" --out "$dist" --root ../..
 )
 
-printf 'built SWE CLI %s in %s\n' "$version" "$dist"
+printf 'built complete SWE Skill packages %s in %s\n' "$version" "$dist"

@@ -68,8 +68,7 @@ swe-cli scope readonly --root /absolute/project
 go generate ./...
 go test -race ./...
 go vet ./...
-scripts/build-release.sh 0.4.0-alpha.1
-go run ./internal/genbinding --version 0.4.0-alpha.1 --dist dist --root ../..
+scripts/build-package.sh vX.Y.Z
 ```
 
 schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入二进制；测试检查来源一致性、模块契约引用和 Skill 链接。生成文件不可手改。
@@ -78,8 +77,12 @@ schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入
 
 ## 配套分发
 
-构建输出 macOS、Linux、Windows 的 amd64/arm64 二进制及 SHA256SUMS。genbinding 将确切发行版本与六平台摘要写入 SWE 的 runtime.json。上传发行物时必须使用生成清单所对应的原始二进制，重新构建后需重新生成清单。
+SWE 不单独发布 CLI。`scripts/build-package.sh <版本>` 构建 macOS、Linux、Windows 的 amd64/arm64 CLI，在 `dist/` 生成六个完整 `swe_<系统>_<架构>.tar.gz` 与包摘要；`dist/bin/` 是不发布的中间产物。版本参数与编入 CLI 的版本一致。
 
-支持配套清单的 harn 将工具暂存于所选 Skill 的 bin 目录，摘要通过后与资源一起提交；缺平台、下载或摘要失败不启用新资源。已有目标目录拒绝覆盖；换版先安装到临时项目并对比，再显式替换整个 Skill。harn 不维护下载记录，也不提供 update、status、remove。CLI 在 bin 目录运行时核对旁边清单的版本与自身摘要。
+每个压缩包包含完整 `skills/swe/`、本平台 `bin/swe-cli`（Windows 为 `.exe`）和生成的 `runtime.json`。清单包含 schema_version、工具名称、版本和本平台 SHA256，不包含 URL；源目录不保存生成清单。各领域共用包根的 CLI，打包不修改源码或自动执行 go generate。
 
-当前清单绑定 0.4.0-alpha.1，尚需单独发布对应资产；旧 0.2.0-alpha.1 不包含这些检查。发布前可在本地使用构建产物验收，不应将未发布清单推送给业务项目使用。分发不提供持久事务恢复或安装读锁；配套补装可从相同修订的临时安装复制，专用修复命令尚未提供。最低系统版本验收仍待完成。六平台构建不等于跨平台运行验证，当前实际运行覆盖 macOS arm64。
+仓库仅创建 Harn Release。`../harn/scripts/build-release.sh <版本>` 统一构建 harn 与上述 Skill 包，将 harn 二进制、六个平台 Skill 包及统一 SHA256SUMS 写入 Harn 发行目录。上传这些资源，不另建 swe-cli Release，也不上传裸 swe-cli 二进制。重新构建必须使用配套生成的新包和摘要。
+
+harn 只下载并安装 Skill 包，不解析运行时清单或发起 CLI 下载。CLI 从 Skill 的 bin 目录启动时按包内清单核对版本和自身摘要；选择错误平台的包无法运行。已有目录拒绝覆盖，换版先安装到临时项目并对比，再显式替换。
+
+包内容与安装行为已有本地测试；远端安装需先发布 Harn 及完整包。六平台构建不等于实机运行验证，当前实际运行覆盖 macOS arm64；最低系统版本仍需发行验收。
