@@ -8,7 +8,7 @@
 
 `runtime.json` 只在 `swe` 根目录中维护，固定六平台 `swe-cli` 摘要；二进制位于 `<共享SWE目录>/bin/swe-cli`，Windows 使用 `.exe`。各领域不各自复制二进制、Schema 或共享规则。缺失包内资源、工具或绑定不一致时明确无法检查，先按项目安装方式补齐，不切换旧脚本。进行中的范围基线继续使用创建它的工具，不通过升级重建基线掩盖改动。
 
-当前开发版配套工具为 `0.4.0-alpha.1`，发行资产尚未发布；源码开发可用本仓构建产物，不能承诺远端安装已可用。各领域 `contract.json` 的包内资源与 Schema 引用用于验证完整性，不是独立安装清单。
+当前开发版配套工具为 `0.4.0-alpha.2`，发行资产尚未发布；源码开发可用本仓构建产物，不能承诺远端安装已可用。各领域 `contract.json` 的包内资源与 Schema 引用用于验证完整性，不是独立安装清单。
 
 ## 选择检查
 
@@ -58,6 +58,6 @@
 
 `allow-file` 或 `allow-dir` 可重复，不能通过扩大原基线消除违规。范围检查需要 Git，包含跟踪与非忽略文件和子模块，显式可写范围还覆盖其忽略文件；不初始化或拉取子模块，不允许父仓范围跨入子模块。
 
-退出码 0 表示本次覆盖通过，1 表示违规，2 表示无法检查。`documents/design/artifacts/structure` 可由 JSON 协议版本 2 的 `check --request` 调用，结果在 `results` 中包含 `status`、`diagnostics`、`evidence`、`coverage` 与 `unverified`。输入观察不是原子快照。
+退出码 0 表示本次覆盖通过，1 表示违规，2 表示无法检查。`documents/design/artifacts/structure` 可由 JSON 协议版本 2 的 `check --request` 调用，结果数组为 `checks`，每项包含 `status`、`diagnostics`、`evidence` 和 `coverage`，`unverified` 为可选字段。输入观察不是原子快照。
 
-`architecture` 是独立入口，使用 `swe-architecture-v1` 结果，包含设计摘要、诊断、观察依赖和覆盖边界；它没有旧请求的输入稳定性复核，应在静止工作区运行。`render` 成功输出 HTML，失败输出 JSON，必须同时检查退出码。`scope` 也使用独立格式。不要按一套 JSON 字段解析全部命令，不把工具成功扩大为语义、行为或部署完成。
+`architecture` 是独立入口，正常检查及参数、文件读取等失败均使用 `swe-architecture-v1` 结果，包含设计摘要、诊断、观察依赖和覆盖边界；它没有旧请求的输入稳定性复核，应在静止工作区运行。`render` 成功输出 HTML，检查或生成失败输出同一架构 JSON；输出通道自身不可写时只能以退出码 2 报告，不能保证诊断可送达。必须同时检查退出码。未能完整读取设计时 `design_sha256` 为空。`scope` 也使用独立格式。不要按一套 JSON 字段解析全部命令，不把工具成功扩大为语义、行为或部署完成。
