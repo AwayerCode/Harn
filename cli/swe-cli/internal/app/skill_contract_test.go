@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -73,6 +74,9 @@ func TestSkillCommandContracts(t *testing.T) {
 				return
 			}
 			if args[0] == "system-design" {
+				if string(result["format"]) == `"swe-system-design-batch-v1"` {
+					assertBatchResultContract(t, out.Bytes(), args[1])
+				}
 				if (string(result["format"]) != `"swe-system-design-v1"` && string(result["format"]) != `"swe-system-design-batch-v1"`) || string(result["status"]) != `"passed"` {
 					t.Fatal(out.String())
 				}
@@ -117,6 +121,116 @@ func TestArchitectureUnavailableContract(t *testing.T) {
 		}
 		if code != 2 || r.Format != "swe-system-design-v1" || r.Status != "unavailable" || r.Digest != "" || len(r.Diagnostics) == 0 {
 			t.Fatalf("%v: %d %s", args, code, &out)
+		}
+	}
+}
+
+func assertBatchResultContract(t *testing.T, data []byte, mode string) designBatch {
+	t.Helper()
+	var batch designBatch
+	if err := json.Unmarshal(data, &batch); err != nil {
+		t.Fatal(err)
+	}
+	if batch.Format != "swe-system-design-batch-v1" || batch.Mode != mode {
+		t.Fatalf("unexpected batch: %s", data)
+	}
+	if batch.Scopes == nil || batch.Results == nil {
+		t.Fatalf("arrays must not be absent or null: %s", data)
+	}
+	if mode == "list" {
+		if len(batch.Results) != 0 {
+			t.Fatalf("list must not include validation reports: %s", data)
+		}
+		return batch
+	}
+	if len(batch.Results) != len(batch.Scopes) {
+		t.Fatalf("scope/report count differs: %s", data)
+	}
+	seen := map[string]bool{}
+	for i, s := range batch.Scopes {
+		if seen[s.File] {
+			t.Fatalf("duplicate scope: %s", s.File)
+		}
+		seen[s.File] = true
+		r := batch.Results[i]
+		if r.Scope == nil || !reflect.DeepEqual(s, *r.Scope) || r.Mode != mode || r.Format != "swe-system-design-v1" {
+			t.Fatalf("scope/report identity or order differs at %d: %s", i, data)
+		}
+	}
+	return batch
+}
+
+func TestListDoesNotValidateAndBatchIncludesFailures(t *testing.T) {
+	t.Setenv("GOWORK", "off")
+	root := t.TempDir()
+	for _, name := range []string{"a-invalid", "b-unavailable", "c-valid"} {
+		scopeProject(t, filepath.Join(root, name), "example.com/"+name)
+	}
+	write(t, filepath.Join(root, "a-invalid/system-design.yaml"), "invalid: [\n")
+	file := filepath.Join(root, "b-unavailable/system-design.yaml")
+	if err := os.Remove(file); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(file, 0755); err != nil {
+		t.Fatal(err)
+	}
+	for _, mode := range []string{"list", "validate", "check"} {
+		args := []string{mode, "--root", root}
+		if mode != "list" {
+			args = append(args, "--all")
+		}
+		code, data := designRun(t, args...)
+		if code != 2 {
+			t.Fatalf("expected unavailable entry: %d %s", code, data)
+		}
+		batch := assertBatchResultContract(t, data, mode)
+		if len(batch.Scopes) != 3 {
+			t.Fatalf("missing scope: %s", data)
+		}
+		if mode != "list" {
+			for i, want := range []string{"violations", "unavailable", "passed"} {
+				if batch.Results[i].Status != want {
+					t.Fatalf("unexpected report %d: %s", i, data)
+				}
+			}
+		}
+	}
+	// With only regular files, syntactically invalid YAML does not fail list.
+	if err := os.Remove(file); err != nil {
+		t.Fatal(err)
+	}
+	write(t, file, scopedDesign)
+	code, data := designRun(t, "list", "--root", root)
+	if code != 0 {
+		t.Fatalf("list parsed invalid YAML: %d %s", code, data)
+	}
+	assertBatchResultContract(t, data, "list")
+}
+
+func TestExplicitSymlinkDirectoryResolvesToRealScope(t *testing.T) {
+	t.Setenv("GOWORK", "off")
+	real, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	scopeProject(t, real, "example.com/real")
+	entry := filepath.Join(t.TempDir(), "alias")
+	if err := os.Symlink(real, entry); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	code, data := designRun(t, "list", "--root", entry)
+	if code != 0 {
+		t.Fatalf("%d %s", code, data)
+	}
+	batch := assertBatchResultContract(t, data, "list")
+	if len(batch.Scopes) != 1 || batch.Scopes[0].Root != real || batch.Scopes[0].File != filepath.Join(real, "system-design.yaml") {
+		t.Fatalf("not canonical: %s", data)
+	}
+	for _, mode := range []string{"validate", "check"} {
+		code, a := designRun(t, mode, "--file", filepath.Join(entry, "system-design.yaml"))
+		direct, b := designRun(t, mode, "--file", filepath.Join(real, "system-design.yaml"))
+		if code != 0 || direct != 0 || !bytes.Equal(a, b) {
+			t.Fatalf("explicit alias differs: %d %s / %d %s", code, a, direct, b)
 		}
 	}
 }

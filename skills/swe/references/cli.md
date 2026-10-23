@@ -24,7 +24,7 @@ CLI 版本随本次 Harn 构建写入平台包；仓库仅发布 Harn，完整 S
 | 任意领域写入／只读审查 | `scope snapshot/check` 或 `scope readonly` | Git 工作区范围与指纹，不是权限隔离 |
 | 构建、测试与部署 | 项目已有工具 | CLI 不替代语言工具、测试执行器和部署平台 |
 
-YAML 文件统一命名 `system-design.yaml`，每份只负责所在目录；`list` 检索，`--file` 单独检查，`validate/check --all` 批量检查。父级排除子设计目录，越界声明和已识别的本地跨作用域导入报错；隐藏目录及依赖目录也参与作用域发现，仅排除 Git 元数据；具体规则和 Go workspace 限制见 [作用域规范](system-design/guide.md#发现与目录作用域)。
+YAML 文件统一命名 `system-design.yaml`，每份只负责所在目录；`list` 只发现作用域，不解析或校验 YAML 内容，成功不代表设计合法；`--file` 单独检查，`validate/check --all` 批量检查。父级排除子设计目录，越界声明和已识别的本地跨作用域导入报错；隐藏目录及依赖目录也参与作用域发现，仅排除 Git 元数据；具体规则和 Go workspace 限制见 [作用域规范](system-design/guide.md#发现与目录作用域)。
 
 只运行与当前对象相关的检查。YAML 项目不为满足旧 `design` 或 `structure` 命令复制 Markdown 架构表格。独立协议可运行 `documents --kind interface-protocol`，YAML 与协议的关联目前需要人工核对。不支持的语言、workspace 或关系说明未验证，不当作通过。
 
@@ -67,6 +67,8 @@ YAML 文件统一命名 `system-design.yaml`，每份只负责所在目录；`li
 
 `system-design` 是独立入口，单份检查及参数、文件读取等失败使用 `swe-system-design-v1` 结果，包含设计摘要、诊断、观察依赖和覆盖边界；它没有旧请求的输入稳定性复核，应在静止工作区运行。`render` 成功输出 HTML，检查或生成失败输出同一架构 JSON；输出通道自身不可写时只能以退出码 2 报告，不能保证诊断可送达。必须同时检查退出码。未能完整读取设计时 `design_sha256` 为空。`scope` 也使用独立格式。不要按一套 JSON 字段解析全部命令，不把工具成功扩大为语义、行为或部署完成。
 
-列表与批量结果使用 `swe-system-design-batch-v1`，`scopes` 列出作用域，`results` 包含逐份报告；某份失败仍检查其余文件，整体退出码优先为 2、其次 1、全部通过才为 0。未发现 YAML 返回 2。单份报告的 `scope` 标明实际目录及排除的子作用域；`--root` 不能扩大单份 YAML 的范围。
+列表与批量结果使用 `swe-system-design-batch-v1`，`scopes` 列出作用域。`list` 的 `results` 固定为空数组；`validate/check --all` 的 `results` 与 `scopes` 数量、顺序及作用域身份一一对应，包含失败报告；某份失败仍检查其余文件，整体退出码优先为 2、其次 1、全部通过才为 0。未发现 YAML 返回 2。单份报告的 `scope` 标明实际目录及排除的子作用域；`--root` 不能扩大单份 YAML 的范围。
 
 批量输出的 `discovery_issues` 记录无法读取的路径，检查继续执行其余分支，整体返回 2。边界不确定的作用域标为 `unavailable`。本地模块定位错误不能当作外部依赖，只有能确定归属的导入继续检查。
+
+递归遍历不跟随遇到的目录符号链接。显式 `--root` 及 `--file` 的父目录会解析到真实目录，报告使用真实路径；这不允许 YAML 内的源码路径借符号链接越界，也不接受 YAML 文件本身为符号链接。
