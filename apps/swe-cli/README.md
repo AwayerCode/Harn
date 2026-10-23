@@ -66,14 +66,22 @@ swe-cli scope readonly --root /absolute/project
 
 ```bash
 go generate ./...
-go test -race ./...
-go vet ./...
-scripts/build-package.sh vX.Y.Z
+../../scripts/verify.sh
 ```
+
+统一验证入口需要 Node.js 18+ 与 Python 3，依次执行两套 Go 模块的竞态测试与 vet、架构图交互逻辑测试、格式及文档检查、六平台构建。缺少工具或任一检查失败均返回非零，不跳过交互测试；可用 `NODE_BINARY`、`PYTHON_BINARY` 指定开发工具路径。浏览器实际交互仍需人工或浏览器验收，Node 测试不替代该验证。
 
 schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入二进制；测试检查来源一致性、模块契约引用和 Skill 链接。生成文件不可手改。
 
 迁移用例保存在 internal/app/testdata，包含由旧 Python 检查器生成的 95 个正反例及预期退出码，执行不需要 Python。另有显式场景引用、权限、符号链接、子模块、基线保护、工具版本与摘要回归测试。独立二进制测试使用无语言运行时 PATH。
+
+## 内部职责
+
+命令参数与输出协议保留在 `internal/app`：`app.go` 只分派命令，`check_command.go` 解析请求，`check_execution.go` 执行检查并归并结果，`protocol.go` 维护协议与请求校验。`internal/workspace/observer.go` 负责文件读取和输入稳定性观察，规则包通过读取接口使用它。
+
+`internal/systemdesign/execution.go` 组织单份设计的校验、实现检查或渲染；`implementation.go` 的 `CheckGo` 依次调用 Go 环境解析、结构扫描、导入提取与归属解析、依赖规则判断。文件扫描通过回调交出已归属的 Go 文件，依赖规则只处理已经解析的模块关系；保持扫描和诊断顺序。
+
+架构图由 `diagram_model.go` 定义视图数据，`diagram_order.go` 调整模块顺序，`diagram_layout.go` 计算节点几何，`diagram_routes.go` 生成连线路径，`html.go` 将结果交给内嵌 HTML 模板。布局与路由不读取文件或操作浏览器，模板不承担设计规则。
 
 ## 配套分发
 

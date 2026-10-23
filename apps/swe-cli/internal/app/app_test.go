@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/AwayerCode/Harn/apps/swe-cli/internal/workspace"
 	"os"
 	"path/filepath"
 	"strings"
@@ -94,7 +95,7 @@ func TestResultAndOptionalChecks(t *testing.T) {
 func TestObserver(t *testing.T) {
 	root, _ := fixture(t)
 	p := filepath.Join(root, "model.md")
-	o := &Observer{Root: root, Files: map[string]string{}}
+	o := &workspace.Observer{Root: root, Files: map[string]string{}}
 	if _, e := o.Read(p); e != nil {
 		t.Fatal(e)
 	}
@@ -102,7 +103,7 @@ func TestObserver(t *testing.T) {
 	if len(o.Changed()) != 1 {
 		t.Fatal("change undetected")
 	}
-	o = &Observer{Root: root, Files: map[string]string{}}
+	o = &workspace.Observer{Root: root, Files: map[string]string{}}
 	missing := filepath.Join(root, "missing")
 	if exists, e := o.Exists(missing); exists || e != nil {
 		t.Fatal(exists, e)
@@ -120,7 +121,7 @@ func TestObserver(t *testing.T) {
 		}
 	}
 	write(t, p, string([]byte{255}))
-	if _, e := (&Observer{Root: root, Files: map[string]string{}}).Read(p); e == nil {
+	if _, e := (&workspace.Observer{Root: root, Files: map[string]string{}}).Read(p); e == nil {
 		t.Fatal("invalid utf8 accepted")
 	}
 }

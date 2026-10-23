@@ -76,7 +76,7 @@ CLI 请求入口组合规则计算与文件读取。规则计算不依赖某个 
 | 方法与标准资源 | skill-flow | 版本化 SWE 资源 | skill-flow | 仅授权的方法或标准维护任务修改；普通业务任务只读 |
 | 单次原始校验结果 | check-entry | 一次调用及其明确输入 | check-entry | 输出后作为该轮证据，不原地改写历史结论 |
 | 范围基线 | workspace | 单任务、单 Git 根目录 | workspace | 写入前在项目外创建，后续只读，不能重建消除违规 |
-| 配套发行清单 | Skill 发布者 | 版本化 Skill 包 | Skill 发布者 | 随 Skill 发布，声明配套 CLI 的版本与摘要 |
+| 配套发行清单 | runtime | 版本化 Skill 包 | runtime | 发布者通过构建入口生成，随 Skill 发布，声明配套 CLI 的版本与摘要 |
 | 下载暂存与本次创建目录清单 | delivery-io | 一次分发进程 | delivery-io | 暂存位于项目外；本次清单仅在内存中，结束后清理 |
 
 模块所有权表达职责，不代表工具可以自行扩大权限。任务上下文默认不写文件，Review 仅在回复中返回结果；用户指定持久化时才按其授权保存交接。项目源码、项目自定义方法和配置 与业务契约由项目维护者拥有，安装器和检查器不取得其修改权。
@@ -157,7 +157,7 @@ SHA-256 校验下载资产与发行清单的一致性，不防止有写权限者
 
 | 设计责任 | 代码位置 | 公开入口 | 依赖约束 |
 |---|---|---|---|
-| skill-flow | skills/swe/SKILL.md、references/standards/execution.md、各专业 workflow.md | 现有 SWE 入口 | 单一共享循环；不内嵌机器规则实现 |
+| skill-flow | skills/swe/SKILL.md、skills/swe/references/standards/execution.md、各领域 SKILL.md | 现有 SWE 入口 | 单一共享循环；不内嵌机器规则实现 |
 | check-entry | 计划 apps/swe-cli/internal/app/ | swe-cli | 不调用模型、不持有跨任务调度状态 |
 | rules | 计划 apps/swe-cli/internal/checks/ | 核心检查注册接口 | 不依赖安装器；schema 引用唯一来源 |
 | workspace | 计划 apps/swe-cli/internal/workspace/ | workspace.read | 不修改业务文件；仅显式创建基线 |

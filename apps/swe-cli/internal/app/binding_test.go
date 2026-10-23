@@ -37,3 +37,33 @@ func TestRuntimeBinding(t *testing.T) {
 		t.Fatal("tampered executable accepted")
 	}
 }
+
+func TestMissingRuntimeBinding(t *testing.T) {
+	for _, tc := range []struct {
+		name                        string
+		skill, installed, wantError bool
+	}{
+		{"standalone", false, false, false},
+		{"custom Skill location", true, false, true},
+		{"incomplete installed Skill", false, true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			if tc.installed {
+				root = filepath.Join(root, ".agents", "skills", "swe")
+			}
+			file := filepath.Join(root, "bin", "swe-cli")
+			if err := os.MkdirAll(filepath.Dir(file), 0700); err != nil {
+				t.Fatal(err)
+			}
+			write(t, file, "binary")
+			if tc.skill {
+				write(t, filepath.Join(root, "SKILL.md"), "skill")
+			}
+			err := verifyBinding(file)
+			if (err != nil) != tc.wantError {
+				t.Fatalf("binding error: %v", err)
+			}
+		})
+	}
+}

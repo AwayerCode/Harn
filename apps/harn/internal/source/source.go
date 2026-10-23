@@ -19,6 +19,7 @@ const (
 	maxArchiveBytes   = 128 << 20
 	maxFileBytes      = 32 << 20
 	maxExtractedBytes = 512 << 20
+	maxExpandedBytes  = 512 << 20
 	maxFiles          = 100000
 )
 
@@ -107,14 +108,28 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 	fileCount := 0
 	var extractedBytes int64
 
-	reader := tar.NewReader(gzipReader)
+	// Bound the entire decompressed stream, including skipped entries and padding.
+	expanded := &io.LimitedReader{R: gzipReader, N: maxExpandedBytes + 1}
+	reader := tar.NewReader(expanded)
+	entryCount := 0
 	for {
 		header, err := reader.Next()
+		if expanded.N == 0 {
+			return fmt.Errorf("expanded archive exceeds %d bytes", maxExpandedBytes)
+		}
 		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
 			return fmt.Errorf("read archive: %w", err)
+		}
+		entryCount++
+		if entryCount > maxFiles {
+			return fmt.Errorf("archive contains more than %d entries", maxFiles)
+		}
+		// Reject oversized skipped payloads before tar.Next decompresses them.
+		if header.Size > expanded.N-1 {
+			return fmt.Errorf("expanded archive exceeds %d bytes", maxExpandedBytes)
 		}
 		name, err := cleanArchiveName(header.Name)
 		if err != nil {
@@ -157,6 +172,14 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 		}
 	}
 
+	// tar EOF precedes the gzip trailer. Read through it to verify CRC and size.
+	_, streamErr := io.Copy(io.Discard, expanded)
+	if expanded.N == 0 {
+		return fmt.Errorf("expanded archive exceeds %d bytes", maxExpandedBytes)
+	}
+	if streamErr != nil {
+		return fmt.Errorf("verify gzip stream: %w", streamErr)
+	}
 	if limitedBody.N == 0 {
 		return fmt.Errorf("archive exceeds %d bytes", maxArchiveBytes)
 	}
