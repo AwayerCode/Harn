@@ -14,6 +14,10 @@
 
 检查不判断任务整体完成，不解析源码依赖，不替代人工语义审查。结果保留已检查证据和未覆盖项。只有 scope snapshot 创建全新的项目外基线；其他检查不写项目。
 
+## YAML 模块架构
+
+新增 `architecture validate/check/render` 入口，执行结构化设计校验、目录归属与 Go 跨模块导入检查，并生成可展开、可追踪依赖的只读 HTML。采用规则、限制与示例见 [YAML 模块架构](../../skills/swe/references/architecture/guide.md)。`validate --profile architecture` 用于层设计交接，完整验收要求存在模块；该入口不并入 JSON 协议版本 2。
+
 ## 使用
 
 ```bash
@@ -59,14 +63,14 @@ swe-cli scope readonly --root /absolute/project
 
 ## 开发与构建
 
-需要 Go 1.24+；Git 用于范围检查。运行普通文档关系检查不需要 Git。二进制不依赖 Python、Node 或 Go 运行环境，无第三方 Go 依赖。
+需要 Go 1.24+；Git 用于范围检查。运行普通文档关系检查不需要 Git。二进制不依赖 Python、Node 或 Go 运行环境，YAML 与 JSON Schema 库编入二进制，无额外运行时依赖。
 
 ```bash
 go generate ./...
 go test -race ./...
 go vet ./...
-scripts/build-release.sh 0.3.0-alpha.1
-go run ./internal/genbinding --version 0.3.0-alpha.1 --dist dist --root ../..
+scripts/build-release.sh 0.4.0-alpha.1
+go run ./internal/genbinding --version 0.4.0-alpha.1 --dist dist --root ../..
 ```
 
 schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入二进制；测试检查来源一致性、模块契约引用和 Skill 链接。生成文件不可手改。
@@ -79,4 +83,4 @@ schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入
 
 支持配套清单的 harn 将工具暂存于所选 Skill 的 bin 目录，摘要通过后与资源一起提交；缺平台、下载或摘要失败不启用新资源。更新保护本地修改，status 检查二进制内容。CLI 在 bin 目录运行时核对旁边清单的版本与自身摘要。
 
-当前清单绑定 0.3.0-alpha.1，尚需单独发布对应资产；旧 0.2.0-alpha.1 不包含这些检查。发布前可在本地使用构建产物验收，不应将未发布清单推送给业务项目使用。崩溃恢复、配套修复命令、安装读锁和最低系统版本验收仍待完成。六平台构建不等于跨平台运行验证，当前实际运行覆盖 macOS arm64。
+当前清单绑定 0.4.0-alpha.1，尚需单独发布对应资产；旧 0.2.0-alpha.1 不包含这些检查。发布前可在本地使用构建产物验收，不应将未发布清单推送给业务项目使用。崩溃恢复、配套修复命令、安装读锁和最低系统版本验收仍待完成。六平台构建不等于跨平台运行验证，当前实际运行覆盖 macOS arm64。

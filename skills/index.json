@@ -44,8 +44,8 @@
     {
       "name": "swe",
       "description": "按工程对象、共同标准、系统与模块契约组织软件设计、实现和验收；选择相关专业模块，不默认执行完整工作流程。",
-      "version": "0.1.0",
-      "updated_at": "2026-10-20T21:32:28+08:00",
+      "version": "0.2.1",
+      "updated_at": "2026-10-23T15:58:01+08:00",
       "source": {
         "repository": null,
         "path": null

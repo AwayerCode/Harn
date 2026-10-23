@@ -1,0 +1,30 @@
+schema_version: 1
+source_root: src
+layers:
+  - id: application
+    directory: application
+    responsibility: 应用流程与业务协调
+    allowed_dependencies: [infrastructure]
+  - id: infrastructure
+    directory: infrastructure
+    responsibility: 技术资源适配
+    allowed_dependencies: []
+modules:
+  - id: orders
+    layer: application
+    directory: orders
+    responsibility: 订单处理
+    required_files: [service.go]
+    allowed_dependencies: [payments]
+  - id: payments
+    layer: application
+    directory: payments
+    responsibility: 支付处理
+    required_files: [service.go]
+    allowed_dependencies: [storage]
+  - id: storage
+    layer: infrastructure
+    directory: storage
+    responsibility: 存储访问
+    required_files: [repository.go]
+    allowed_dependencies: []

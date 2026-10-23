@@ -32,6 +32,8 @@ SWE 采用 Go CLI + Skill 的演进方案：稳定校验放入 Go 独立可执�
 
 当前仓库包含 Skills、Go 分发工具 `harn` 和 Go swe-cli 检查核心；knowledge-doc-guard 独立使用 Python 检查。现有 SWE 检查已迁入 Go，harn 已支持按清单安装配套工具；发行资产及跨平台运行验收需另行完成，目标方案以系统设计和接口协议为准；任务分发调度器不在本阶段范围。
 
+开发版增加可选的 [YAML 模块架构](skills/swe/references/architecture/guide.md)：以层目录和模块目录落实设计，校验 Go 模块依赖并生成只读 HTML；需要新版配套检查器，尚待发布。
+
 本阶段聚焦独立任务：闭环统一放在 SWE 的共享执行规范中，Agent 执行循环，swe-cli 提供单次校验。目标架构、模块边界及迁移安排见[系统设计](docs/system-design.md)，数据与失败语义见[接口协议](docs/interface-protocol.md)；两份文档描述待实施方案。
 
 ## 使用示例

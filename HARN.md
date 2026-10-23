@@ -121,6 +121,6 @@ CLI 使用登记表搜索，但尚不按这些独立版本解析安装目标，�
 
 ## 开发版配套检查工具
 
-当前源码中的 harn 支持 Skill 的 runtime.json：安装或更新 SWE 时下载清单固定版本的 swe-cli，验证 SHA256 后与资源一起写入 Skill 的 bin 目录。该能力尚未包含在 harn v0.2.2 中；当前绑定的 SWE CLI 0.3.0-alpha.1 也需单独发布。发布前按 CLI README 构建并本地验收，不能使用旧工具解释新清单。
+当前源码中的 harn 支持 Skill 的 runtime.json：安装或更新 SWE 时下载清单固定版本的 swe-cli，验证 SHA256 后与资源一起写入 Skill 的 bin 目录。该能力尚未包含在 harn v0.2.2 中；当前绑定的 SWE CLI 0.4.0-alpha.1 也需单独发布。发布前按 CLI README 构建并本地验收，不能使用旧工具解释新清单。
 
 业务项目应忽略 `.harness/skills/swe/bin/` 中的平台二进制。跨平台补装与专用修复命令尚未完成；不要把某个平台的二进制提交为通用资源。

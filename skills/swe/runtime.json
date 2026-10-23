@@ -1,31 +1,31 @@
 {
   "assets": {
     "darwin/amd64": {
-      "sha256": "85fae0df9a0dec5eb25ba5027f2250805af8baecff2311621f8639e94863d118",
-      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.3.0-alpha.1/swe-cli_darwin_amd64"
+      "sha256": "c70dca220a12435fedd53fd286f34b75c4fd1449a2ba7186b5d3f446b6d824f9",
+      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.4.0-alpha.1/swe-cli_darwin_amd64"
     },
     "darwin/arm64": {
-      "sha256": "cf1f55920756e134db88788092b341a3c46752f58a144c50fed45981302ca9cb",
-      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.3.0-alpha.1/swe-cli_darwin_arm64"
+      "sha256": "498e8259ecae606dfa02b5802a07df4c6433943b5c725d9e6e269b08fe7d7a29",
+      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.4.0-alpha.1/swe-cli_darwin_arm64"
     },
     "linux/amd64": {
-      "sha256": "eb75c456205f5d1c60bead81c637fb72267fb1969655286c443067d62029f530",
-      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.3.0-alpha.1/swe-cli_linux_amd64"
+      "sha256": "7dff8937516955dbc1acb9680c8b7933a672279fd8a6761aedc54c6c9063ffb0",
+      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.4.0-alpha.1/swe-cli_linux_amd64"
     },
     "linux/arm64": {
-      "sha256": "72135ad1d03488dfd85e5517a02add4abdf3d5cd3a6dc0f480d5449a0295a423",
-      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.3.0-alpha.1/swe-cli_linux_arm64"
+      "sha256": "b8bfe9c9698f434b2aedbdcd1c9c30526003d3eb55e51939caadb23f254caf02",
+      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.4.0-alpha.1/swe-cli_linux_arm64"
     },
     "windows/amd64": {
-      "sha256": "6449a9c5bffbd9b5e24f697057ce12dc6066571714640ad050c77f10622efbcb",
-      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.3.0-alpha.1/swe-cli_windows_amd64.exe"
+      "sha256": "65ce1147cafe303d435912b00fabe614d6db04a85a72533364cd2d5e730b6d28",
+      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.4.0-alpha.1/swe-cli_windows_amd64.exe"
     },
     "windows/arm64": {
-      "sha256": "9807008bb6f8de33cffac91bc5dab6d3a2ceaf784f333a8bf170d8e1a067d3b4",
-      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.3.0-alpha.1/swe-cli_windows_arm64.exe"
+      "sha256": "de91db2564356f701b7543ec9aa4dc1aa0bfaa859df30e0109f031b42b538a6b",
+      "url": "https://github.com/AwayerCode/Harn/releases/download/swe-cli-v0.4.0-alpha.1/swe-cli_windows_arm64.exe"
     }
   },
   "name": "swe-cli",
   "schema_version": 1,
-  "version": "0.3.0-alpha.1"
+  "version": "0.4.0-alpha.1"
 }
