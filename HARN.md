@@ -124,3 +124,13 @@ CLI 使用登记表搜索，但尚不按这些独立版本解析安装目标，�
 当前源码中的 harn 支持 Skill 的 runtime.json：安装或更新 SWE 时下载清单固定版本的 swe-cli，验证 SHA256 后与资源一起写入 Skill 的 bin 目录。该能力尚未包含在 harn v0.2.2 中；当前绑定的 SWE CLI 0.4.0-alpha.1 也需单独发布。发布前按 CLI README 构建并本地验收，不能使用旧工具解释新清单。
 
 业务项目应忽略 `.harness/skills/swe/bin/` 中的平台二进制。跨平台补装与专用修复命令尚未完成；不要把某个平台的二进制提交为通用资源。
+
+## 五个领域与共享配套
+
+SWE 统一安装 `skills/swe`，内部包含 `business-model/`、`system-design/`、`implementation/`、`testing/`、`delivery/` 五个领域入口。它们代表责任与改动范围，不代表执行顺序。顶层入口按任务加载内部 Skill，不依赖宿主发现嵌套目录。旧设计／实现／Review 和交互目录已删除，有效专业方法已迁入新领域。
+
+安装时只传入 `--path skills/swe`，使用包含新结构的 commit 或后续标签。五个领域不单独安装、更新或登记版本；`skills/index.json` 只登记一个 SWE 版本。此前试用的同级 `swe-*` 领域包应移除，避免旧入口继续被发现。
+
+共享规则、Schema 和唯一的 `runtime.json` 位于包内，五个领域共用 `bin/swe-cli`。各领域的 `contract.json` 仅描述包内 Schema 引用，由测试检查完整性，不控制安装与权限。配套 CLI 发行资产尚未发布，开发环境可使用本仓构建产物。
+
+领域负责专业判断与产物边界，CLI 检查已编码规则，项目测试与运行工具提供行为证据。文件范围检查不替代共享文件内部条目的差异复核。

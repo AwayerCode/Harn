@@ -6,7 +6,7 @@
 
 执行前按需读取目标 Skill 的入口与相关资源：
 
-- [swe](skills/swe/SKILL.md)：软件工程总入口，以共同标准、系统分层和模块契约组织专业设计、按层实现与集成验收。
+- [swe](skills/swe/SKILL.md)：五个领域能力的导航与共享规范、CLI 入口；按任务选择业务模型、系统设计、代码实现、测试或部署。测试产物统一归测试领域。
 - [concise-response](skills/concise-response/SKILL.md)：每轮对话使用，控制立场和表达；简洁不减少必须交付的内容。
 - [knowledge-doc-guard](skills/knowledge-doc-guard/SKILL.md)：用于知识文档读取、整理、写入和质量检查。
 

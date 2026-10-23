@@ -1,3 +1,0 @@
-interface:
-  display_name: "测试设计"
-  short_description: "只修改测试设计文档，定义场景、预期、验证层级和判定条件，不编写测试代码。"

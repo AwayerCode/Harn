@@ -1,6 +1,6 @@
 # 产物与格式契约
 
-共同文档格式唯一来源为 `../artifact-schemas/` 中按文档类型命名的 JSON。模块的 `input-contract.json`、`artifact-contract.json` 只声明消费或产出类型及 `$ref`，`schema_version: 1` 表示当前格式集合；校验实现唯一来源为配套 Go CLI 的 `documents` 检查。
+共同文档格式唯一来源为 `../artifact-schemas/` 中按文档类型命名的 JSON。五个领域的 `contract.json` 声明可读取和产出的类型及共享 Schema 路径，按任务选择适用输入；原交互资源仍保留历史文档契约。`schema_version: 1` 表示当前格式集合；校验实现唯一来源为配套 Go CLI 的 `documents` 检查。
 
 业务模型、系统设计、接口协议、交互规范、测试设计分别使用各自的当前 schema 和生产方模板。schema 是文档格式的唯一机器契约；内容不足仍由相应专业工作流判断。
 

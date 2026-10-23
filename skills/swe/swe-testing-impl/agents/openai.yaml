@@ -1,3 +1,0 @@
-interface:
-  display_name: "测试实施"
-  short_description: "依据测试设计实施并运行测试，只修改测试代码、数据与必要配置，文档和生产代码只读。"

@@ -1,3 +1,0 @@
-interface:
-  display_name: "UI 设计"
-  short_description: "只修改交互规范，定义页面、状态、操作和目标平台验收条件，不实现 UI。"

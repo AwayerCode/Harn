@@ -1,9 +1,0 @@
-{
-  "skill": "swe-testing-design",
-  "documents": {
-    "test-design": {
-      "$ref": "test-design.json"
-    }
-  },
-  "schema_version": 1
-}
