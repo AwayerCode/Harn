@@ -36,3 +36,7 @@
 普通检查输出统一 JSON，退出码 0 为必需检查通过、1 为违规、2 为不可检查。缺失工具、无效请求、读取失败、越界或执行中观察到输入变化均不能当作通过。
 
 机器调用可继续使用 `swe-cli check --request <JSON文件或-> --format json`，协议版本 2；同一请求不能重复 checkId，多份同类型文档分别调用。范围操作使用独立 scope 命令，因为 snapshot 有显式写入副作用。文件观察不是原子快照，检查通过不替代业务、架构、测试或内容语义审查。
+
+## YAML 模块架构
+
+`architecture validate/check/render` 分别提供设计校验、文件结构与 Go 模块依赖检查、只读 HTML 生成。字段、采用规则、局部设计和执行示例见[模块架构规范](architecture/guide.md)。

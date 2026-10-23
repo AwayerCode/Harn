@@ -11,6 +11,8 @@ description: 在既定架构内划分模块，定义状态归属、接口、质�
 
 ## 规则
 
+采用 YAML 模块架构的项目按[模块架构规范](../references/architecture/guide.md)执行对应职责和校验流程，替代下文相应 Markdown 架构章节的格式与命令；不重复维护层、模块、路径和依赖表格。局部交接与完整验收仍须区分，业务和接口设计职责保持不变。
+
 遵守[按需加载与职责边界](../references/standards/loading.md)，按当前对象读取共同标准与项目契约；不加载其他专业工作流来完成本职责。
 
 阅读[专业方法](references/professional-method.md)和[设计文档说明](references/document-format.md)。维护系统设计的模块与依赖、状态与资源所有权、关键协作路径和代码结构映射，以及接口协议；架构章节只读。共享文档的元信息与待确认问题只更新本职责内容，交付前人工逐节核对。
