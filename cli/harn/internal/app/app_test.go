@@ -51,70 +51,15 @@ func TestInstallRequiresArguments(t *testing.T) {
 	}
 }
 
-func TestUpdateRequiresPathOrAll(t *testing.T) {
-	t.Parallel()
-	var stdout, stderr bytes.Buffer
-	runner := New(Options{Stdout: &stdout, Stderr: &stderr})
-	if code := runner.Run(context.Background(), []string{"update"}); code != 2 {
-		t.Fatalf("got exit code %d", code)
-	}
-	if !strings.Contains(stderr.String(), "requires --path or --all") {
-		t.Fatalf("unexpected error %q", stderr.String())
-	}
-}
-
-func TestUpdateRejectsPathWithAll(t *testing.T) {
-	t.Parallel()
-	var stdout, stderr bytes.Buffer
-	runner := New(Options{Stdout: &stdout, Stderr: &stderr})
-	if code := runner.Run(context.Background(), []string{"update", "--all", "--path", "skills/swe"}); code != 2 {
-		t.Fatalf("got exit code %d", code)
-	}
-	if !strings.Contains(stderr.String(), "not both") {
-		t.Fatalf("unexpected error %q", stderr.String())
-	}
-}
-
-func TestListAndStatusAndRemoveRequireRecording(t *testing.T) {
-	t.Parallel()
-	project := t.TempDir()
-	var stdout, stderr bytes.Buffer
-	runner := New(Options{Stdout: &stdout, Stderr: &stderr})
-
-	if code := runner.Run(context.Background(), []string{"list", "--root", project}); code != 0 {
-		t.Fatalf("list exit code %d: %s", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "nothing recorded") {
-		t.Fatalf("unexpected list output %q", stdout.String())
-	}
-
-	stdout.Reset()
-	if code := runner.Run(context.Background(), []string{"status", "--root", project}); code != 0 {
-		t.Fatalf("status exit code %d: %s", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "nothing recorded") {
-		t.Fatalf("unexpected status output %q", stdout.String())
-	}
-
-	stdout.Reset()
-	if code := runner.Run(context.Background(), []string{"remove", "--root", project}); code != 2 {
-		t.Fatalf("remove without path exit code %d", code)
-	}
-	if !strings.Contains(stderr.String(), "requires at least one --path") {
-		t.Fatalf("unexpected error %q", stderr.String())
-	}
-}
-
-func TestHelpListsManagementCommands(t *testing.T) {
-	t.Parallel()
-	var stdout, stderr bytes.Buffer
-	runner := New(Options{Stdout: &stdout, Stderr: &stderr})
-	if code := runner.Run(context.Background(), []string{"help"}); code != 0 {
-		t.Fatalf("help exit code %d", code)
-	}
-	for _, command := range []string{"install", "update", "list", "status", "remove", "version"} {
-		if !strings.Contains(stdout.String(), command) {
-			t.Fatalf("help is missing %s: %q", command, stdout.String())
+func TestRemovedManagementCommands(t *testing.T) {
+	for _, command := range []string{"update", "status", "remove"} {
+		var stderr bytes.Buffer
+		runner := New(Options{Stderr: &stderr})
+		if code := runner.Run(context.Background(), []string{command}); code != 2 {
+			t.Fatalf("%s exit %d", command, code)
+		}
+		if !strings.Contains(stderr.String(), "unknown command") {
+			t.Fatal(stderr.String())
 		}
 	}
 }

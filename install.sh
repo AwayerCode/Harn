@@ -1,39 +1,42 @@
 #!/usr/bin/env sh
 set -eu
 
-# Install the Harn binary for the current platform.
+# Download, verify and run Harn temporarily; leave only selected Skills in the project.
 #
 #   curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | sh
-#   curl -fsSL .../install.sh | sh -s -- --version v0.2.1 --root ./my-project
+#   curl -fsSL .../install.sh | sh -s -- --version <release> --root ./my-project -- search
 
 repo="AwayerCode/Harn"
 version="${HARN_VERSION:-}"
 root="."
-bin_dir=""
 
 usage() {
   cat <<'EOF'
-Usage: install.sh [--version <tag>] [--root <dir>] [--bin-dir <dir>]
+Usage: install.sh [--version <harn-release>] [--root <dir>] -- [harn command and arguments]
 
-  --version <tag>  Install a specific release tag (default: latest release)
-  --root <dir>     Project root; the binary goes to <dir>/.harness/bin
-  --bin-dir <dir>  Override the binary directory
+  --version <tag>  Select the harn release (default: latest release)
+  --root <dir>     Working directory for the command (default: current directory)
+  --              Pass the remaining arguments to harn (default command: search)
+
+The executable is removed after the command; no global or project installation.
 EOF
 }
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --version)
-      version="${2:-}"
+      [ "$#" -ge 2 ] && [ -n "$2" ] || { usage >&2; exit 2; }
+      version="$2"
       shift 2
       ;;
     --root)
-      root="${2:-}"
+      [ "$#" -ge 2 ] && [ -n "$2" ] || { usage >&2; exit 2; }
+      root="$2"
       shift 2
       ;;
-    --bin-dir)
-      bin_dir="${2:-}"
-      shift 2
+    --)
+      shift
+      break
       ;;
     -h|--help)
       usage
@@ -72,14 +75,14 @@ else
   base="https://github.com/${repo}/releases/latest/download"
 fi
 
-if [ -z "$bin_dir" ]; then
-  bin_dir="${root}/.harness/bin"
-fi
+cd "$root"
 
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+trap 'rm -rf "$tmp"' 0
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-printf 'downloading %s\n' "$asset"
+printf 'downloading %s\n' "$asset" >&2
 curl -fsSL "$base/$asset" -o "$tmp/$asset"
 curl -fsSL "$base/SHA256SUMS" -o "$tmp/SHA256SUMS"
 
@@ -98,19 +101,8 @@ if [ "$actual" != "$expected" ]; then
   exit 1
 fi
 
-mkdir -p "$bin_dir"
-cp "$tmp/$asset" "$bin_dir/harn"
-chmod +x "$bin_dir/harn"
-
-printf 'installed %s\n' "$bin_dir/harn"
-printf 'available skills:\n'
-if [ -n "$version" ]; then
-  if ! "$bin_dir/harn" search --source "https://github.com/$repo" --version "tag:$version"; then
-    printf 'install.sh: installed successfully, but could not list skills; retry harn search later\n' >&2
-  fi
-else
-  if ! "$bin_dir/harn" search --source "https://github.com/$repo"; then
-    printf 'install.sh: installed successfully, but could not list skills; retry harn search later\n' >&2
-  fi
+chmod +x "$tmp/$asset"
+if [ "$#" -eq 0 ]; then
+  set -- search
 fi
-printf 'usage: https://github.com/%s/blob/main/HARN.md\n' "$repo"
+"$tmp/$asset" "$@"

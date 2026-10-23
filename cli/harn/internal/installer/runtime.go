@@ -18,7 +18,7 @@ import (
 )
 
 // RuntimeBinding pins companion bytes to the selected Skill revision. Binaries
-// are staged inside the resource and use the same ownership/rollback transaction.
+// are staged inside the resource and are installed together with the Skill.
 type RuntimeBinding struct {
 	SchemaVersion int                     `json:"schema_version"`
 	Name          string                  `json:"name"`

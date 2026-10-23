@@ -75,18 +75,6 @@ func ResolveArchiveURL(rawSource, version string) (string, error) {
 }
 
 func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets []string, destination string) error {
-	return fetch(ctx, client, archiveURL, targets, destination, nil)
-}
-
-// FetchSkillEntries extracts only public, top-level Skill entry files.
-func FetchSkillEntries(ctx context.Context, client *http.Client, archiveURL, destination string) error {
-	return fetch(ctx, client, archiveURL, []string{"skills"}, destination, func(relative string) bool {
-		parts := strings.Split(relative, "/")
-		return len(parts) == 3 && parts[0] == "skills" && parts[2] == "SKILL.md" && !strings.HasPrefix(parts[1], "_") && !strings.HasPrefix(parts[1], ".")
-	})
-}
-
-func fetch(ctx context.Context, client *http.Client, archiveURL string, targets []string, destination string, include func(string) bool) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, archiveURL, nil)
 	if err != nil {
 		return fmt.Errorf("create archive request: %w", err)
@@ -144,10 +132,6 @@ func fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 			continue
 		}
 
-		if include != nil && !include(relative) {
-			continue
-		}
-
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.MkdirAll(filepath.Join(destination, filepath.FromSlash(relative)), 0o755); err != nil {
@@ -175,9 +159,6 @@ func fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 
 	if limitedBody.N == 0 {
 		return fmt.Errorf("archive exceeds %d bytes", maxArchiveBytes)
-	}
-	if include != nil {
-		return nil
 	}
 	for target := range selected {
 		if _, err := os.Lstat(filepath.Join(destination, filepath.FromSlash(target))); err != nil {
