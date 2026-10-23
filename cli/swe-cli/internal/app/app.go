@@ -19,7 +19,7 @@ import (
 	"github.com/AwayerCode/Harn/cli/swe-cli/internal/checks"
 )
 
-var Version = "0.4.0-dev"
+var Version = "0.5.0-dev"
 
 const maxRequest = 1024 * 1024
 
@@ -88,8 +88,8 @@ func unavailable(out io.Writer, err error) int {
 	return encode(out, map[string]any{"protocolVersion": ProtocolVersion, "error": Diagnostic{RuleID: "request.unavailable", Message: err.Error()}, "summary": Summary{Status: "unavailable", ExitCode: 2, Warnings: []string{}}}, 2)
 }
 func Run(args []string, in io.Reader, out io.Writer) int {
-	if len(args) > 0 && args[0] == "architecture" {
-		return Architecture(args[1:], out)
+	if len(args) > 0 && args[0] == "system-design" {
+		return SystemDesign(args[1:], out)
 	}
 	if len(args) > 0 && args[0] == "scope" {
 		return Scope(args[1:], out)
@@ -98,7 +98,7 @@ func Run(args []string, in io.Reader, out io.Writer) int {
 		return Direct(args[0], args[1:], out)
 	}
 	if len(args) == 0 || len(args) == 1 && (args[0] == "help" || args[0] == "--help") {
-		_, err := fmt.Fprintln(out, "swe-cli check --request <file|-> [--format json]\nswe-cli version\nGo core: documents, design, artifacts, structure; scope snapshot/check/readonly; architecture validate/check/render --root <project> --file <yaml>. No extensions.")
+		_, err := fmt.Fprintln(out, "swe-cli check --request <file|-> [--format json]\nswe-cli version\nGo core: documents, design, artifacts, structure; scope snapshot/check/readonly; system-design list --root <dir>; system-design validate/check --file <system-design.yaml> or --root <dir> --all; system-design render --file <system-design.yaml>. No extensions.")
 		if err != nil {
 			return 2
 		}

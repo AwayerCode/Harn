@@ -3,12 +3,12 @@
   "shared_resource": "..",
   "inputs": [
     "business-model",
-    "architecture",
+    "system-design-yaml",
     "system-design",
     "interface-protocol"
   ],
   "outputs": [
-    "architecture",
+    "system-design-yaml",
     "system-design",
     "interface-protocol"
   ],
@@ -16,6 +16,6 @@
     "system-design": "../references/artifact-schemas/system-design.json",
     "business-model": "../references/artifact-schemas/business-model.json",
     "interface-protocol": "../references/artifact-schemas/interface-protocol.json",
-    "architecture": "../references/architecture/schema.json"
+    "system-design-yaml": "../references/system-design/schema.json"
   }
 }

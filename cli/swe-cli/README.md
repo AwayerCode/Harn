@@ -16,7 +16,7 @@
 
 ## YAML 模块架构
 
-新增 `architecture validate/check/render` 入口，执行结构化设计校验、目录归属与 Go 跨模块导入检查，并生成可展开、可追踪依赖的只读 HTML。采用规则、限制与示例见 [YAML 模块架构](../../skills/swe/references/architecture/guide.md)。`validate --profile architecture` 用于层设计交接，完整验收要求存在模块；该入口不并入 JSON 协议版本 2。
+新增 `system-design list/validate/check/render` 入口，执行结构化设计校验、目录归属与 Go 跨模块导入检查，并生成可展开、可追踪依赖的只读 HTML。采用规则、限制与示例见 [YAML 模块架构](../../skills/swe/references/system-design/guide.md)。`validate --profile layers` 用于层设计交接，完整验收要求存在模块；该入口不并入 JSON 协议版本 2。
 
 ## 使用
 

@@ -21,7 +21,7 @@ description: 从业务模型设计或审查分层、模块、文件结构、依�
 
 ## 表达与检查
 
-采用 YAML 时使用共享[模块架构规范](../references/architecture/guide.md)与 Schema，结构关系只维护一份。层设计可用 `architecture validate --profile architecture` 交接；模块齐备后运行完整 `architecture validate`，需要视图时运行 `architecture render`。已有源码的对照使用 `architecture check`，不因此获得源码写入权。
+采用 YAML 时统一命名 `system-design.yaml`，每份只负责所在目录。先用 `system-design list --root <目录>` 发现已有设计，父级排除子设计子树，不声明其内部路径；多份设计使用 `validate --all` 或 `check --all` 汇总，局部任务指定 `--file`。使用共享[模块架构规范](../references/system-design/guide.md)与 Schema，结构关系只维护一份。层设计可用 `system-design validate --profile layers` 交接；模块齐备后运行完整 `system-design validate`，需要视图时运行 `system-design render`。已有源码的对照使用 `system-design check`，不因此获得源码写入权。
 
 CLI 当前只覆盖模块结构与 Go 源码导入；设计理由、状态所有权、数据语义、失败、幂等、兼容和生命周期仍需专业判断。接口机器定义沿用已有权威来源，不复制字段；暂未实现接口检查不等于可以省略必要协议。
 
