@@ -1,9 +1,0 @@
-{
-  "skill": "swe-business-model",
-  "documents": {
-    "business-model": {
-      "$ref": "business-model.json"
-    }
-  },
-  "schema_version": 1
-}

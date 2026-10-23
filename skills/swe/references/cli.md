@@ -1,42 +1,63 @@
-# 检查工具
+# 领域 Skill 与 CLI 配套
 
-检查由配套 Go 二进制执行；Skill 保存方法、规范、schema 与模板。`runtime.json` 绑定工具版本及六个平台资产的 SHA256。使用支持配套安装的 harn 安装或更新本 Skill，二进制位于 `<SWE目录>/bin/swe-cli`；Windows 使用 `swe-cli.exe`。缺少工具或版本与清单不一致时先补装，不回退其他检查器。
+领域 Skill 定义方法、产物所有权与判断标准，项目设计提供具体规则，CLI 检查已编码约束，项目测试和运行工具提供行为证据。CLI 不选择任务顺序、不授予写入权限，也不以退出码证明整个任务完成。
 
-## 调用
+## 安装与版本
 
-命令可从任意目录执行，显式传入项目根目录。文档路径可相对于项目根目录；项目外文件与符号链接越界返回不可检查。
+仅安装 `skills/swe`，五个内部领域、共享规则、Schema 与 CLI 配套随包统一更新。领域不独立安装或登记版本；运行时工具版本仍由唯一的 `runtime.json` 固定。
+
+`runtime.json` 只在 `swe` 根目录中维护，固定六平台 `swe-cli` 摘要；二进制位于 `<共享SWE目录>/bin/swe-cli`，Windows 使用 `.exe`。各领域不各自复制二进制、Schema 或共享规则。缺失包内资源、工具或绑定不一致时明确无法检查，先按项目安装方式补齐，不切换旧脚本。进行中的范围基线继续使用创建它的工具，不通过升级重建基线掩盖改动。
+
+当前开发版配套工具为 `0.4.0-alpha.1`，发行资产尚未发布；源码开发可用本仓构建产物，不能承诺远端安装已可用。各领域 `contract.json` 的包内资源与 Schema 引用用于验证完整性，不是独立安装清单。
+
+## 选择检查
+
+| 任务对象 | 检查 | 结论边界 |
+| --- | --- | --- |
+| 业务模型 | `documents --kind business-model` | 格式与本地链接，抽象与规则仍由领域判断 |
+| YAML 层／模块设计 | `architecture validate`，局部层设计加 `--profile architecture` | Schema、引用、路径冲突与声明依赖，不要求代码已存在 |
+| YAML 设计视图 | `architecture render` | 设计通过后输出 HTML，不代表实现验收 |
+| YAML 下的生产代码或测试 | `architecture check` | 目录归属、必要文件与单 Go module 导入；接口与行为未覆盖 |
+| Markdown 系统设计及协议 | `documents`、`design` | 约定格式与显式关系，不等同 YAML 检查 |
+| Markdown 代码映射 | `structure` | 显式位置与入口，不解析源码依赖 |
+| 测试设计 | `documents --kind test-design`、`artifacts --kind test` | 风险、场景显式引用；断言与行为由测试验证 |
+| 任意领域写入／只读审查 | `scope snapshot/check` 或 `scope readonly` | Git 工作区范围与指纹，不是权限隔离 |
+| 构建、测试与部署 | 项目已有工具 | CLI 不替代语言工具、测试执行器和部署平台 |
+
+只运行与当前对象相关的检查。YAML 项目不为满足旧 `design` 或 `structure` 命令复制 Markdown 架构表格。独立协议可运行 `documents --kind interface-protocol`，YAML 与协议的关联目前需要人工核对。不支持的语言、workspace 或关系说明未验证，不当作通过。
+
+## 命令入口
+
+以下 `<CLI>` 指SWE 包实际二进制，所有命令显式指定目标根目录，文件一般使用相对项目路径。
 
 ```bash
-<SWE目录>/bin/swe-cli version
-<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind system-design --file <文档路径>
-<SWE目录>/bin/swe-cli documents --root <项目根目录> --kind system-design --profile architecture --file <文档路径>
-<SWE目录>/bin/swe-cli design --root <项目根目录> --system-design <路径> --interface-protocol <路径>
-<SWE目录>/bin/swe-cli artifacts --root <项目根目录> --kind ui --file <交互规范路径> --protocol <接口协议路径>
-<SWE目录>/bin/swe-cli artifacts --root <项目根目录> --kind test --file <测试设计路径>
-<SWE目录>/bin/swe-cli structure --root <项目根目录> --design <系统设计路径> --scope <相对路径>
+<CLI> version
+<CLI> documents --root <项目根目录> --kind business-model --file <模型路径>
+<CLI> architecture validate --root <项目根目录> --file <YAML路径>
+<CLI> architecture validate --root <项目根目录> --file <YAML路径> --profile architecture
+<CLI> architecture check --root <项目根目录> --file <YAML路径>
+<CLI> architecture render --root <项目根目录> --file <YAML路径>
+<CLI> design --root <项目根目录> --system-design <Markdown路径> --interface-protocol <协议路径>
+<CLI> structure --root <项目根目录> --design <Markdown路径> --scope <相对路径>
+<CLI> documents --root <项目根目录> --kind test-design --file <测试设计路径>
+<CLI> artifacts --root <项目根目录> --kind test --file <测试设计路径>
 ```
 
-纯界面动作的 artifacts 检查可以省略 protocol；业务操作需要协议依据。structure 只核对显式文件位置、入口与映射，不解析源码依赖或导出语义。输出的 unverified 项仍须人工审查。
+旧交互 Skill 已删除；CLI 中已有交互文档检查能力保留兼容，不作为本包的领域入口。渲染写入项目文件是架构领域的明确写入动作，须纳入范围，使用临时输出成功后替换，避免错误诊断覆盖原图；具体规范见 [YAML 架构](architecture/guide.md)。
 
-## 范围与只读核对
+## 范围与结果
+
+范围命令及副作用按[执行规范](standards/execution.md)使用。混合源码目录不能直接作为代码或测试的整目录写入范围；共享配置条目需要差异复核，CLI 目前只做到文件粒度。
 
 ```bash
-<SWE目录>/bin/swe-cli scope snapshot --root <Git根目录> --baseline <项目外全新文件> --allow-file <相对路径>
-<SWE目录>/bin/swe-cli scope check --root <Git根目录> --baseline <原文件>
-<SWE目录>/bin/swe-cli scope readonly --root <Git根目录>
-<SWE目录>/bin/swe-cli scope readonly --root <Git根目录> --expected <原sha256字段完整值>
+<CLI> scope snapshot --root <Git根目录> --baseline <项目外全新文件> --allow-file <相对路径>
+<CLI> scope check --root <Git根目录> --baseline <原文件>
+<CLI> scope readonly --root <Git根目录>
+<CLI> scope readonly --root <Git根目录> --expected <完整原指纹>
 ```
 
-可重复 allow-file 或 allow-dir。snapshot 只创建全新的项目外基线，check 不接受新范围。readonly 不写文件；sha256 字段包含格式前缀，调用者保存并原样传回。旧基线与旧指纹不兼容，进行中的任务继续使用原工具；不得通过重新建立基线掩盖修改。
+`allow-file` 或 `allow-dir` 可重复，不能通过扩大原基线消除违规。范围检查需要 Git，包含跟踪与非忽略文件和子模块，显式可写范围还覆盖其忽略文件；不初始化或拉取子模块，不允许父仓范围跨入子模块。
 
-范围检查需要 Git，单次 Git 命令最多 10 秒。跟踪与非忽略文件、显式可写范围内的忽略文件、子模块引用与内容均纳入相应检查；不自动初始化子模块，不允许父仓写入范围覆盖子模块。
+退出码 0 表示本次覆盖通过，1 表示违规，2 表示无法检查。`documents/design/artifacts/structure` 可由 JSON 协议版本 2 的 `check --request` 调用，结果在 `results` 中包含 `status`、`diagnostics`、`evidence`、`coverage` 与 `unverified`。输入观察不是原子快照。
 
-## 结果与边界
-
-普通检查输出统一 JSON，退出码 0 为必需检查通过、1 为违规、2 为不可检查。缺失工具、无效请求、读取失败、越界或执行中观察到输入变化均不能当作通过。
-
-机器调用可继续使用 `swe-cli check --request <JSON文件或-> --format json`，协议版本 2；同一请求不能重复 checkId，多份同类型文档分别调用。范围操作使用独立 scope 命令，因为 snapshot 有显式写入副作用。文件观察不是原子快照，检查通过不替代业务、架构、测试或内容语义审查。
-
-## YAML 模块架构
-
-`architecture validate/check/render` 分别提供设计校验、文件结构与 Go 模块依赖检查、只读 HTML 生成。字段、采用规则、局部设计和执行示例见[模块架构规范](architecture/guide.md)。
+`architecture` 是独立入口，使用 `swe-architecture-v1` 结果，包含设计摘要、诊断、观察依赖和覆盖边界；它没有旧请求的输入稳定性复核，应在静止工作区运行。`render` 成功输出 HTML，失败输出 JSON，必须同时检查退出码。`scope` 也使用独立格式。不要按一套 JSON 字段解析全部命令，不把工具成功扩大为语义、行为或部署完成。

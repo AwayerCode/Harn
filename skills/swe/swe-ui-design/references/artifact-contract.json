@@ -1,9 +1,0 @@
-{
-  "skill": "swe-ui-design",
-  "documents": {
-    "interaction-standards": {
-      "$ref": "interaction-standards.json"
-    }
-  },
-  "schema_version": 1
-}

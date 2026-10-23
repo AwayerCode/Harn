@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "shared_resource": "..",
+  "inputs": [
+    "architecture",
+    "system-design",
+    "interface-protocol"
+  ],
+  "outputs": [],
+  "schemas": {
+    "system-design": "../references/artifact-schemas/system-design.json",
+    "interface-protocol": "../references/artifact-schemas/interface-protocol.json",
+    "architecture": "../references/architecture/schema.json"
+  }
+}

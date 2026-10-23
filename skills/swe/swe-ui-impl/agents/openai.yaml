@@ -1,3 +1,0 @@
-interface:
-  display_name: "UI 实施"
-  short_description: "依据契约实现界面及明确的本模块单元测试，独立验收测试与设计只读"

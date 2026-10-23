@@ -37,41 +37,13 @@ func TestGeneratedSchemasMatchSource(t *testing.T) {
 	}
 }
 
-func TestModuleContractsAndArchitectureTemplate(t *testing.T) {
+func TestArchitectureTemplate(t *testing.T) {
 	root := "../../../../skills/swe"
 	var schemas map[string]Schema
 	if e := json.Unmarshal([]byte(SchemaJSON), &schemas); e != nil {
 		t.Fatal(e)
 	}
-	files, e := filepath.Glob(filepath.Join(root, "*/references/*contract.json"))
-	if e != nil || len(files) == 0 {
-		t.Fatal(e)
-	}
-	for _, p := range files {
-		b, e := os.ReadFile(p)
-		if e != nil {
-			t.Fatal(e)
-		}
-		var c struct {
-			Version   int                          `json:"schema_version"`
-			Documents map[string]map[string]string `json:"documents"`
-		}
-		if e = json.Unmarshal(b, &c); e != nil {
-			t.Fatal(e)
-		}
-		if c.Version != 1 {
-			t.Fatal(p, "unsupported schema")
-		}
-		for kind, spec := range c.Documents {
-			if len(spec) != 1 || spec["$ref"] != kind+".json" {
-				t.Fatal(p, kind, spec)
-			}
-			if _, ok := schemas[kind]; !ok {
-				t.Fatal("missing canonical schema", kind)
-			}
-		}
-	}
-	b, e := os.ReadFile(filepath.Join(root, "swe-architecture-design/assets/architecture-design.md"))
+	b, e := os.ReadFile(filepath.Join(root, "system-design/assets/architecture-design.md"))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -117,5 +89,110 @@ func TestSkillLinksResolve(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestUnifiedSWERuntimeAndEntries(t *testing.T) {
+	root := "../../../../skills/swe"
+	entries, err := filepath.Glob(filepath.Join(root, "*", "SKILL.md"))
+	if err != nil || len(entries) != 5 {
+		t.Fatalf("expected five domain entries, got %v: %v", entries, err)
+	}
+	runtimes := []string{}
+	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.Name() == "runtime.json" {
+			runtimes = append(runtimes, path)
+		}
+		if entry.IsDir() && strings.HasPrefix(entry.Name(), "swe-") {
+			t.Errorf("obsolete domain directory: %s", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(runtimes, []string{filepath.Join(root, "runtime.json")}) {
+		t.Fatalf("expected one root runtime binding: %v", runtimes)
+	}
+}
+
+func TestUnifiedSWEPackageClosure(t *testing.T) {
+	for _, domain := range []string{"business-model", "system-design", "implementation", "testing", "delivery"} {
+		t.Run(domain, func(t *testing.T) {
+			root := t.TempDir()
+			for _, name := range []string{"swe"} {
+				if err := os.CopyFS(filepath.Join(root, name), os.DirFS(filepath.Join("../../../../skills", name))); err != nil {
+					t.Fatal(err)
+				}
+			}
+			var contract struct {
+				Version int               `json:"schema_version"`
+				Shared  string            `json:"shared_resource"`
+				Inputs  []string          `json:"inputs"`
+				Outputs []string          `json:"outputs"`
+				Schemas map[string]string `json:"schemas"`
+			}
+			b, err := os.ReadFile(filepath.Join(root, "swe", domain, "contract.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err = json.Unmarshal(b, &contract); err != nil {
+				t.Fatal(err)
+			}
+			if contract.Version != 1 || contract.Shared != ".." {
+				t.Fatal("unsupported domain contract")
+			}
+			for _, kind := range append(contract.Inputs, contract.Outputs...) {
+				ref, ok := contract.Schemas[kind]
+				if !ok {
+					t.Fatalf("missing schema: %s", kind)
+				}
+				data, err := os.ReadFile(filepath.Join(root, "swe", domain, ref))
+				if err != nil {
+					t.Fatal(err)
+				}
+				if !json.Valid(data) {
+					t.Fatalf("invalid schema: %s", ref)
+				}
+			}
+			seen := map[string]bool{}
+			var visit func(string)
+			visit = func(path string) {
+				path = filepath.Clean(path)
+				if seen[path] {
+					return
+				}
+				seen[path] = true
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Error(err)
+					return
+				}
+				ignored := []string{}
+				for _, match := range linkRE.FindAllStringSubmatch(strings.Join(Visible(string(data), &ignored), "\n"), -1) {
+					u, err := url.Parse(strings.Trim(match[1], "<>"))
+					if err != nil {
+						t.Error(err)
+						continue
+					}
+					if u.Scheme != "" || u.Host != "" || u.Path == "" {
+						continue
+					}
+					target := filepath.Join(filepath.Dir(path), filepath.FromSlash(u.Path))
+					if _, err := os.Stat(target); err != nil {
+						t.Errorf("%s: unavailable installed reference %s", path, match[1])
+						continue
+					}
+					if filepath.Ext(target) == ".md" {
+						visit(target)
+					}
+				}
+			}
+			visit(filepath.Join(root, "swe", domain, "SKILL.md"))
+			visit(filepath.Join(root, "swe", "SKILL.md"))
+		})
 	}
 }
