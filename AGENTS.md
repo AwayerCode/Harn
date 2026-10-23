@@ -1,12 +1,12 @@
 # Harn 协作约定
 
-本仓是 Harn 的完整源码位置：`docs/` 保存系统设计与详细使用指南，根目录 `README.md` 保存项目介绍与快速开始，`CONTRIBUTING.md` 保存 Skill 版本登记与构建发布规则，`skills/` 保存可版本化的 Agent 能力，`cli/harn/` 保存临时 Skill 分发工具，测试与构建在本地执行，二进制手动发布到 GitHub Releases。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
+本仓是 Harn 的完整源码位置：`docs/` 保存系统设计与详细使用指南，根目录 `README.md` 保存项目介绍与快速开始，`CONTRIBUTING.md` 保存 Skill 版本登记与构建发布规则，`skills/` 保存可版本化的 Agent 能力，`apps/harn/` 保存临时 Skill 分发工具，测试与构建在本地执行，二进制手动发布到 GitHub Releases。业务项目只下载明确选择的资源，不复制整个仓库，也不依赖全局安装。
 
 ## Skill 入口
 
 执行前按需读取目标 Skill 的入口与相关资源：
 
-- [swe](skills/swe/SKILL.md)：五个领域能力的导航与共享规范、CLI 入口；按任务选择业务模型、系统设计、代码实现、测试或部署。测试产物统一归测试领域。
+- [swe](skills/swe/SKILL.md)：adoption 项目接入与五个领域能力的导航、共享规范和 CLI 入口；按任务选择业务模型、系统设计、代码实现、测试或部署。测试产物统一归测试领域。
 - [concise-response](skills/concise-response/SKILL.md)：每轮对话使用，控制立场和表达；简洁不减少必须交付的内容。
 - [knowledge-doc-guard](skills/knowledge-doc-guard/SKILL.md)：用于知识文档读取、整理、写入和质量检查。
 
@@ -23,30 +23,30 @@
 命令从仓库根目录执行。修改 Go 代码后检查格式、运行测试与竞态检测、执行 vet，并构建六平台产物：
 
 ```bash
-find cli/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l
-(cd cli/harn && go test -race ./...)
-(cd cli/harn && go vet ./...)
-cli/harn/scripts/build-release.sh
-find cli/swe-cli -name '*.go' -type f -print0 | xargs -0 gofmt -l
-(cd cli/swe-cli && go test -race ./...)
-(cd cli/swe-cli && go vet ./...)
-cli/swe-cli/scripts/build-package.sh
+find apps/harn -name '*.go' -type f -print0 | xargs -0 gofmt -l
+(cd apps/harn && go test -race ./...)
+(cd apps/harn && go vet ./...)
+apps/harn/scripts/build-release.sh
+find apps/swe-cli -name '*.go' -type f -print0 | xargs -0 gofmt -l
+(cd apps/swe-cli && go test -race ./...)
+(cd apps/swe-cli && go vet ./...)
+apps/swe-cli/scripts/build-package.sh
 ```
 
-`gofmt -l` 应无输出。构建产物位于 `cli/harn/dist/` 和 `cli/swe-cli/dist/`，不提交。仓库只发布 Harn：其发行目录含 harn 二进制、六平台完整 SWE Skill 包与统一摘要；swe-cli 仅作为 Skill 包内文件，不单独发布。交叉编译不代替 Windows 实际运行验证；在 Windows 上分别进入 `cli/harn` 和 `cli/swe-cli` 执行 `go test -race ./...` 和 `go vet ./...`。
+`gofmt -l` 应无输出。构建产物位于 `apps/harn/dist/` 和 `apps/swe-cli/dist/`，不提交。仓库只发布 Harn：其发行目录含 harn 二进制、六平台完整 SWE Skill 包与统一摘要；swe-cli 仅作为 Skill 包内文件，不单独发布。交叉编译不代替 Windows 实际运行验证；在 Windows 上分别进入 `apps/harn` 和 `apps/swe-cli` 执行 `go test -race ./...` 和 `go vet ./...`。
 
 修改 Skill 时，按涉及范围运行：
 
 ```bash
-(cd cli/swe-cli && go test ./internal/checks ./internal/app ./internal/workspace)
+(cd apps/swe-cli && go test ./internal/checks ./internal/app ./internal/workspace)
 ```
 
 修改安装或构建脚本时运行：
 
 ```bash
 sh -n install.sh
-bash -n cli/harn/scripts/build-release.sh
-bash -n cli/swe-cli/scripts/build-package.sh
+bash -n apps/harn/scripts/build-release.sh
+bash -n apps/swe-cli/scripts/build-package.sh
 ```
 
 修改文档后运行：
@@ -56,4 +56,4 @@ python3 -B skills/knowledge-doc-guard/scripts/knowledge_lint.py --changed
 git diff --check
 ```
 
-Skill 登记表为 `skills/index.json`。新增、更新或引入 Skill 时同步维护简介、独立版本、时间与来源，规则见 [贡献指南的 Skill 版本登记](CONTRIBUTING.md#skill-版本登记)。运行 `(cd cli/harn && go test ./internal/installer -run Catalog)` 检查索引结构与 `SKILL.md` 的目录、名称和简介一致性。
+Skill 登记表为 `skills/index.json`。新增、更新或引入 Skill 时同步维护简介、独立版本、时间与来源，规则见 [贡献指南的 Skill 版本登记](CONTRIBUTING.md#skill-版本登记)。运行 `(cd apps/harn && go test ./internal/installer -run Catalog)` 检查索引结构与 `SKILL.md` 的目录、名称和简介一致性。

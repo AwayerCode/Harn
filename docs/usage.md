@@ -7,7 +7,7 @@ Skill 是交付单元，方法、资源和配套 CLI 一起安装到 `.agents/sk
 当前源码的新分发行为尚未随旧版 `v0.2.2` 发布。验证当前实现时，在本仓根目录构建到项目外临时目录：
 
 ```bash
-go build -C cli/harn -o /tmp/harn .
+go build -C apps/harn -o /tmp/harn .
 /tmp/harn version
 ```
 
@@ -24,7 +24,7 @@ curl -fsSL https://raw.githubusercontent.com/AwayerCode/Harn/main/install.sh | s
 Windows 在本仓根目录可用 PowerShell 构建临时分发工具：
 
 ```powershell
-go build -C cli/harn -o "$env:TEMP/harn.exe" .
+go build -C apps/harn -o "$env:TEMP/harn.exe" .
 & "$env:TEMP/harn.exe" version
 ```
 

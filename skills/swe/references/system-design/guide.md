@@ -110,7 +110,7 @@ modules:
     allowed_dependencies: []
 ```
 
-仓库中的可运行三模块 Go 示例位于 `cli/swe-cli/internal/systemdesign/testdata/project/`，包含层间与同层模块依赖。开发阶段可从 `cli/swe-cli` 执行：
+仓库中的可运行三模块 Go 示例位于 `apps/swe-cli/internal/systemdesign/testdata/project/`，包含层间与同层模块依赖。开发阶段可从 `apps/swe-cli` 执行：
 
 ```bash
 go run . system-design validate --root internal/systemdesign/testdata/project --file system-design.yaml
