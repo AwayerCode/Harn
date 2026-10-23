@@ -16,7 +16,7 @@ CLI 版本随本次 Harn 构建写入平台包；仓库仅发布 Harn，完整 S
 | --- | --- | --- |
 | 业务模型 | `documents --kind business-model` | 格式与本地链接，抽象与规则仍由领域判断 |
 | YAML 层／模块设计 | `system-design validate`，局部层设计加 `--profile layers` | Schema、引用、路径冲突与声明依赖，不要求代码已存在 |
-| YAML 设计视图 | `system-design render` | 设计通过后输出 HTML，不代表实现验收 |
+| YAML 设计视图 | `system-design render` | 内含完整设计校验；成功输出单份 HTML，由 Agent 按查看流程保存并打开，不代表实现验收 |
 | YAML 下的生产代码或测试 | `system-design check` | 当前 YAML 作用域的目录归属、必要文件与 Go 导入；接口与行为未覆盖 |
 | Markdown 系统设计及协议 | `documents`、`design` | 约定格式与显式关系，不等同 YAML 检查 |
 | Markdown 代码映射 | `structure` | 显式位置与入口，不解析源码依赖 |
@@ -48,7 +48,7 @@ YAML 文件统一命名 `system-design.yaml`，每份只负责所在目录；`li
 <CLI> artifacts --root <项目根目录> --kind test --file <测试设计路径>
 ```
 
-旧交互 Skill 已删除；CLI 中已有交互文档检查能力保留兼容，不作为本包的领域入口。渲染写入项目文件是架构领域的明确写入动作，须纳入范围，使用临时输出成功后替换，避免错误诊断覆盖原图；具体规范见 [YAML 架构](system-design/guide.md)。
+旧交互 Skill 已删除；CLI 中已有交互文档检查能力保留兼容，不作为本包的领域入口。渲染写入项目文件是架构领域的明确写入动作，须纳入范围，使用临时输出成功后替换，避免错误诊断覆盖原图；用户请求查看时的目标选择、项目外缓存、多图汇总与宿主打开统一遵循[查看与展示流程](system-design/guide.md#查看与展示流程)；CLI 不负责启动浏览器。
 
 ## 范围与结果
 

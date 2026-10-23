@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>模块架构图</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:#23334b;font:15px system-ui,sans-serif}main{max-width:1600px;margin:auto;padding:32px}header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}h1{font-size:28px;margin:0 0 8px}p{line-height:1.6;margin:8px 0}.muted{color:#63728a}.legend{display:flex;gap:20px;flex-wrap:wrap}.legend span{white-space:nowrap}.solid{color:#2563a6}.dashed{color:#8a69ad}.canvas{overflow:auto;background:#fff;border:1px solid #dce3ef;border-radius:16px;padding:16px}svg{display:block;width:100%;height:auto;min-width:900px}svg text{font-family:system-ui,sans-serif;fill:#23334b;font-size:15px}.band{stroke-width:1}.color-0{fill:#eef5ff;stroke:#b6cdeb}.color-1{fill:#edfaf6;stroke:#afd9cd}.color-2{fill:#f5f0fc;stroke:#cfbce8}.color-3{fill:#fff7e9;stroke:#e6cf9e}.node{fill:#fff;stroke:#8ea8c6;stroke-width:1.5}.node-link:hover .node,.node-link:focus .node{stroke:#2563a6;stroke-width:3}.node-title{font-weight:650}.edge{fill:none;stroke-width:2;stroke-linejoin:round}.edge-module{stroke:#2563a6;marker-end:url(#arrow-module)}.edge-layer{stroke:#8a69ad;stroke-dasharray:6 5;marker-end:url(#arrow-layer)}.edge:hover{stroke-width:4}.layer-title{font-weight:650}details{margin-top:24px;border:1px solid #dce3ef;background:#fff;border-radius:12px;padding:18px}summary{cursor:pointer;font-weight:600}.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}article{padding:12px;scroll-margin-top:20px}article:target{background:#edf5ff;outline:2px solid #689bcc;border-radius:8px}h3{margin:8px 0}code{overflow-wrap:anywhere;font-size:12px}a{color:#2563a6}footer{font-size:12px;margin-top:20px;color:#63728a;overflow-wrap:anywhere}@media(max-width:700px){main{padding:16px}header{display:block}.legend{margin-top:16px}}@media print{main{padding:0}.canvas{overflow:visible;padding:0;border:0}svg{min-width:0}details{display:none}}
+
+.node-link,.edge{transition:opacity .12s ease}
+svg.tracing .node-link{opacity:.16}svg.tracing .edge{opacity:.08}
+svg.tracing .node-link.related,svg.tracing .edge.related{opacity:1}
+svg.tracing .edge.related{stroke-width:3}
+svg.tracing .node-link.related .node{stroke:#2563a6;stroke-width:2;fill:#f0f6ff}
+svg.tracing .node-link.selected .node{stroke:#174a8b;stroke-width:3;fill:#dbeafe}
+@media(prefers-reduced-motion:reduce){.node-link,.edge{transition:none}}
+@media print{svg.tracing .node-link,svg.tracing .edge{opacity:1!important}}
+</style></head><body><main>
+<header><div><h1>模块架构图</h1><p class="muted">按层组织模块 · 箭头从依赖方指向被依赖方</p></div><div class="legend"><span class="solid">━━▶ 模块依赖</span><span class="dashed">┄┄▶ 层间依赖</span></div></header>
+<div class="canvas"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {{.Width}} {{.Height}}" role="group" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">分层模块架构与允许依赖</title><desc id="diagram-desc">每条横向色带代表一个层，层内矩形代表模块。实线箭头表示模块允许依赖，虚线箭头表示层间允许依赖。点击模块查看目录和必要文件。</desc>
+<defs><marker id="arrow-module" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563a6"/></marker><marker id="arrow-layer" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8a69ad"/></marker></defs>
+{{range .Layers}}<g id="layer-{{.ID}}"><title>{{.ID}}：{{.Responsibility}}</title><rect class="band color-{{.Color}}" x="{{$.BandX}}" y="{{.Y}}" width="{{$.BandWidth}}" height="{{.Height}}" rx="12"/>
+{{$layer := .}}{{range $i,$line := .Lines}}<text class="layer-title" x="{{$layer.LabelX}}" y="{{lineY $layer.LabelY $i}}">{{$line}}</text>{{end}}
+{{range .Modules}}<a class="node-link" data-module="{{.ID}}" tabindex="0" id="module-{{.ID}}" href="#info-{{.ID}}"><title>{{.ID}}：{{.Responsibility}} · {{.Path}}</title><rect class="node" x="{{.X}}" y="{{.Y}}" width="{{.Width}}" height="{{.Height}}" rx="8"/>
+{{$module := .}}{{range $i,$line := .Lines}}<text {{if eq $i 0}}class="node-title"{{end}} x="{{add $module.X 16}}" y="{{lineY $module.Y $i}}">{{$line}}</text>{{end}}</a>{{end}}</g>{{end}}
+{{range .Edges}}<path class="edge edge-{{.Kind}}" data-from="{{.From}}" data-to="{{.To}}" d="{{.Path}}"><title>{{.From}} → {{.To}}</title></path>{{end}}
+</svg></div>
+<p class="muted" id="trace-status" role="status" aria-live="polite">悬停或键盘聚焦模块，追踪直接上下游依赖；移开后恢复。点击模块查看详情。</p>
+<section class="detail-grid" aria-label="模块详情">{{range .Layers}}{{range .Modules}}<article id="info-{{.ID}}"><details><summary>{{.ID}} · 目录与文件</summary><p>{{.Responsibility}}</p><code>{{.Path}}/</code><h3>必要文件</h3><ul>{{range .Required}}<li><code>{{.}}</code></li>{{else}}<li>未指定</li>{{end}}</ul><p>允许依赖：{{range .Allowed}}<a href="#module-{{.}}">→ {{.}}</a> {{else}}无{{end}}</p></details></article>{{end}}{{end}}</section>
+<footer>只读设计视图 · 修改 YAML 后重新生成 · 仅设计校验，不代表实现已验收<br>设计 SHA256：<code>{{.Report.Digest}}</code><br>生成器：{{.Report.Version}}</footer>
+</main>
+<script type="application/javascript">
+(() => {
+  const svg = document.querySelector('.canvas svg');
+  const nodes = Array.from(svg.querySelectorAll('.node-link'));
+  const edges = Array.from(svg.querySelectorAll('.edge'));
+  const status = document.getElementById('trace-status');
+  const idle = status.textContent;
+  let hovered = null;
+  let focused = null;
+  function update() {
+    const id = hovered || focused;
+    const related = new Set(id ? [id] : []);
+    const upstream = new Set();
+    const downstream = new Set();
+    for (const edge of edges) {
+      const moduleEdge = edge.classList.contains('edge-module');
+      const from = edge.dataset.from;
+      const to = edge.dataset.to;
+      const active = Boolean(id && moduleEdge && (from === id || to === id));
+      edge.classList.toggle('related', active);
+      if (active) {
+        related.add(from);
+        related.add(to);
+        if (to === id) upstream.add(from);
+        if (from === id) downstream.add(to);
+      }
+    }
+    svg.classList.toggle('tracing', Boolean(id));
+    for (const node of nodes) {
+      node.classList.toggle('related', related.has(node.dataset.module));
+      node.classList.toggle('selected', node.dataset.module === id);
+    }
+    status.textContent = id
+      ? id + '：' + upstream.size + ' 个上游模块依赖它，依赖 ' + downstream.size + ' 个下游模块。仅高亮直接关系。'
+      : idle;
+  }
+  for (const node of nodes) {
+    const id = node.dataset.module;
+    node.addEventListener('pointerenter', () => { hovered = id; update(); });
+    node.addEventListener('pointerleave', () => { if (hovered === id) hovered = null; update(); });
+    node.addEventListener('focus', () => { focused = id; update(); });
+    node.addEventListener('blur', () => { if (focused === id) focused = null; update(); });
+  }
+})();
+</script>
+</body></html>
