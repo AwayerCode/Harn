@@ -1,4 +1,4 @@
-package architecture
+package systemdesign
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func fixture(t *testing.T) (string, []byte) {
 	if e != nil {
 		t.Fatal(e)
 	}
-	b, e := os.ReadFile(filepath.Join(root, "architecture.yaml"))
+	b, e := os.ReadFile(filepath.Join(root, "system-design.yaml"))
 	if e != nil {
 		t.Fatal(e)
 	}
@@ -55,7 +55,7 @@ func has(r Report, rule string) bool {
 	return false
 }
 func TestSchemaMatchesCanonical(t *testing.T) {
-	b, e := os.ReadFile("../../../../skills/swe/references/architecture/schema.json")
+	b, e := os.ReadFile("../../../../skills/swe/references/system-design/schema.json")
 	if e != nil || string(b) != SchemaJSON {
 		t.Fatal("run go generate", e)
 	}

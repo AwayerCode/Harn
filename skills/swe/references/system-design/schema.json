@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Module architecture v1",
+  "title": "System design v1",
   "type": "object",
   "additionalProperties": false,
   "required": [

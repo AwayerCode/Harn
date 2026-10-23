@@ -45,7 +45,7 @@
       "name": "swe",
       "description": "提供业务模型、系统设计、代码实现、测试与发布交付五个领域能力，统一共享规范、Schema 和 CLI，按任务选用，不编排流水线。",
       "version": "2.0.0",
-      "updated_at": "2026-10-23T17:04:57+08:00",
+      "updated_at": "2026-10-23T17:14:16+08:00",
       "source": {
         "repository": null,
         "path": null

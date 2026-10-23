@@ -23,7 +23,7 @@ SWE 以软件价值交付为目标。业务模型、系统设计、代码实现�
 
 首先按[领域边界](references/standards/domains.md)确定产物所有权，再按[加载规范](references/standards/loading.md)读取当前所需内容。范围和失败处理遵守[执行规范](references/standards/execution.md)，专业判断遵守[共同工程标准](references/standards/engineering.md)。
 
-[CLI 约定](references/cli.md)定义检查选择与输出边界；[产物规范](references/standards/artifacts.md)维护文档表达，[YAML 模块架构](references/architecture/guide.md)定义结构化架构。共享方法、Schema 和 CLI 只维护一份，不复制进各领域或业务项目。
+[CLI 约定](references/cli.md)定义检查选择与输出边界；[产物规范](references/standards/artifacts.md)维护文档表达，[YAML 模块架构](references/system-design/guide.md)定义结构化架构。共享方法、Schema 和 CLI 只维护一份，不复制进各领域或业务项目。
 
 ## 协作与改动范围
 

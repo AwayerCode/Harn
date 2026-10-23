@@ -26,7 +26,7 @@ func TestSkillCommandContracts(t *testing.T) {
 	if len(field) != 2 {
 		t.Fatal("missing documented check result field")
 	}
-	fixture, err := filepath.Abs("../architecture/testdata/project")
+	fixture, err := filepath.Abs("../systemdesign/testdata/project")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,9 +46,9 @@ func TestSkillCommandContracts(t *testing.T) {
 		count++
 		t.Run(strings.TrimPrefix(line, "<CLI> "), func(t *testing.T) {
 			command := strings.TrimPrefix(line, "<CLI> ")
-			if strings.HasPrefix(command, "architecture ") {
+			if strings.HasPrefix(command, "system-design ") {
 				command = strings.ReplaceAll(command, "<项目根目录>", fixture)
-				command = strings.ReplaceAll(command, "<YAML路径>", "architecture.yaml")
+				command = strings.ReplaceAll(command, "<YAML路径>", "system-design.yaml")
 			}
 			args := strings.Fields(repl.Replace(command))
 			var out bytes.Buffer
@@ -56,7 +56,7 @@ func TestSkillCommandContracts(t *testing.T) {
 			if code != 0 && code != 1 {
 				t.Fatalf("example unavailable: %d %s", code, &out)
 			}
-			if len(args) > 1 && args[0] == "architecture" && args[1] == "render" {
+			if len(args) > 1 && args[0] == "system-design" && args[1] == "render" {
 				if code != 0 || !strings.HasPrefix(out.String(), "<!doctype html>") {
 					t.Fatal(out.String())
 				}
@@ -72,8 +72,8 @@ func TestSkillCommandContracts(t *testing.T) {
 				}
 				return
 			}
-			if args[0] == "architecture" {
-				if string(result["format"]) != `"swe-architecture-v1"` || string(result["status"]) != `"passed"` {
+			if args[0] == "system-design" {
+				if (string(result["format"]) != `"swe-system-design-v1"` && string(result["format"]) != `"swe-system-design-batch-v1"`) || string(result["status"]) != `"passed"` {
 					t.Fatal(out.String())
 				}
 				return
@@ -100,12 +100,12 @@ func TestArchitectureUnavailableContract(t *testing.T) {
 	root := t.TempDir()
 	for _, args := range [][]string{
 		{}, {"unknown"}, {"check"}, {"validate", "--unknown"},
-		{"check", "--file", "unused", "--profile", "architecture"},
+		{"check", "--file", "unused", "--profile", "layers"},
 		{"validate", "--file", filepath.Join(root, "missing.yaml")},
 		{"render", "--file", root}, // opening succeeds on Unix, reading a directory fails
 	} {
 		var out bytes.Buffer
-		code := Run(append([]string{"architecture"}, args...), nil, &out)
+		code := Run(append([]string{"system-design"}, args...), nil, &out)
 		var r struct {
 			Format      string `json:"format"`
 			Status      string `json:"status"`
@@ -115,7 +115,7 @@ func TestArchitectureUnavailableContract(t *testing.T) {
 		if err := json.Unmarshal(out.Bytes(), &r); err != nil {
 			t.Fatal(err)
 		}
-		if code != 2 || r.Format != "swe-architecture-v1" || r.Status != "unavailable" || r.Digest != "" || len(r.Diagnostics) == 0 {
+		if code != 2 || r.Format != "swe-system-design-v1" || r.Status != "unavailable" || r.Digest != "" || len(r.Diagnostics) == 0 {
 			t.Fatalf("%v: %d %s", args, code, &out)
 		}
 	}

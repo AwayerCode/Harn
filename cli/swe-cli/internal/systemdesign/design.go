@@ -1,5 +1,5 @@
-// Package architecture validates directory-backed module architecture.
-package architecture
+// Package systemdesign validates directory-backed module systemdesign.
+package systemdesign
 
 import (
 	"bytes"
@@ -45,6 +45,7 @@ type Edge struct {
 	Line int    `json:"line"`
 }
 type Report struct {
+	Scope       *Scope       `json:"scope,omitempty"`
 	Format      string       `json:"format"`
 	Version     string       `json:"generator_version"`
 	Digest      string       `json:"design_sha256"`
@@ -58,7 +59,7 @@ type Report struct {
 
 func NewReport(mode, version string, data []byte) Report {
 	h := sha256.Sum256(data)
-	return Report{Format: "swe-architecture-v1", Version: version, Digest: hex.EncodeToString(h[:]), Mode: mode, Status: "passed", Diagnostics: []Diagnostic{}, Edges: []Edge{}, Coverage: []string{}, Unverified: []string{"Interfaces, runtime calls and behavior are not checked."}}
+	return Report{Format: "swe-system-design-v1", Version: version, Digest: hex.EncodeToString(h[:]), Mode: mode, Status: "passed", Diagnostics: []Diagnostic{}, Edges: []Edge{}, Coverage: []string{}, Unverified: []string{"Interfaces, runtime calls and behavior are not checked."}}
 }
 func (r *Report) Add(rule, loc, message string) {
 	r.Diagnostics = append(r.Diagnostics, Diagnostic{rule, loc, message})
@@ -150,10 +151,10 @@ func ParseProfile(data []byte, r *Report, partial bool) *Design {
 		return nil
 	}
 	c := jsonschema.NewCompiler()
-	if e = c.AddResource("architecture.json", strings.NewReader(SchemaJSON)); e != nil {
+	if e = c.AddResource("systemdesign.json", strings.NewReader(SchemaJSON)); e != nil {
 		panic(e)
 	}
-	schema, e := c.Compile("architecture.json")
+	schema, e := c.Compile("systemdesign.json")
 	if e != nil {
 		panic(e)
 	}

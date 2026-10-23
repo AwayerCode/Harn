@@ -1,4 +1,4 @@
-package architecture
+package systemdesign
 
 import (
 	"html/template"

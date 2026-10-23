@@ -11,7 +11,7 @@
 
 采用 YAML 时结构关系以 YAML 为准，设计理由与数据契约保留自己的权威来源；不要为了旧文档检查复制一套结构表格。Markdown 项目继续按其文档契约检查。两者的命令与覆盖差异见 [CLI 约定](../cli.md)。
 
-YAML 层设计可用 `architecture validate --profile architecture`，Markdown 层设计可用 `documents --kind system-design --profile architecture`。局部通过仅供交接，完整模块设计才可作为实现依据；实现验收还需要结构、依赖和行为证据。
+YAML 层设计可用 `system-design validate --profile layers`，Markdown 层设计可用 `documents --kind system-design --profile architecture`。局部通过仅供交接，完整模块设计才可作为实现依据；实现验收还需要结构、依赖和行为证据。
 
 ## 职责交接
 
