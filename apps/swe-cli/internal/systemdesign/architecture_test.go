@@ -160,7 +160,7 @@ func TestRenderEscapesAndLinks(t *testing.T) {
 		t.Fatal(e)
 	}
 	s := out.String()
-	for _, want := range []string{"&lt;script&gt;", `href="#module-payments"`, "src/application/orders", r.Digest} {
+	for _, want := range []string{"&lt;script&gt;", `data-detail="payments"`, "src/application/orders"} {
 		if !strings.Contains(s, want) {
 			t.Fatalf("missing %s", want)
 		}

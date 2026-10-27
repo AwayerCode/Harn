@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>模块架构图</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f5f7fb;color:#23334b;font:15px system-ui,sans-serif}main{max-width:1600px;margin:auto;padding:32px}header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}h1{font-size:28px;margin:0 0 8px}p{line-height:1.6;margin:8px 0}.muted{color:#63728a}.legend{display:flex;gap:20px;flex-wrap:wrap}.legend span{white-space:nowrap}.solid{color:#2563a6}.dashed{color:#8a69ad}.canvas{overflow:auto;background:#fff;border:1px solid #dce3ef;border-radius:16px;padding:16px}svg{display:block;width:100%;height:auto;min-width:900px}svg text{font-family:system-ui,sans-serif;fill:#23334b;font-size:15px}.band{stroke-width:1}.color-0{fill:#eef5ff;stroke:#b6cdeb}.color-1{fill:#edfaf6;stroke:#afd9cd}.color-2{fill:#f5f0fc;stroke:#cfbce8}.color-3{fill:#fff7e9;stroke:#e6cf9e}.node{fill:#fff;stroke:#8ea8c6;stroke-width:1.5}.node-link:hover .node,.node-link:focus .node{stroke:#2563a6;stroke-width:3}.node-title{font-weight:650}.edge{fill:none;stroke-width:2;stroke-linejoin:round}.edge-module{stroke:#2563a6;marker-end:url(#arrow-module)}.edge-layer{stroke:#8a69ad;stroke-dasharray:6 5;marker-end:url(#arrow-layer)}.edge:hover{stroke-width:4}.layer-title{font-weight:650}details{margin-top:24px;border:1px solid #dce3ef;background:#fff;border-radius:12px;padding:18px}summary{cursor:pointer;font-weight:600}.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}article{padding:12px;scroll-margin-top:20px}article:target{background:#edf5ff;outline:2px solid #689bcc;border-radius:8px}h3{margin:8px 0}code{overflow-wrap:anywhere;font-size:12px}a{color:#2563a6}footer{font-size:12px;margin-top:20px;color:#63728a;overflow-wrap:anywhere}@media(max-width:700px){main{padding:16px}header{display:block}.legend{margin-top:16px}}@media print{main{padding:0}.canvas{overflow:visible;padding:0;border:0}svg{min-width:0}details{display:none}}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:#242424;font:15px system-ui,sans-serif}main{max-width:1920px;margin:auto;padding:40px}header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px}h1{font-size:30px;margin:0 0 8px}p{line-height:1.6;margin:8px 0}.muted{color:#63728a}.legend{display:flex;gap:20px;flex-wrap:wrap}.legend span{white-space:nowrap}.solid{color:#2563a6}.dashed{color:#925119}.canvas{height:clamp(240px,70vh,900px);overflow:auto;background:#fff;border:0;border-radius:0;padding:0}svg{display:block;max-width:none;margin-inline:auto}svg text{stroke:none;font-family:system-ui,sans-serif;fill:#242424;font-size:15px}.band{stroke-width:2;stroke-dasharray:8 6}.color-0{fill:#f5f7ff;stroke:#2853a0}.color-1{fill:#fff8f0;stroke:#925119}.color-2{fill:#f6f1ff;stroke:#6832a5}.color-3{fill:#f0faf6;stroke:#187463}.node{stroke-width:2;fill:#e6edff;stroke:#2853a0}.color-1 .node{fill:#fcebd9;stroke:#925119}.color-2 .node{fill:#ede5fb;stroke:#6832a5}.color-3 .node{fill:#d5f4e9;stroke:#187463}.node-link:hover .node,.node-link:focus .node{stroke:#2563a6;stroke-width:3}.node-title{font-weight:650}.edge{fill:none;stroke-width:2;stroke-linejoin:round}.edge-module{stroke:#2563a6;marker-end:url(#arrow-module)}.edge-layer{stroke:#925119;stroke-dasharray:6 5;marker-end:url(#arrow-layer)}.edge:hover{stroke-width:4}.layer-title{font-weight:650}dialog{width:min(560px,calc(100vw - 32px));max-height:80vh;overflow:auto;border:1px solid #bcc8d8;border-radius:12px;padding:24px;color:#242424}dialog::backdrop{background:rgb(15 23 42 / 35%)}.dialog-close{float:right;font:inherit;cursor:pointer;padding:5px 12px}.detail-link{font:inherit;color:#2563a6;background:none;border:0;cursor:pointer;text-decoration:underline}dialog h2{font-size:20px;margin:0 0 16px;overflow-wrap:anywhere}h3{margin:8px 0}code{overflow-wrap:anywhere;font-size:12px}a{color:#2563a6}footer{font-size:12px;margin-top:20px;color:#63728a;overflow-wrap:anywhere}@media(max-width:700px){main{padding:16px}header{display:block}.legend{margin-top:16px}}@media print{main{padding:0}.zoom-controls{display:none}.canvas{height:auto;overflow:visible;padding:0;border:0}svg{width:100%!important;height:auto!important}dialog{display:none}}
 
 .node-link,.edge{transition:opacity .12s ease}
 svg.tracing .node-link{opacity:.16}svg.tracing .edge{opacity:.08}
@@ -11,20 +11,37 @@ svg.tracing .node-link.related .node{stroke:#2563a6;stroke-width:2;fill:#f0f6ff}
 svg.tracing .node-link.selected .node{stroke:#174a8b;stroke-width:3;fill:#dbeafe}
 @media(prefers-reduced-motion:reduce){.node-link,.edge{transition:none}}
 @media print{svg.tracing .node-link,svg.tracing .edge{opacity:1!important}}
+.zoom-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}.zoom-controls button{font:inherit;padding:6px 12px;border:1px solid #bcc8d8;border-radius:6px;background:#fff;color:#23334b;cursor:pointer}.zoom-controls button:focus-visible{outline:2px solid #2563a6;outline-offset:2px}.zoom-controls output{min-width:52px;text-align:center}
+
+html,body{height:100%;overflow:hidden}main{height:100vh;height:100dvh;width:100%;max-width:none;margin:0;padding:0;display:flex;flex-direction:column}.canvas{flex:1;min-height:0;height:auto;width:100%}.statusbar{flex:none;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0;padding:4px 12px;border-top:1px solid #d4d9e0;background:#f3f4f6;color:#475569;font-size:12px;line-height:24px}.diagram-key{white-space:nowrap}.statusbar .legend{gap:12px;margin:0}.statusbar .zoom-controls{margin:0 0 0 auto;gap:4px;flex-wrap:nowrap}.zoom-controls button{font-size:12px;border:0;border-radius:3px;background:transparent;padding:2px 8px;white-space:nowrap}.zoom-controls button:hover{background:#e0e5ed}.zoom-controls output{min-width:42px}.view-info{position:relative}.view-info summary{cursor:pointer;list-style:none}.view-info>div{position:absolute;right:0;bottom:32px;width:min(400px,90vw);background:white;border:1px solid #cbd5e1;border-radius:6px;padding:12px;box-shadow:0 4px 20px #0002;overflow-wrap:anywhere;z-index:2}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media(max-width:700px){.statusbar{gap:4px 12px}.diagram-key{white-space:normal;line-height:18px}.statusbar .legend{flex-wrap:wrap}}@media print{html,body{height:auto;overflow:visible}main{height:auto;display:block}.canvas{height:auto;overflow:visible}.statusbar{display:none}}
+.canvas{position:relative;overflow:hidden;touch-action:none;cursor:grab;user-select:none}.canvas.panning{cursor:grabbing}.canvas svg{position:absolute;margin:0}.canvas .node-link{cursor:pointer}@media print{.canvas svg{position:static;left:auto!important;top:auto!important}}
+.module-path{color:#64748b;margin:0 0 20px}.detail-section{border-top:1px solid #e2e8f0;padding:16px 0}.detail-section h3{font-size:14px;margin:0 0 10px;color:#475569}.detail-count{font-size:12px;font-weight:400;margin-left:6px;color:#64748b}.interface-item{padding:10px 12px;background:#f8fafc;border-radius:6px;margin:8px 0}.interface-item code{font-size:14px;font-weight:600}.interface-item p{margin:4px 0 0;font-size:14px}.file-list{list-style:none;margin:0;padding:0}.file-list li{padding:7px 0;border-bottom:1px solid #f1f5f9}.module-dependencies{border-top:1px solid #e2e8f0;padding-top:14px;font-size:13px}.module-dependencies summary{cursor:pointer;color:#64748b}
+dialog{padding:0;overflow:hidden;max-height:85vh;max-height:85dvh;width:min(640px,calc(100vw - 32px));box-shadow:0 20px 60px #0f172a33}dialog[open]{display:flex;flex-direction:column}.dialog-heading{display:flex;align-items:center;gap:16px;flex:none;padding:18px 24px;border-bottom:1px solid #e2e8f0;background:#fff}.dialog-heading h2{flex:1;min-width:0;margin:0;font-size:20px}.dialog-close{float:none;display:grid;place-items:center;width:32px;height:32px;flex:none;padding:0;border:0;border-radius:6px;background:transparent;color:#64748b;font-size:26px;line-height:1}.dialog-close:hover{background:#f1f5f9;color:#0f172a}.dialog-close:focus-visible{outline:2px solid #2563a6;outline-offset:2px}#detail-content{display:block;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:20px 24px;overflow-wrap:anywhere}#detail-content .detail-section{display:block;width:100%}#detail-content .module-path{margin-bottom:16px}@media print{dialog[open]{display:none}}
+
+/* Finder-style columns: the lists scroll independently, not the entire dialog. */
+dialog{width:min(1120px,calc(100vw - 32px));height:min(720px,85dvh)}#detail-content{display:flex;flex-direction:column;flex:1;min-height:0;padding:0;overflow:hidden;scrollbar-gutter:auto}#detail-content .module-path{flex:none;margin:0;padding:12px 20px;border-bottom:1px solid #e2e8f0;background:#f8fafc}.detail-columns{display:grid;grid-template-columns:minmax(240px,0.9fr) minmax(280px,1.15fr) minmax(240px,1fr);flex:1;min-height:0;overflow-x:auto}#detail-content .detail-section{display:flex;flex-direction:column;min-width:0;min-height:0;width:auto;padding:0;border-top:0;border-right:1px solid #e2e8f0}#detail-content .detail-section:last-child{border-right:0}.detail-section h3{flex:none;margin:0;padding:14px 18px;border-bottom:1px solid #edf0f4;background:#fafbfc}.column-body{flex:1;min-height:0;padding:8px 18px 20px;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}.interface-item{background:transparent;border-bottom:1px solid #edf0f4;border-radius:0;padding:12px 0;margin:0}.file-list li{padding:10px 0}.module-dependencies{margin-top:20px}@media(max-width:700px){dialog{width:calc(100vw - 16px)}.detail-columns{grid-template-columns:240px 280px 240px}}
+.detail-columns{grid-template-columns:minmax(240px,.9fr) 7px minmax(280px,1.15fr) 7px minmax(240px,1fr)}.column-divider{cursor:col-resize;touch-action:none;background:#edf0f4;position:relative;outline:none}.column-divider::after{content:"";position:absolute;left:3px;top:0;bottom:0;width:1px;background:#cbd5e1}.column-divider:hover,.column-divider:focus-visible,.column-divider.resizing{background:#bfdbfe}.detail-columns.resizing{user-select:none;cursor:col-resize}@media(max-width:700px){.detail-columns{grid-template-columns:240px 7px 280px 7px 240px}}
+
+:root{color-scheme:light;--surface:#fff;--canvas:#fafbfc;--panel:#f3f4f6;--text:#242424;--muted:#64748b;--border:#d4d9e0;--hover:#e2e8f0;--grid:#cbd3df;--blue:#2563a6;--orange:#925119}
+@media screen{:root[data-theme="dark"]{color-scheme:dark;--surface:#20242b;--canvas:#171b21;--panel:#252b34;--text:#e4eaf2;--muted:#a5b1c2;--border:#414a59;--hover:#364354;--grid:#3b4656;--blue:#80b7ff;--orange:#e8b37b}
+[data-theme="dark"] .color-0{fill:#202d45;stroke:#729de3}[data-theme="dark"] .color-1{fill:#332b23;stroke:#c99a69}[data-theme="dark"] .color-2{fill:#2e2540;stroke:#aa8bd4}[data-theme="dark"] .color-3{fill:#1d3431;stroke:#6db5a3}
+[data-theme="dark"] .node{fill:#293e60;stroke:#729de3}[data-theme="dark"] .color-1 .node{fill:#4a3627;stroke:#c99a69}[data-theme="dark"] .color-2 .node{fill:#403055;stroke:#aa8bd4}[data-theme="dark"] .color-3 .node{fill:#23493f;stroke:#6db5a3}
+[data-theme="dark"] svg.tracing .node-link.related .node{fill:#293e60;stroke:#80b7ff}[data-theme="dark"] svg.tracing .node-link.selected .node{fill:#355580;stroke:#a6cdff}}
+body,dialog{background:var(--surface);color:var(--text)}.canvas{background-color:var(--canvas);background-image:radial-gradient(circle at 1px 1px,var(--grid) 1px,transparent 1.2px);background-size:var(--grid-size,24px) var(--grid-size,24px);background-position:var(--grid-x,0px) var(--grid-y,0px)}svg text{fill:var(--text)}.edge-module{stroke:var(--blue)}.edge-layer{stroke:var(--orange)}#arrow-module path{fill:var(--blue)}#arrow-layer path{fill:var(--orange)}.solid,a,.detail-link{color:var(--blue)}.dashed{color:var(--orange)}.muted,.module-path,.detail-count,.module-dependencies summary{color:var(--muted)}.statusbar,.detail-section h3,#detail-content .module-path{background:var(--panel);color:var(--muted);border-color:var(--border)}.zoom-controls button,.dialog-close{color:var(--text)}.zoom-controls button:hover,.dialog-close:hover{background:var(--hover);color:var(--text)}dialog,.dialog-heading,.view-info>div{background:var(--surface);color:var(--text);border-color:var(--border)}#detail-content .detail-section,.interface-item,.file-list li,.module-dependencies{border-color:var(--border)}.column-divider{background:var(--panel)}.column-divider::after{background:var(--border)}.column-divider:hover,.column-divider:focus-visible,.column-divider.resizing{background:var(--blue)}.theme-control{display:flex;align-items:center;gap:6px;white-space:nowrap}.theme-control select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:2px 5px}@media print{.canvas{background:#fff}}
 </style></head><body><main>
-<header><div><h1>模块架构图</h1><p class="muted">按层组织模块 · 箭头从依赖方指向被依赖方</p></div><div class="legend"><span class="solid">━━▶ 模块依赖</span><span class="dashed">┄┄▶ 层间依赖</span></div></header>
-<div class="canvas"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {{.Width}} {{.Height}}" role="group" aria-labelledby="diagram-title diagram-desc">
-<title id="diagram-title">分层模块架构与允许依赖</title><desc id="diagram-desc">每条横向色带代表一个层，层内矩形代表模块。实线箭头表示模块允许依赖，虚线箭头表示层间允许依赖。点击模块查看目录和必要文件。</desc>
-<defs><marker id="arrow-module" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563a6"/></marker><marker id="arrow-layer" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8a69ad"/></marker></defs>
-{{range .Layers}}<g id="layer-{{.ID}}"><title>{{.ID}}：{{.Responsibility}}</title><rect class="band color-{{.Color}}" x="{{$.BandX}}" y="{{.Y}}" width="{{$.BandWidth}}" height="{{.Height}}" rx="12"/>
+<div class="canvas" tabindex="0" aria-label="架构图画布，滚轮缩放，拖拽平移"><svg xmlns="http://www.w3.org/2000/svg" width="{{.Width}}" height="{{.Height}}" viewBox="0 0 {{.Width}} {{.Height}}" role="group" aria-labelledby="diagram-title diagram-desc">
+<title id="diagram-title">分层模块架构与允许依赖</title><desc id="diagram-desc">每个虚线分区代表一个层，顶部为层名和职责，区内淡色矩形代表模块。实线箭头表示模块允许依赖，虚线箭头表示层间允许依赖。点击模块查看目录和必要文件。</desc>
+<defs><marker id="arrow-module" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563a6"/></marker><marker id="arrow-layer" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#925119"/></marker></defs>
+{{range .Layers}}<g id="layer-{{.ID}}" class="color-{{.Color}}"><title>{{.ID}}：{{.Responsibility}}</title><rect class="band color-{{.Color}}" x="{{$.BandX}}" y="{{.Y}}" width="{{$.BandWidth}}" height="{{.Height}}" rx="12"/>
 {{$layer := .}}{{range $i,$line := .Lines}}<text class="layer-title" x="{{$layer.LabelX}}" y="{{lineY $layer.LabelY $i}}">{{$line}}</text>{{end}}
-{{range .Modules}}<a class="node-link" data-module="{{.ID}}" tabindex="0" id="module-{{.ID}}" href="#info-{{.ID}}"><title>{{.ID}}：{{.Responsibility}} · {{.Path}}</title><rect class="node" x="{{.X}}" y="{{.Y}}" width="{{.Width}}" height="{{.Height}}" rx="8"/>
-{{$module := .}}{{range $i,$line := .Lines}}<text {{if eq $i 0}}class="node-title"{{end}} x="{{add $module.X 16}}" y="{{lineY $module.Y $i}}">{{$line}}</text>{{end}}</a>{{end}}</g>{{end}}
+{{range .Modules}}<a class="node-link" data-module="{{.ID}}" tabindex="0" aria-haspopup="dialog" id="module-{{.ID}}" href="#info-{{.ID}}"><title>{{.ID}}：{{.Responsibility}} · {{.Path}}</title><rect class="node" x="{{.X}}" y="{{.Y}}" width="{{.Width}}" height="{{.Height}}" rx="8"/>
+{{$module := .}}{{range $i,$line := .Lines}}<text {{if eq $i 0}}class="node-title"{{end}} text-anchor="middle" x="{{add $module.X 112}}" y="{{lineY $module.Y $i}}">{{$line}}</text>{{end}}</a>{{end}}</g>{{end}}
 {{range .Edges}}<path class="edge edge-{{.Kind}}" data-from="{{.From}}" data-to="{{.To}}" d="{{.Path}}"><title>{{.From}} → {{.To}}</title></path>{{end}}
 </svg></div>
-<p class="muted" id="trace-status" role="status" aria-live="polite">悬停或键盘聚焦模块，追踪直接上下游依赖；移开后恢复。点击模块查看详情。</p>
-<section class="detail-grid" aria-label="模块详情">{{range .Layers}}{{range .Modules}}<article id="info-{{.ID}}"><details><summary>{{.ID}} · 目录与文件</summary><p>{{.Responsibility}}</p><code>{{.Path}}/</code><h3>必要文件</h3><ul>{{range .Required}}<li><code>{{.}}</code></li>{{else}}<li>未指定</li>{{end}}</ul><p>允许依赖：{{range .Allowed}}<a href="#module-{{.}}">→ {{.}}</a> {{else}}无{{end}}</p></details></article>{{end}}{{end}}</section>
-<footer>只读设计视图 · 修改 YAML 后重新生成 · 仅设计校验，不代表实现已验收<br>设计 SHA256：<code>{{.Report.Digest}}</code><br>生成器：{{.Report.Version}}</footer>
+<p class="sr-only" id="trace-status" role="status" aria-live="polite">悬停或键盘聚焦模块，追踪直接上下游依赖；移开后恢复。点击模块查看详情。</p>
+{{range .Layers}}{{range .Modules}}<template id="info-{{.ID}}" data-name="{{.ID}}"><p class="module-path"><code>{{.Path}}/</code></p><div class="detail-columns"><section class="detail-section"><h3>模块功能</h3><div class="column-body"><p>{{.Responsibility}}</p><details class="module-dependencies"><summary>允许依赖</summary><p>{{range .Allowed}}<button class="detail-link" data-detail="{{.}}">→ {{.}}</button> {{else}}无{{end}}</p></details></div></section><div class="column-divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="模块功能列宽" aria-valuemin="180" aria-valuenow="240" data-divider="0"></div><section class="detail-section"><h3>接口列表 <span class="detail-count">{{len .Interfaces}}</span></h3><div class="column-body">{{range .Interfaces}}<div class="interface-item"><code>{{.Name}}</code><p>{{.Description}}</p></div>{{else}}<p class="muted">尚未声明接口</p>{{end}}</div></section><div class="column-divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="接口列表列宽" aria-valuemin="180" aria-valuenow="240" data-divider="1"></div><section class="detail-section"><h3>文件列表 <span class="detail-count">{{len .Required}}</span></h3><div class="column-body"><p class="muted">设计声明的必要文件</p><ul class="file-list">{{range .Required}}<li><code>{{.}}</code></li>{{else}}<li class="muted">尚未声明文件</li>{{end}}</ul></div></section></div></template>{{end}}{{end}}
+<dialog id="module-dialog" aria-labelledby="module-detail-title"><div class="dialog-heading"><h2 id="module-detail-title"></h2><button class="dialog-close" id="detail-close" aria-label="关闭模块详情" title="关闭（Esc）" autofocus><span aria-hidden="true">×</span></button></div><div id="detail-content"></div></dialog>
+<footer class="statusbar" aria-label="架构图工具栏"><div class="zoom-controls" role="group" aria-label="架构图缩放"><button id="zoom-out" aria-label="缩小">−</button><output id="zoom-level" aria-live="polite">100%</output><button id="zoom-in" aria-label="放大">＋</button><button id="zoom-reset">100%</button><button id="zoom-fit">适应全图</button></div><label class="theme-control">主题 <select id="theme-mode" aria-label="配色主题"><option value="auto">自动</option><option value="light">亮色</option><option value="dark">暗色</option></select></label><details class="view-info"><summary>信息</summary><div><p>虚线框：职责边界<br>箭头：依赖方 → 被依赖方<br><span class="solid">蓝色实线：模块允许依赖</span><br><span class="dashed">橙色虚线：层间允许依赖</span></p></div></details></footer>
 </main>
 <script type="application/javascript">
 (() => {
@@ -69,6 +86,196 @@ svg.tracing .node-link.selected .node{stroke:#174a8b;stroke-width:3;fill:#dbeafe
     node.addEventListener('focus', () => { focused = id; update(); });
     node.addEventListener('blur', () => { if (focused === id) focused = null; update(); });
   }
+})();
+</script>
+<script type="application/javascript">
+(() => {
+  const canvas = document.querySelector('.canvas');
+  const svg = canvas.querySelector('svg');
+  const width = svg.viewBox.baseVal.width;
+  const height = svg.viewBox.baseVal.height;
+  const level = document.getElementById('zoom-level');
+  let scale = 1;
+  let fitting = true;
+  let offsetX = 0, offsetY = 0;
+  function apply(next, fit, x = canvas.clientWidth / 2, y = canvas.clientHeight / 2) {
+    const worldX = (x - offsetX) / scale;
+    const worldY = (y - offsetY) / scale;
+    scale = next;
+    fitting = fit;
+    offsetX = fit ? (canvas.clientWidth - width * scale) / 2 : x - worldX * scale;
+    offsetY = fit ? (canvas.clientHeight - height * scale) / 2 : y - worldY * scale;
+    svg.style.width = width * scale + 'px';
+    svg.style.height = height * scale + 'px';
+    position();
+    level.textContent = Math.round(scale * 100) + '%';
+  }
+  function position() {
+    svg.style.left = offsetX + 'px';
+    svg.style.top = offsetY + 'px';
+    // Keep grid lines legible at low zoom, anchored to diagram coordinates.
+    let spacing = 24 * scale;
+    while (spacing < 12) spacing *= 2;
+    canvas.style.setProperty('--grid-size', spacing + 'px');
+    canvas.style.setProperty('--grid-x', offsetX + 'px');
+    canvas.style.setProperty('--grid-y', offsetY + 'px');
+  }
+  function fit() {
+    apply(Math.min(1, Math.max(1, canvas.clientWidth - 16) / width,
+      Math.max(1, canvas.clientHeight - 16) / height), true);
+  }
+  document.getElementById('zoom-in').addEventListener('click', () => apply(Math.min(3, scale * 1.25), false));
+  document.getElementById('zoom-out').addEventListener('click', () => apply(Math.max(Math.min(scale, 0.05), scale / 1.25), false));
+  document.getElementById('zoom-reset').addEventListener('click', () => apply(1, false));
+  document.getElementById('zoom-fit').addEventListener('click', fit);
+  canvas.addEventListener('wheel', event => {
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1);
+    const next = Math.min(3, Math.max(Math.min(scale, 0.05), scale * Math.exp(-Math.max(-500, Math.min(500, delta)) * 0.002)));
+    apply(next, false, event.clientX - rect.left, event.clientY - rect.top);
+  }, {passive:false});
+  let drag = null, suppressClick = false;
+  canvas.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || !event.isPrimary) return;
+    suppressClick = false;
+    drag = {id:event.pointerId, x:event.clientX, y:event.clientY, ox:offsetX, oy:offsetY, moved:false};
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (!drag || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+    drag.moved = true;
+    suppressClick = true;
+    fitting = false;
+    canvas.setPointerCapture(event.pointerId);
+    canvas.classList.toggle('panning', true);
+    offsetX = drag.ox + dx; offsetY = drag.oy + dy;
+    position();
+    event.preventDefault();
+  });
+  function endDrag(event) {
+    if (!drag || drag.id !== event.pointerId) return;
+    drag = null;
+    canvas.classList.toggle('panning', false);
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('lostpointercapture', endDrag);
+  canvas.addEventListener('click', event => {
+    if (suppressClick && event.detail !== 0) {
+      event.preventDefault(); event.stopImmediatePropagation(); suppressClick = false;
+    }
+  }, true);
+  canvas.addEventListener('dragstart', event => event.preventDefault());
+  new ResizeObserver(() => { if (fitting) fit(); }).observe(canvas);
+  fit();
+})();
+</script>
+<script type="application/javascript">
+(() => {
+  const dialog = document.getElementById('module-dialog');
+  const content = document.getElementById('detail-content');
+  let opener;
+  function show(id) {
+    const template = document.getElementById('info-' + id);
+    if (!template) return;
+    document.getElementById('module-detail-title').textContent = template.dataset.name;
+    content.replaceChildren(template.content.cloneNode(true));
+    content.scrollTop = 0;
+    if (!dialog.open) dialog.showModal();
+  }
+  for (const node of document.querySelectorAll('.node-link')) {
+    node.addEventListener('click', event => {
+      event.preventDefault();
+      opener = node;
+      show(node.dataset.module);
+    });
+  }
+  content.addEventListener('click', event => {
+    const link = event.target.closest('[data-detail]');
+    if (link) show(link.dataset.detail);
+  });
+  document.getElementById('detail-close').addEventListener('click', () => dialog.close());
+  function outside(event) {
+    const rect = dialog.getBoundingClientRect();
+    return event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom);
+  }
+  let backdropPress = false;
+  dialog.addEventListener('pointerdown', event => { backdropPress = outside(event); });
+  dialog.addEventListener('click', event => {
+    if (backdropPress && outside(event)) dialog.close();
+    backdropPress = false;
+  });
+  dialog.addEventListener('close', () => { if (opener) opener.focus({preventScroll:true}); });
+})();
+</script>
+<script type="application/javascript">
+(() => {
+  const content = document.getElementById('detail-content');
+  let drag = null;
+  function geometry(handle) {
+    const grid = handle.parentElement;
+    const widths = Array.from(grid.querySelectorAll('.detail-section'), node => node.getBoundingClientRect().width);
+    return {grid, widths, index:Number(handle.dataset.divider)};
+  }
+  function resize(handle, state, delta) {
+    const widths = state.widths.slice();
+    const i = state.index, total = widths[i] + widths[i + 1];
+    widths[i] = Math.max(180, Math.min(total - 180, widths[i] + delta));
+    widths[i + 1] = total - widths[i];
+    state.grid.style.gridTemplateColumns = widths.map(w => w + 'px').join(' 7px ');
+    handle.setAttribute('aria-valuenow', Math.round(widths[i]));
+    handle.setAttribute('aria-valuemax', Math.round(total - 180));
+  }
+  content.addEventListener('pointerdown', event => {
+    const handle = event.target.closest('.column-divider');
+    if (!handle || event.button !== 0 || !event.isPrimary) return;
+    event.preventDefault();
+    handle.focus({preventScroll:true});
+    drag = {...geometry(handle), handle, id:event.pointerId, start:event.clientX};
+    handle.setPointerCapture(event.pointerId);
+    handle.classList.add('resizing');
+    drag.grid.classList.add('resizing');
+  });
+  content.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    resize(drag.handle, drag, event.clientX - drag.start);
+  });
+  function finish(event) {
+    if (!drag || (event.pointerId !== undefined && event.pointerId !== drag.id)) return;
+    const {handle, grid, id} = drag;
+    drag = null;
+    handle.classList.remove('resizing'); grid.classList.remove('resizing');
+    if (handle.hasPointerCapture(id)) handle.releasePointerCapture(id);
+  }
+  for (const type of ['pointerup','pointercancel','lostpointercapture']) content.addEventListener(type, finish);
+  document.getElementById('module-dialog').addEventListener('close', finish);
+  content.addEventListener('keydown', event => {
+    const handle = event.target.closest('.column-divider');
+    if (!handle || !['ArrowLeft','ArrowRight'].includes(event.key)) return;
+    event.preventDefault();
+    resize(handle, geometry(handle), (event.key === 'ArrowLeft' ? -1 : 1) * (event.shiftKey ? 40 : 10));
+  });
+})();
+</script>
+<script type="application/javascript">
+(() => {
+  const select = document.getElementById('theme-mode');
+  const system = window.matchMedia('(prefers-color-scheme: dark)');
+  const valid = value => ['auto','light','dark'].includes(value);
+  try { const saved = localStorage.getItem('harn-diagram-theme'); if (valid(saved)) select.value = saved; } catch {}
+  function apply() {
+    document.documentElement.dataset.theme = select.value === 'auto' ? (system.matches ? 'dark' : 'light') : select.value;
+  }
+  select.addEventListener('change', () => {
+    if (!valid(select.value)) select.value = 'auto';
+    try { localStorage.setItem('harn-diagram-theme', select.value); } catch {}
+    apply();
+  });
+  system.addEventListener('change', apply);
+  apply();
 })();
 </script>
 </body></html>

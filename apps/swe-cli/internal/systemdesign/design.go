@@ -22,7 +22,12 @@ type Layer struct {
 	Responsibility string   `json:"responsibility"`
 	Allowed        []string `json:"allowed_dependencies"`
 }
+type ModuleInterface struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
 type Module struct {
+	Interfaces []ModuleInterface `json:"interfaces,omitempty"`
 	Layer
 	LayerID  string   `json:"layer"`
 	Required []string `json:"required_files"`

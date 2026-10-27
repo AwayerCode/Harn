@@ -79,21 +79,21 @@ func routeDiagram(d *Design, layout diagramLayout) []viewEdge {
 					ty = b.Y + b.Height
 				}
 				if ar-br == 1 || br-ar == 1 {
-					// Adjacent rows connect locally; curves fan out between endpoint ports.
+					// Adjacent rows use orthogonal paths, matching the architecture overview.
 					middle := (sy + ty) / 2
-					path = fmt.Sprintf("M %d %d C %d %d %d %d %d %d", sx, sy, sx, middle, tx, middle, tx, ty)
+					path = fmt.Sprintf("M %d %d V %d H %d V %d", sx, sy, middle, tx, ty)
 				} else {
 					// All rows share module columns. Their gutters are obstacle-free, even across skipped rows.
 					chosen, best := 0, math.MaxFloat64
 					for k := 0; k <= columns; k++ {
-						x := v.BandX + 174 + k*280
+						x := v.BandX + 28 + k*280
 						score := math.Abs(float64(sx-x)) + math.Abs(float64(tx-x)) + float64(gapUse[k]*60)
 						if score < best {
 							best = score
 							chosen = k
 						}
 					}
-					x := v.BandX + 174 + chosen*280 + (gapUse[chosen]%5-2)*6
+					x := v.BandX + 28 + chosen*280 + (gapUse[chosen]%5-2)*6
 					gapUse[chosen]++
 					startY := sy + direction*(46+min(outIndex, 10)*6)
 					if direction > 0 {

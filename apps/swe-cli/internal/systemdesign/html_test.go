@@ -2,6 +2,7 @@ package systemdesign
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -36,6 +37,9 @@ func TestDiagramContainsLayersModulesAndDirectedEdges(t *testing.T) {
 	view := makeDiagram(design, report)
 	for _, layer := range view.Layers {
 		for _, module := range layer.Modules {
+			if module.Y < layer.LabelY+28+(len(layer.Lines)-1)*23+16 {
+				t.Fatal("module overlaps layer heading")
+			}
 			if module.Y < layer.Y || module.Y+module.Height > layer.Y+layer.Height {
 				t.Fatal("module outside layer")
 			}
@@ -73,6 +77,16 @@ func TestDenseDiagramUsesCompactLocalRoutes(t *testing.T) {
 	adjacent := 0
 	for _, e := range v.Edges {
 		if strings.Contains(e.Path, " C ") {
+			t.Fatalf("non-orthogonal route: %s", e.Path)
+		}
+		if e.To[0]-e.From[0] == 1 {
+			var sx, sy, mid, tx, ty int
+			if n, err := fmt.Sscanf(e.Path, "M %d %d V %d H %d V %d", &sx, &sy, &mid, &tx, &ty); err != nil || n != 5 {
+				t.Fatalf("invalid adjacent route: %s", e.Path)
+			}
+			if mid <= sy || mid >= ty {
+				t.Fatalf("bend outside row gap: %s", e.Path)
+			}
 			adjacent++
 		}
 	}
@@ -132,6 +146,52 @@ func TestSkipRoutesStayBetweenDenseRows(t *testing.T) {
 		for _, m := range v.Layers[1].Modules {
 			if y1 >= m.Y || y2 <= m.Y+m.Height {
 				t.Fatalf("skip route crosses middle-row height: %s", e.Path)
+			}
+		}
+	}
+}
+
+func TestModuleInterfacesAreValidatedAndEscaped(t *testing.T) {
+	_, data := fixture(t)
+	for _, tc := range []struct {
+		value string
+		valid bool
+	}{
+		{`[{"name":"Reserve(ctx, sku, quantity)","description":"预留库存 <script>"}]`, true},
+		{`[{"name":"Reserve"}]`, false},
+		{`[{"name":" ","description":"预留库存"}]`, false},
+	} {
+		r := NewReport("render", "test", data)
+		d := Parse(data, &r)
+		raw, err := json.Marshal(d)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var obj map[string]any
+		if err = json.Unmarshal(raw, &obj); err != nil {
+			t.Fatal(err)
+		}
+		var value any
+		if err = json.Unmarshal([]byte(tc.value), &value); err != nil {
+			t.Fatal(err)
+		}
+		obj["modules"].([]any)[0].(map[string]any)["interfaces"] = value
+		raw, err = json.Marshal(obj)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r = NewReport("render", "test", raw)
+		d = Parse(raw, &r)
+		if (r.Status == "passed") != tc.valid {
+			t.Fatalf("unexpected validation result: %+v", r)
+		}
+		if tc.valid {
+			var out bytes.Buffer
+			if err = Render(&out, d, r); err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(out.String(), "Reserve(ctx, sku, quantity)") || !strings.Contains(out.String(), "&lt;script&gt;") {
+				t.Fatal("interface omitted or unescaped")
 			}
 		}
 	}

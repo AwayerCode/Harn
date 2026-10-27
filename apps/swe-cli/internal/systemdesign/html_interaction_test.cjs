@@ -9,7 +9,7 @@ const script=source.match(/<script type="application\/javascript">([\s\S]*?)<\/s
 function element(dataset,classes=[]) {
  const names=new Set(classes), events={};
  return {dataset,classList:{contains:n=>names.has(n),toggle(n,on){if(on)names.add(n);else names.delete(n);}},
- addEventListener(n,fn){events[n]=fn;},fire(n){events[n]();}};
+ addEventListener(n,fn){events[n]=fn;},fire(n,event){events[n](event);}};
 }
 function fixture(){
  const nodes=['up','selected','down','indirect','isolated'].map(module=>element({module}));
@@ -45,4 +45,93 @@ test('isolated module is visible without unrelated edges',()=>{
  assert.deepEqual(nodes.map(n=>n.classList.contains('related')),[false,false,false,false,true]);
  assert.ok(edges.every(n=>!n.classList.contains('related')));
  assert.match(status.textContent,/0 个上游.*0 个下游/);
+});
+
+test('zoom fits both dimensions, preserves manual zoom on resize, and restores fit',()=>{
+ const zoomScript=[...source.matchAll(/<script type="application\/javascript">([\s\S]*?)<\/script>/g)][1][1];
+ const svg={viewBox:{baseVal:{width:2000,height:1600}},style:{}};
+ const canvas={...element({}),style:{setProperty(){}},clientWidth:1000,clientHeight:800,scrollLeft:0,scrollTop:0,querySelector:()=>svg};
+ const controls=Object.fromEntries(['zoom-level','zoom-in','zoom-out','zoom-reset','zoom-fit'].map(id=>[id,element({})]));
+ let resize;
+ vm.runInNewContext(zoomScript,{document:{querySelector:()=>canvas,getElementById:id=>controls[id]},ResizeObserver:class{constructor(fn){resize=fn;}observe(){}}});
+ assert.ok(parseFloat(svg.style.width)<=1000);
+ assert.ok(parseFloat(svg.style.height)<=800);
+ controls['zoom-reset'].fire('click');
+ assert.equal(svg.style.width,'2000px');
+ canvas.getBoundingClientRect=()=>({left:0,top:0});
+ const before=(200-parseFloat(svg.style.left));
+ canvas.fire('wheel',{preventDefault(){},deltaY:-100,deltaMode:0,clientX:200,clientY:150});
+ const after=(200-parseFloat(svg.style.left))/(parseFloat(svg.style.width)/2000);
+ assert.ok(Math.abs(before-after)<1e-8,'wheel keeps the pointer anchor fixed');
+ canvas.setPointerCapture=()=>{};canvas.hasPointerCapture=()=>false;
+ const oldX=parseFloat(svg.style.left);
+ canvas.fire('pointerdown',{button:0,isPrimary:true,pointerId:1,clientX:200,clientY:150});
+ canvas.fire('pointermove',{pointerId:1,clientX:240,clientY:180,preventDefault(){}});
+ assert.equal(parseFloat(svg.style.left),oldX+40);
+ canvas.fire('pointerup',{pointerId:1});
+ let blocked=false;
+ canvas.fire('click',{detail:1,preventDefault(){},stopImmediatePropagation(){blocked=true;}});
+ assert.equal(blocked,true);
+ controls['zoom-reset'].fire('click');
+ canvas.clientWidth=700;resize();assert.equal(svg.style.width,'2000px');
+ controls['zoom-in'].fire('click');assert.equal(svg.style.width,'2500px');
+ controls['zoom-out'].fire('click');assert.equal(svg.style.width,'2000px');
+ controls['zoom-fit'].fire('click');assert.ok(parseFloat(svg.style.width)<=700);
+ canvas.clientHeight=400;resize();assert.ok(parseFloat(svg.style.height)<=400);
+ canvas.clientWidth=4000;canvas.clientHeight=3000;resize();assert.equal(svg.style.width,'2000px');
+ assert.equal(controls['zoom-level'].textContent,'100%');
+});
+
+test('module details open in modal without navigation and restore focus on close',()=>{
+ const detailScript=[...source.matchAll(/<script type="application\/javascript">([\s\S]*?)<\/script>/g)][2][1];
+ const node=element({module:'orders'}),dialog=element({}),content=element({}),close=element({});
+ let rendered,focused,prevented=false;
+ content.replaceChildren=value=>{rendered=value;};
+ dialog.showModal=()=>{dialog.open=true;};
+ dialog.close=()=>{dialog.open=false;dialog.fire('close');};
+ node.focus=options=>{focused=options.preventScroll;};
+ const ids={'module-dialog':dialog,'detail-content':content,'detail-close':close,'module-detail-title':{},'info-orders':{dataset:{name:'orders'},content:{cloneNode:()=> 'order details'}}};
+ vm.runInNewContext(detailScript,{document:{getElementById:id=>ids[id],querySelectorAll:()=>[node]}});
+ node.fire('click',{preventDefault(){prevented=true;}});
+ assert.equal(prevented,true);assert.equal(dialog.open,true);assert.equal(rendered,'order details');
+ close.fire('click');assert.equal(dialog.open,false);assert.equal(focused,true);
+ node.fire('click',{preventDefault(){}});
+ dialog.getBoundingClientRect=()=>({left:100,right:500,top:100,bottom:500});
+ const inside={target:dialog,clientX:120,clientY:120};
+ const outside={target:dialog,clientX:50,clientY:50};
+ dialog.fire('pointerdown',inside);dialog.fire('click',outside);
+ assert.equal(dialog.open,true,'dragging out of the dialog must not close it');
+ dialog.fire('pointerdown',outside);dialog.fire('click',outside);
+ assert.equal(dialog.open,false,'backdrop click closes the dialog');
+});
+
+test('column dividers resize adjacent columns with minimum widths and keyboard support',()=>{
+ const dividerScript=[...source.matchAll(/<script type="application\/javascript">([\s\S]*?)<\/script>/g)][3][1];
+ const content=element({}),dialog=element({}),handle=element({divider:'1'});
+ const classes={add(){},remove(){}};
+ const grid={style:{},classList:classes,querySelectorAll:()=>[300,400,300].map(width=>({getBoundingClientRect:()=>({width})}))};
+ handle.parentElement=grid;handle.classList=classes;handle.focus=()=>{};handle.setPointerCapture=()=>{};handle.hasPointerCapture=()=>false;handle.setAttribute=()=>{};
+ const target={closest:()=>handle};
+ vm.runInNewContext(dividerScript,{document:{getElementById:id=>id==='detail-content'?content:dialog}});
+ content.fire('pointerdown',{target,button:0,isPrimary:true,pointerId:1,clientX:200,preventDefault(){}});
+ content.fire('pointermove',{pointerId:1,clientX:250});
+ assert.equal(grid.style.gridTemplateColumns,'300px 7px 450px 7px 250px');
+ content.fire('pointermove',{pointerId:1,clientX:2000});
+ assert.equal(grid.style.gridTemplateColumns,'300px 7px 520px 7px 180px');
+ content.fire('pointerup',{pointerId:1});
+ content.fire('keydown',{target,key:'ArrowLeft',shiftKey:false,preventDefault(){}});
+ assert.equal(grid.style.gridTemplateColumns,'300px 7px 390px 7px 310px');
+});
+
+test('theme follows system in auto mode and preserves manual choice',()=>{
+ const themeScript=[...source.matchAll(/<script type="application\/javascript">([\s\S]*?)<\/script>/g)][4][1];
+ const select=element({});select.value='auto';
+ const system=element({});system.matches=true;
+ const root={dataset:{}};let saved='auto';
+ vm.runInNewContext(themeScript,{document:{getElementById:()=>select,documentElement:root},window:{matchMedia:()=>system},localStorage:{getItem:()=>saved,setItem:(k,v)=>{saved=v;}}});
+ assert.equal(root.dataset.theme,'dark');
+ system.matches=false;system.fire('change');assert.equal(root.dataset.theme,'light');
+ select.value='dark';select.fire('change');assert.equal(saved,'dark');
+ system.fire('change');assert.equal(root.dataset.theme,'dark');
+ select.value='auto';select.fire('change');assert.equal(root.dataset.theme,'light');
 });
