@@ -100,6 +100,7 @@ func testPreviewCommand(t *testing.T, args []string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	args = append(args, "--no-open")
 	raw, err := json.Marshal(args)
 	if err != nil {
 		t.Fatal(err)
@@ -125,6 +126,24 @@ func testPreviewCommand(t *testing.T, args []string) {
 	}
 	if info.Format != "swe-preview-v1" {
 		t.Fatalf("unexpected preview metadata: %+v", info)
+	}
+
+	repeat := exec.CommandContext(ctx, binary, "-test.run=^TestPreviewCommandProcess$")
+	repeat.Env = cmd.Env
+	reused, err := repeat.Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var next struct {
+		URL           string `json:"url"`
+		Reused        bool   `json:"reused"`
+		BrowserOpened bool   `json:"browser_opened"`
+	}
+	if err := json.Unmarshal(reused, &next); err != nil {
+		t.Fatal(err)
+	}
+	if next.URL != info.URL || !next.Reused || next.BrowserOpened {
+		t.Fatalf("reuse failed: %s", reused)
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
 	response, err := client.Get(info.URL)

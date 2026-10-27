@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"net/http/httptest"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -36,6 +38,7 @@ func TestPreviewOnlyServesFreshYAMLRendering(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, expected, code := Execute(scope, "render", "", "pinned-test")
+	expected = liveDocument(expected)
 	if code != 0 || first.Code != 200 || !bytes.Equal(first.Body.Bytes(), expected) {
 		t.Fatal("preview differs from CLI rendering")
 	}
@@ -117,5 +120,75 @@ func TestPreviewCSPMatchesRenderedScripts(t *testing.T) {
 		if !strings.Contains(policy, "'sha256-"+base64.StdEncoding.EncodeToString(sum[:])+"'") {
 			t.Fatal("CSP would block emitted script")
 		}
+	}
+}
+
+func TestLivePreviewStateRecovery(t *testing.T) {
+	_, data := fixture(t)
+	file := filepath.Join(t.TempDir(), Filename)
+	os.WriteFile(file, data, 0600)
+	p, _, code := NewPreview(file, "test")
+	if code != 0 {
+		t.Fatal(code)
+	}
+	h := p.Handler("127.0.0.1:12345")
+	state := func() map[string]any {
+		t.Helper()
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, httptest.NewRequest("GET", "http://127.0.0.1:12345"+p.Path()+"state", nil))
+		var result map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+	first := state()
+	if first["valid"] != true {
+		t.Fatal(first)
+	}
+	os.WriteFile(file, []byte("invalid: ["), 0600)
+	if state()["valid"] != false {
+		t.Fatal("invalid YAML not detected")
+	}
+	os.Remove(file)
+	if state()["valid"] != false {
+		t.Fatal("deleted YAML not detected")
+	}
+	os.WriteFile(file, data, 0600)
+	recovered := state()
+	if recovered["valid"] != true || recovered["revision"] != first["revision"] {
+		t.Fatal("recovery failed")
+	}
+	os.WriteFile(file, bytes.Replace(data, []byte("订单处理"), []byte("新的职责"), 1), 0600)
+	if state()["revision"] == first["revision"] {
+		t.Fatal("change not detected")
+	}
+}
+
+// Exercise the shipped browser monitor, including error and reconnect paths.
+func TestLivePreviewBrowserMonitor(t *testing.T) {
+	script := strings.TrimSuffix(strings.TrimPrefix(liveScript, "<script type=\"application/javascript\">"), "</script>")
+	harness := `
+const vm = require("node:vm"), assert = require("node:assert/strict");
+let callback, overlay, reloads = 0, state = {valid:true, revision:"REVISION"}, disconnected = false;
+const context = {
+  URL, AbortSignal, location:{href:"http://127.0.0.1:1234/token/#info-order", reload(){reloads++;}},
+  document:{createElement(){return {style:{}, setAttribute(){}, remove(){overlay=null;}};},body:{appendChild(el){overlay=el;}}},
+  setTimeout(fn){callback=fn;},
+  async fetch(url){assert.equal(url.href,"http://127.0.0.1:1234/token/state");if(disconnected)throw Error("offline");return {ok:true,json:async()=>state};}
+};
+vm.runInNewContext(process.argv[1],context);
+(async()=>{
+ await callback(); assert.equal(reloads,0); assert.equal(overlay,undefined);
+ state={valid:false,report:{message:"bad YAML"}}; await callback(); assert.match(overlay.textContent,/已过期/);
+ state={valid:true,revision:"REVISION"}; await callback(); assert.equal(overlay,null);
+ disconnected=true; await callback(); assert.match(overlay.textContent,/连接中断/);
+ disconnected=false; await callback(); assert.equal(overlay,null);
+ state={valid:true,revision:"changed"}; await callback(); assert.equal(reloads,1);
+})().catch(error=>{console.error(error);process.exitCode=1;});
+`
+	cmd := exec.Command("node", "-e", harness, script)
+	if output, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("browser monitor: %v\n%s", err, output)
 	}
 }

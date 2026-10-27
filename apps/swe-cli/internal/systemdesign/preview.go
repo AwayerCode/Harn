@@ -49,7 +49,7 @@ func (p *Preview) Handler(host string) http.Handler {
 			http.Error(w, "invalid preview host", http.StatusForbidden)
 			return
 		}
-		if r.URL.Path != p.route || r.URL.RawQuery != "" {
+		if (r.URL.Path != p.route && r.URL.Path != p.route+"state") || r.URL.RawQuery != "" {
 			http.NotFound(w, r)
 			return
 		}
@@ -67,6 +67,14 @@ func (p *Preview) Handler(host string) http.Handler {
 		} else {
 			report, html, code = Execute(scope, "render", "", p.version)
 		}
+		if r.URL.Path == p.route+"state" {
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			sum := sha256.Sum256(html)
+			if r.Method == http.MethodGet {
+				_ = json.NewEncoder(w).Encode(map[string]any{"valid": code == 0, "revision": hex.EncodeToString(sum[:]), "report": report})
+			}
+			return
+		}
 		if code != 0 {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			status := http.StatusUnprocessableEntity
@@ -79,6 +87,7 @@ func (p *Preview) Handler(host string) http.Handler {
 			}
 			return
 		}
+		html = liveDocument(html)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Content-Security-Policy", previewCSP(html))
 		if r.Method == http.MethodGet {
@@ -95,5 +104,48 @@ func previewCSP(html []byte) string {
 		sum := sha256.Sum256([]byte(match[1]))
 		hashes = append(hashes, "'sha256-"+base64.StdEncoding.EncodeToString(sum[:])+"'")
 	}
-	return "default-src 'none'; script-src " + strings.Join(hashes, " ") + "; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+	return "default-src 'none'; script-src " + strings.Join(hashes, " ") + "; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
 }
+
+// The live wrapper is fixed CLI code; the offline renderer remains deterministic.
+func liveDocument(html []byte) []byte {
+	sum := sha256.Sum256(html)
+	script := strings.ReplaceAll(liveScript, "REVISION", hex.EncodeToString(sum[:]))
+	return []byte(strings.Replace(string(html), "</body>", script+"</body>", 1))
+}
+
+const liveScript = `<script type="application/javascript">
+(function () {
+  const revision = "REVISION";
+  let warning;
+  function show(message) {
+    if (!warning) {
+      warning = document.createElement("div");
+      warning.setAttribute("role", "alert");
+      warning.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(20,25,35,.94);color:#fff;padding:8vh 8vw;overflow:auto;white-space:pre-wrap;font:14px/1.6 system-ui";
+      document.body.appendChild(warning);
+    }
+    warning.textContent = message;
+  }
+  async function check() {
+    try {
+      const response = await fetch(new URL("state", location.href), {cache:"no-store", signal:AbortSignal.timeout(5000)});
+      if (!response.ok) throw new Error("HTTP " + response.status);
+      const state = await response.json();
+      if (!state.valid) {
+        show("当前架构图已过期 · YAML 校验失败，修复后自动更新\n\n" + JSON.stringify(state.report, null, 2));
+      } else if (state.revision !== revision) {
+        location.reload();
+        return;
+      } else if (warning) {
+        warning.remove();
+        warning = null;
+      }
+    } catch (error) {
+      show("当前架构图可能已过期 · 预览服务连接中断，正在重试\n\n" + error.message);
+    }
+    setTimeout(check, 1000);
+  }
+  setTimeout(check, 1000);
+})();
+</script>`
