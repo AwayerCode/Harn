@@ -39,6 +39,21 @@ func (d *Design) owner(rel string) *Module {
 	return nil
 }
 
+type sourceFile struct {
+	Path     string
+	Relative string
+	Owner    *Module
+}
+
+// sourceInventory is the language-neutral result of inspecting the managed
+// source tree. Language adapters consume it only after structural rules pass.
+type sourceInventory struct {
+	Root        string
+	Scope       Scope
+	Files       []sourceFile
+	Directories []string
+}
+
 func (d *Design) checkRequiredPaths(root string, r *Report) error {
 	var e error
 	requiredDir := func(rel string) error {
@@ -86,9 +101,17 @@ func (d *Design) checkRequiredPaths(root string, r *Report) error {
 	return nil
 }
 
-// scanGoFiles preserves traversal order and checks ownership before visiting imports.
-func (d *Design) scanGoFiles(root string, scope Scope, r *Report, visit func(string, string, *Module) error) (int, int, error) {
-	files, goFiles := 0, 0
+// inspectSource validates all language-neutral directory and file ownership.
+// It deliberately performs no language-specific parsing.
+func (d *Design) inspectSource(root string, scope Scope, r *Report) (sourceInventory, error) {
+	inventory := sourceInventory{Root: root, Scope: scope, Files: []sourceFile{}, Directories: []string{}}
+	diagnosticsBefore := len(r.Diagnostics)
+	if err := d.checkRequiredPaths(root, r); err != nil {
+		return inventory, err
+	}
+	if len(r.Diagnostics) > 0 {
+		return inventory, nil
+	}
 	err := filepath.WalkDir(filepath.Join(root, filepath.FromSlash(d.Source)), func(p string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -114,12 +137,10 @@ func (d *Design) scanGoFiles(root string, scope Scope, r *Report, visit func(str
 			return fmt.Errorf("symlink not supported: %s", rel)
 		}
 		if entry.IsDir() {
-			if entry.Name() == "vendor" {
-				return fmt.Errorf("vendor directories inside source_root are unsupported: %s", rel)
-			}
 			if rel == d.Source {
 				return nil
 			}
+			inventory.Directories = append(inventory.Directories, rel)
 			valid := false
 			for _, l := range d.Layers {
 				if rel == path.Join(d.Source, l.Directory) {
@@ -134,20 +155,16 @@ func (d *Design) scanGoFiles(root string, scope Scope, r *Report, visit func(str
 		if !entry.Type().IsRegular() {
 			return fmt.Errorf("non-regular file: %s", rel)
 		}
-		if entry.Name() == "go.mod" || entry.Name() == "go.work" {
-			return fmt.Errorf("nested Go modules/workspaces are unsupported: %s", rel)
-		}
-		files++
 		owner := d.owner(rel)
+		inventory.Files = append(inventory.Files, sourceFile{Path: p, Relative: rel, Owner: owner})
 		if owner == nil {
 			r.Add("structure.unowned", rel, "file has no module owner")
 			return nil
 		}
-		if !strings.HasSuffix(rel, ".go") {
-			return nil
-		}
-		goFiles++
-		return visit(p, rel, owner)
+		return nil
 	})
-	return files, goFiles, err
+	if err == nil && len(r.Diagnostics) == diagnosticsBefore {
+		r.Coverage = append(r.Coverage, fmt.Sprintf("%d regular files remained inside owned modules; child design scopes excluded", len(inventory.Files)))
+	}
+	return inventory, err
 }

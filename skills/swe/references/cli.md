@@ -17,7 +17,7 @@ CLI 版本随本次 Harn 构建写入平台包；仓库仅发布 Harn，完整 S
 | 业务模型 | `documents --kind business-model` | 格式与本地链接，抽象与规则仍由领域判断 |
 | YAML 层／模块设计 | `system-design validate`，局部层设计加 `--profile layers` | Schema、引用、路径冲突与声明依赖，不要求代码已存在 |
 | YAML 设计视图 | `system-design preview` / `render` | preview 校验固定版本后从 YAML 直接提供本机页面；render 仅用于离线导出，均不代表实现验收 |
-| YAML 下的生产代码或测试 | `system-design check` | 当前 YAML 作用域的目录归属、必要文件与 Go 导入；接口与行为未覆盖 |
+| YAML 下的生产代码或测试 | `system-design check` | 当前 YAML 作用域的目录与文件归属、必要文件始终检查；源码依赖按匹配到的语言适配器检查，当前内置 Go、TypeScript 和 C++ |
 | Markdown 系统设计及协议 | `documents`、`design` | 约定格式与显式关系，不等同 YAML 检查 |
 | Markdown 代码映射 | `structure` | 显式位置与入口，不解析源码依赖 |
 | 测试设计 | `documents --kind test-design`、`artifacts --kind test` | 风险、场景显式引用；断言与行为由测试验证 |
@@ -26,7 +26,7 @@ CLI 版本随本次 Harn 构建写入平台包；仓库仅发布 Harn，完整 S
 
 YAML 文件统一命名 `system-design.yaml`，每份只负责所在目录；`list` 只发现作用域，不解析或校验 YAML 内容，成功不代表设计合法；`--file` 单独检查，`validate/check --all` 批量检查。父级排除子设计目录，越界声明和已识别的本地跨作用域导入报错；隐藏目录及依赖目录也参与作用域发现，仅排除 Git 元数据；具体规则和 Go workspace 限制见 [作用域规范](system-design/guide.md#发现与目录作用域)。
 
-只运行与当前对象相关的检查。YAML 项目不为满足旧 `design` 或 `structure` 命令复制 Markdown 架构表格。独立协议可运行 `documents --kind interface-protocol`，YAML 与协议的关联目前需要人工核对。不支持的语言、workspace 或关系说明未验证，不当作通过。
+只运行与当前对象相关的检查。YAML 项目不为满足旧 `design` 或 `structure` 命令复制 Markdown 架构表格。独立协议可运行 `documents --kind interface-protocol`，YAML 与协议的关联目前需要人工核对。`check` 的结构结论与源码依赖结论分开理解：没有语言适配器不等于结构检查失败，但导入或引用关系仍未验证；检测到语言但适配器无法可靠解析时返回无法检查。不支持的 workspace、构建结构或关系说明不当作通过。
 
 ## 命令入口
 
@@ -70,6 +70,6 @@ YAML 文件统一命名 `system-design.yaml`，每份只负责所在目录；`li
 
 列表与批量结果使用 `swe-system-design-batch-v1`，`scopes` 列出作用域。`list` 的 `results` 固定为空数组；`validate/check --all` 的 `results` 与 `scopes` 数量、顺序及作用域身份一一对应，包含失败报告；某份失败仍检查其余文件，整体退出码优先为 2、其次 1、全部通过才为 0。未发现 YAML 返回 2。单份报告的 `scope` 标明实际目录及排除的子作用域；`--root` 不能扩大单份 YAML 的范围。
 
-批量输出的 `discovery_issues` 记录无法读取的路径，检查继续执行其余分支，整体返回 2。边界不确定的作用域标为 `unavailable`。本地模块定位错误不能当作外部依赖，只有能确定归属的导入继续检查。
+批量输出的 `discovery_issues` 记录无法读取的路径，检查继续执行其余分支，整体返回 2。边界不确定的作用域标为 `unavailable`。`check` 在没有匹配语言适配器时可以返回结构通过，同时必须在 `unverified` 中说明源码依赖未检查。Go 适配器的本地模块定位错误不能当作外部依赖，只有能确定归属的导入继续检查。
 
 递归遍历不跟随遇到的目录符号链接。显式 `--root` 及 `--file` 的父目录会解析到真实目录，报告使用真实路径；这不允许 YAML 内的源码路径借符号链接越界，也不接受 YAML 文件本身为符号链接。

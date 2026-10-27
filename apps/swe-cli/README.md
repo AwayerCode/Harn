@@ -1,6 +1,6 @@
 # SWE CLI
 
-[系统设计](../../docs/system-design.md)中的 Go 单次校验核心。Skill 保存方法与规范，CLI 执行确定性检查；业务测试和构建仍由 Agent 按项目约定调用。
+[系统设计](../../docs/system-design.md)中的确定性校验核心。通用核心负责 YAML、目录、文件归属与模块关系；语言适配器负责解释源码中的导入或引用。Skill 保存方法与规范，业务测试和构建仍由 Agent 按项目约定调用。
 
 ## 检查能力
 
@@ -12,11 +12,11 @@
 | structure | 设计声明的代码位置、入口文件和范围映射 |
 | scope snapshot/check/readonly | 可写范围基线、工作区变更和只读指纹，含子模块 |
 
-检查不判断任务整体完成，不解析源码依赖，不替代人工语义审查。结果保留已检查证据和未覆盖项。只有 scope snapshot 创建全新的项目外基线；其他检查不写项目。
+检查不判断任务整体完成，不替代人工语义审查。`system-design check` 可以通过语言适配器检查已支持的源码依赖；其他入口不解析源码依赖。结果保留已检查证据和未覆盖项。只有 scope snapshot 创建全新的项目外基线；其他检查不写项目。
 
 ## YAML 模块架构
 
-新增 `system-design list/validate/check/render/preview` 入口，执行结构化设计校验、目录归属与 Go 跨模块导入检查，并生成可展开、可追踪依赖的只读 HTML。采用规则、限制与示例见 [YAML 模块架构](../../skills/swe/references/system-design/guide.md)。`validate --profile layers` 用于层设计交接，完整验收要求存在模块；该入口不并入 JSON 协议版本 2。
+新增 `system-design list/validate/check/render/preview` 入口，执行结构化设计校验、语言无关的目录与文件归属检查，并生成可展开、可追踪依赖的只读 HTML。`check` 按检测到的源码调用内置 Go、TypeScript 或 C++ 适配器；其他语言在结构检查后明确列为源码依赖未验证。采用规则、限制与示例见 [YAML 模块架构](../../skills/swe/references/system-design/guide.md)。`validate --profile layers` 用于层设计交接，完整验收要求存在模块；该入口不并入 JSON 协议版本 2。
 
 受控查看使用 `swe-cli system-design preview --file /absolute/project/system-design.yaml --expect-version <固定版本>`。命令验证版本和 YAML 后输出本机 URL，默认打开系统浏览器，使用 `--no-open` 可由宿主自行展示。服务持续前台运行，Ctrl-C 或终止进程时停止；重复启动同一 YAML 和同一 CLI 构建会复用服务并退出新命令。页面每秒检查 YAML 并自动更新；校验失败或连接中断时遮罩标注旧图已过期或可能过期，修复后自动恢复。不接受磁盘 HTML，不输出中间页面文件。`render` 仅用于离线导出。版本声明不能替代安装包和运行权限保护。
 
@@ -81,7 +81,7 @@ schema 从唯一来源 `skills/swe/references/artifact-schemas/` 生成并编入
 
 命令参数与输出协议保留在 `internal/app`：`app.go` 只分派命令，`check_command.go` 解析请求，`check_execution.go` 执行检查并归并结果，`protocol.go` 维护协议与请求校验。`internal/workspace/observer.go` 负责文件读取和输入稳定性观察，规则包通过读取接口使用它。
 
-`internal/systemdesign/execution.go` 组织单份设计的校验、实现检查或渲染；`implementation.go` 的 `CheckGo` 依次调用 Go 环境解析、结构扫描、导入提取与归属解析、依赖规则判断。文件扫描通过回调交出已归属的 Go 文件，依赖规则只处理已经解析的模块关系；保持扫描和诊断顺序。
+`internal/systemdesign/execution.go` 组织单份设计的校验、实现检查或渲染；`source_structure.go` 先完成语言无关的必需路径、文件类型、目录归属与文件归属检查；`implementation.go` 再按文件类型选择 Go、TypeScript 或 C++ 适配器。适配器只提取引用并映射目标文件，模块关闭与允许依赖由共享核心统一裁决。`CheckGo` 保留为显式 Go 分析入口。适配器不能改变 YAML 结构规则或允许依赖语义。
 
 架构图由 `diagram_model.go` 定义视图数据，`diagram_order.go` 调整模块顺序，`diagram_layout.go` 计算节点几何，`diagram_routes.go` 生成连线路径，`html.go` 将结果交给内嵌 HTML 模板。布局与路由不读取文件或操作浏览器，模板不承担设计规则。
 

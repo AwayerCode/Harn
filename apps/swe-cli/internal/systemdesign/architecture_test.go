@@ -189,6 +189,9 @@ func TestNestedModuleAboveSource(t *testing.T) {
 	d := Parse(b, &r)
 	d.Source = "nested/src"
 	write(t, root, "nested/go.mod", "module nested\n")
+	write(t, root, "nested/src/application/orders/service.go", "package orders\n")
+	write(t, root, "nested/src/application/payments/service.go", "package payments\n")
+	write(t, root, "nested/src/infrastructure/storage/repository.go", "package storage\n")
 	if e := d.CheckGo(root, &r); e == nil {
 		t.Fatal("accepted nested module above source root")
 	}

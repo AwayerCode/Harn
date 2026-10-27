@@ -24,7 +24,7 @@ func Run(args []string, in io.Reader, out io.Writer) int {
 		return Direct(args[0], args[1:], out)
 	}
 	if len(args) == 0 || len(args) == 1 && (args[0] == "help" || helpFlag(args[0])) {
-		_, err := fmt.Fprintln(out, "swe-cli check --request <file|-> [--format json]\nswe-cli version\nGo core: documents, design, artifacts, structure; scope snapshot/check/readonly; system-design list --root <dir>; system-design validate/check --file <system-design.yaml> or --root <dir> --all; system-design render --file <system-design.yaml>; system-design preview --file <system-design.yaml> --expect-version <version>. No extensions.")
+		_, err := fmt.Fprintln(out, "swe-cli check --request <file|-> [--format json]\nswe-cli version\nGo core: documents, design, artifacts, structure; scope snapshot/check/readonly; system-design list --root <dir>; system-design validate/check --file <system-design.yaml> or --root <dir> --all; system-design render --file <system-design.yaml>; system-design preview --file <system-design.yaml> --expect-version <version>. No generic extension protocol.")
 		if err != nil {
 			return 2
 		}

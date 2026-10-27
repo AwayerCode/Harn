@@ -6,13 +6,36 @@ import (
 	"path/filepath"
 )
 
-// CheckGo coordinates environment, structure, import resolution and dependency checks.
-// It parses all build-tag branches and never executes project code.
-func (d *Design) CheckGo(root string, r *Report) error {
-	return d.checkGo(root, r, NewSession())
+// sourceAdapter is the optional language-specific layer. Core structure and
+// dependency policy remain owned by this package so adapters cannot redefine
+// YAML semantics.
+type sourceAdapter interface {
+	Name() string
+	Matches(sourceInventory) bool
+	Check(*Design, sourceInventory, *Report, *Session, *sourceAdapterState) error
 }
 
-func (d *Design) checkGo(root string, r *Report, session *Session) error {
+type sourceAdapterState struct {
+	observed map[string][]string
+}
+
+func builtinSourceAdapters() []sourceAdapter {
+	return []sourceAdapter{goSourceAdapter{}, typeScriptSourceAdapter{}, cppSourceAdapter{}}
+}
+
+// CheckGo keeps the direct Go adapter entry point for callers that explicitly
+// request Go analysis. Normal system-design checks use checkImplementation.
+func (d *Design) CheckGo(root string, r *Report) error {
+	return d.checkImplementationWithAdapters(root, r, NewSession(), []sourceAdapter{goSourceAdapter{}})
+}
+
+// checkImplementation first validates language-neutral structure, then runs
+// every adapter that recognizes the owned files.
+func (d *Design) checkImplementation(root string, r *Report, session *Session) error {
+	return d.checkImplementationWithAdapters(root, r, session, builtinSourceAdapters())
+}
+
+func (d *Design) checkImplementationWithAdapters(root string, r *Report, session *Session, adapters []sourceAdapter) error {
 	root, e := filepath.Abs(root)
 	if e != nil {
 		return e
@@ -42,29 +65,29 @@ func (d *Design) checkGo(root string, r *Report, session *Session) error {
 	if len(r.Diagnostics) > 0 {
 		return nil
 	}
-	env, e := session.loadGoEnvironment(root, d.Source, r)
+	inventory, e := d.inspectSource(root, scope, r)
 	if e != nil {
-		return e
-	}
-	if e = d.checkRequiredPaths(root, r); e != nil {
 		return e
 	}
 	if len(r.Diagnostics) > 0 {
 		return nil
 	}
-	observed := map[string][]string{}
-	files, goFiles, e := d.scanGoFiles(root, scope, r, func(file, rel string, owner *Module) error {
-		imports, err := readGoImports(file)
-		if err != nil {
-			return err
+	matched := false
+	state := &sourceAdapterState{observed: map[string][]string{}}
+	for _, adapter := range adapters {
+		if !adapter.Matches(inventory) {
+			continue
 		}
-		return d.checkGoImports(imports, rel, owner, scope, env, observed, r)
-	})
-	if e != nil {
-		return e
+		matched = true
+		if e := adapter.Check(d, inventory, r, session, state); e != nil {
+			return fmt.Errorf("%s source adapter: %w", adapter.Name(), e)
+		}
 	}
-	cycles(observed, "observed module", r)
-	r.Coverage = append(r.Coverage, fmt.Sprintf("%d regular files owned; %d Go files parsed including tests, generated files and all build tags", files, goFiles), "Nearest ancestor Go module; child scopes excluded; import declarations only; external imports excluded")
-	r.Unverified = append(r.Unverified, "No compiler/type resolution or build execution; build-tag alternatives are conservatively combined; external dependency internals are not inspected.")
+	cycles(state.observed, "observed module", r)
+	if matched {
+		r.Unverified = append(r.Unverified, "Source languages without a matching adapter, if present, are not dependency-checked.")
+	} else {
+		r.Unverified = append(r.Unverified, "No source-language adapter matched; imports and source dependencies are not checked.")
+	}
 	return nil
 }

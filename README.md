@@ -18,7 +18,7 @@ Harn 将架构约束写入 `system-design.yaml`，让设计和代码有共同的
 
 1. 定义架构：用 YAML 声明层、模块、职责、目录、必要文件与允许依赖。CLI 校验设计，并可生成只读 HTML 架构图。
 2. 按设计实现：Agent 读取 SWE Skill 与项目依据，在授权范围内修改代码、测试和交付配置。
-3. 检查实现偏差：CLI 核对目录、文件归属和 Go 源码导入，返回违规位置；Agent 根据反馈修正，再执行项目测试与构建。
+3. 检查实现偏差：CLI 始终核对目录、文件归属和必要文件；匹配到语言适配器时再检查源码依赖，返回违规位置。Agent 根据反馈修正，再执行项目测试与构建。
 
 > YAML 定义约束 → Agent 实现 → CLI 检查 → 根据反馈修正。
 
@@ -51,7 +51,7 @@ modules:
     allowed_dependencies: []
 ```
 
-对应目录为 `src/application/orders/` 和 `src/application/payments/`，各包含一个 `service.go`。设计校验不要求源码已存在；实现检查要求目录和必要文件存在，并检查实际导入。
+对应目录为 `src/application/orders/` 和 `src/application/payments/`，各包含一个 `service.go`。设计校验不要求源码已存在；实现检查始终要求目录和必要文件存在。当前内置 Go、TypeScript 和 C++ 适配器，只在检测到对应源码时检查导入或引用；其他语言需要新增适配器才能验证源码依赖，没有适配器时结构检查与源码依赖检查必须分开理解。
 
 安装 SWE 后，在项目根目录执行：
 
@@ -121,7 +121,7 @@ printf 'package payments\n' > src/application/payments/service.go
 
 SWE 统一安装，按任务选择业务模型、系统设计、代码实现、测试或发布交付五个领域；它们表示职责与产物边界，不要求顺序执行。接入、更新和退出由同包的 adoption 组织。
 
-`swe-cli` 提供 YAML 架构、文档、产物关系、目录结构和改动范围检查。当前 YAML 源码依赖检查针对 Go，检查导入关系，不验证函数调用、类型语义或业务行为；Go workspace、replace 等限制见 [YAML 规范](skills/swe/references/system-design/guide.md#依赖与验收语义)。
+`swe-cli` 提供 YAML 架构、文档、产物关系、目录结构和改动范围检查。YAML 的目录、文件归属与必要文件检查不依赖语言；源码依赖由可选语言适配器检查，当前内置 Go、TypeScript 和 C++。未匹配适配器的语言会明确标记为源码依赖未验证。即使启用适配器，也不验证函数调用、类型语义或业务行为；各适配器的解析限制见 [YAML 规范](skills/swe/references/system-design/guide.md#语言适配器边界)。
 
 `harn` 负责查找与分发选定的 Skill，`swe-cli` 随 SWE 包交付。Harn 不接管 Agent 运行时；当前聚焦独立任务，不提供任务调度器，Bug 修复与需求开发等专门流程暂未建设。
 

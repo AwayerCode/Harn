@@ -23,7 +23,9 @@ description: 从业务模型设计或审查分层、模块、文件结构、依�
 
 采用 YAML 时统一命名 `system-design.yaml`，每份只负责所在目录。先用 `system-design list --root <目录>` 发现已有设计（只检索，不校验内容），父级排除子设计子树，不声明其内部路径；多份设计使用 `validate --all` 或 `check --all` 汇总，局部任务指定 `--file`。使用共享[模块架构规范](../references/system-design/guide.md)与 Schema，结构关系只维护一份。层设计可用 `system-design validate --profile layers` 交接；模块齐备后运行完整 `system-design validate`，需要视图时运行 `system-design render`。已有源码的对照使用 `system-design check`，不因此获得源码写入权。
 
-CLI 当前只覆盖模块结构与 Go 源码导入；设计理由、状态所有权、数据语义、失败、幂等、兼容和生命周期仍需专业判断。接口机器定义沿用已有权威来源，不复制字段；暂未实现接口检查不等于可以省略必要协议。
+`system-design check` 的语言无关部分覆盖受管目录、全部普通文件归属和必要文件；源码依赖由可选语言适配器补充。当前内置 Go、TypeScript 和 C++ 适配器，只在检测到对应文件时解析导入或 include。其他语言没有匹配适配器时仍可完成结构检查，但导入或引用依赖必须明确列为未验证，不能声称依赖关系已经通过。设计理由、状态所有权、数据语义、失败、幂等、兼容和生命周期仍需专业判断。接口机器定义沿用已有权威来源，不复制字段；暂未实现接口检查不等于可以省略必要协议。
+
+语言适配器只解释语言级引用并映射到 YAML 已声明的模块；目录归属、模块映射、允许依赖和最终诊断由 CLI 核心统一裁决。YAML 不记录语言、解析器、构建命令或 import/include 语法。新增语言适配器时，不得要求修改通用 YAML 结构，也不得把本地未解析引用静默当作外部依赖。
 
 已有 Markdown 设计沿用[文档表达](references/markdown-design.md)、[系统设计模板](assets/system-design.md)和[协议模板](assets/interface-protocol.md)，使用 `documents`、`design` 与 `structure`。不为通过旧检查器再抄一份 YAML 架构表格。YAML 项目的独立协议按 `documents --kind interface-protocol` 检查，模块引用一致性人工核对。
 

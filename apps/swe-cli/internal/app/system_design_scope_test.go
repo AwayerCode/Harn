@@ -186,13 +186,40 @@ func TestSystemDesignBatchUnavailableContinues(t *testing.T) {
 	t.Setenv("GOWORK", "off")
 	root := t.TempDir()
 	scopeProject(t, filepath.Join(root, "a"), "example.com/a")
-	scopeProject(t, filepath.Join(root, "b"), "") // no module, unavailable implementation
+	scopeProject(t, filepath.Join(root, "b"), "") // Go source without module: unavailable import analysis
 	scopeProject(t, filepath.Join(root, "c"), "example.com/c")
 	code, b := designRun(t, "check", "--root", root, "--all")
 	var batch designBatch
 	_ = json.Unmarshal(b, &batch)
 	if code != 2 || len(batch.Results) != 3 || batch.Results[2].Status != "passed" {
 		t.Fatalf("%d %s", code, b)
+	}
+}
+
+func TestSystemDesignStructureCheckDoesNotRequireGo(t *testing.T) {
+	root := t.TempDir()
+	design := strings.Replace(scopedDesign, "[core.go]", "[index.ts]", 1)
+	write(t, filepath.Join(root, "system-design.yaml"), design)
+	if err := os.MkdirAll(filepath.Join(root, "src/domain/core"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	write(t, filepath.Join(root, "src/domain/core/index.ts"), "export {};\n")
+	code, b := designRun(t, "check", "--file", filepath.Join(root, "system-design.yaml"))
+	var report systemdesign.Report
+	if err := json.Unmarshal(b, &report); err != nil {
+		t.Fatal(err)
+	}
+	if code != 0 || report.Status != "passed" || len(report.Diagnostics) != 0 {
+		t.Fatalf("%d %s", code, b)
+	}
+	found := false
+	for _, item := range report.Coverage {
+		if strings.Contains(item, "TypeScript files parsed") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("TypeScript adapter did not run without Go: %s", b)
 	}
 }
 

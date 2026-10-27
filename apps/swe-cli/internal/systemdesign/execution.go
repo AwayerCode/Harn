@@ -52,7 +52,7 @@ func (session *Session) executeData(s Scope, data []byte, mode, profile, version
 		d.ValidateScope(s, &r)
 	}
 	if len(r.Diagnostics) == 0 && mode == "check" {
-		if err := d.checkGo(s.Root, &r, session); err != nil {
+		if err := d.checkImplementation(s.Root, &r, session); err != nil {
 			r.Status = "unavailable"
 			r.Diagnostics = append(r.Diagnostics, Diagnostic{Rule: "implementation.unavailable", Message: err.Error()})
 			return r, nil, 2
