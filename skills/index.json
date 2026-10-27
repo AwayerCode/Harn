@@ -9,7 +9,8 @@
       "source": {
         "repository": null,
         "path": null
-      }
+      },
+      "path": "skills/concise-response"
     },
     {
       "name": "diagram-design",
@@ -19,7 +20,8 @@
       "source": {
         "repository": "https://github.com/cathrynlavery/diagram-design",
         "path": "skills/diagram-design"
-      }
+      },
+      "path": "skills/3rdparty/diagram-design"
     },
     {
       "name": "huashu-motion",
@@ -29,7 +31,8 @@
       "source": {
         "repository": "https://github.com/alchaincyf/huashu-motion",
         "path": "skills/huashu-motion"
-      }
+      },
+      "path": "skills/3rdparty/huashu-motion"
     },
     {
       "name": "knowledge-doc-guard",
@@ -39,7 +42,8 @@
       "source": {
         "repository": null,
         "path": null
-      }
+      },
+      "path": "skills/knowledge-doc-guard"
     },
     {
       "name": "swe",
@@ -49,7 +53,8 @@
       "source": {
         "repository": null,
         "path": null
-      }
+      },
+      "path": "skills/swe"
     }
   ]
 }

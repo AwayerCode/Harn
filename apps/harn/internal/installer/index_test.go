@@ -19,6 +19,11 @@ func validateCatalog(root string) error {
 	if err != nil {
 		return err
 	}
+	thirdParty, err := filepath.Glob(filepath.Join(root, "skills", "3rdparty", "*", "SKILL.md"))
+	if err != nil {
+		return err
+	}
+	entries = append(entries, thirdParty...)
 	actual := map[string]Skill{}
 	for _, entry := range entries {
 		dir := filepath.Base(filepath.Dir(entry))
@@ -29,7 +34,11 @@ func validateCatalog(root string) error {
 		if err != nil {
 			return err
 		}
-		skill, err := parseSkill(data, "skills/"+dir)
+		relative, err := filepath.Rel(root, filepath.Dir(entry))
+		if err != nil {
+			return err
+		}
+		skill, err := parseSkill(data, filepath.ToSlash(relative))
 		if err != nil {
 			return err
 		}
@@ -97,10 +106,10 @@ func TestRepositoryCatalogFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, entry := range catalog.Skills {
-		if len(entry) != 5 {
+		if len(entry) != 6 {
 			t.Fatalf("unexpected fields: %s", data)
 		}
-		for _, key := range []string{"name", "description", "version", "updated_at", "source"} {
+		for _, key := range []string{"name", "path", "description", "version", "updated_at", "source"} {
 			if _, ok := entry[key]; !ok {
 				t.Fatalf("missing %s", key)
 			}
@@ -124,8 +133,38 @@ func TestRepositoryCatalogFields(t *testing.T) {
 		if len(source) != 2 || !hasRepo || !hasPath || (repo == nil) != (path == nil) {
 			t.Fatal("source requires repository and path, both null or both filled")
 		}
+		var location, name string
+		if err := json.Unmarshal(entry["path"], &location); err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(entry["name"], &name); err != nil {
+			t.Fatal(err)
+		}
+		expected := "skills/" + name
+		if repo != nil {
+			expected = "skills/3rdparty/" + name
+		}
+		if location != expected {
+			t.Fatalf("ownership/path mismatch: %s", location)
+		}
 		if repo != nil && (strings.TrimSpace(*repo) == "" || strings.TrimSpace(*path) == "") {
 			t.Fatal("empty external source")
 		}
+	}
+}
+
+func TestCatalogIncludesThirdPartyAndRejectsUnregistered(t *testing.T) {
+	root := t.TempDir()
+	dir := filepath.Join(root, "skills", "3rdparty", "external")
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte("---\nname: external\ndescription: external test\n---\n"), 0644)
+	index := filepath.Join(root, "skills", "index.json")
+	os.WriteFile(index, []byte(`{"schema_version":1,"skills":[]}`), 0644)
+	if err := validateCatalog(root); err == nil {
+		t.Fatal("unregistered third-party Skill accepted")
+	}
+	os.WriteFile(index, []byte(`{"schema_version":1,"skills":[{"name":"external","path":"skills/3rdparty/external","description":"external test"}]}`), 0644)
+	if err := validateCatalog(root); err != nil {
+		t.Fatal(err)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -333,5 +334,83 @@ func TestLateConflictRollsBackOnlyThisInstall(t *testing.T) {
 	assertFile(t, project, "skills/zeta/SKILL.md", "concurrent owner")
 	if _, err := os.Stat(filepath.Join(project, ".agents", "skills", "alpha")); !os.IsNotExist(err) {
 		t.Fatalf("partial batch retained: %v", err)
+	}
+}
+
+func TestThirdPartyInstallCompatibility(t *testing.T) {
+	for _, requested := range []string{"skills/external", "skills/3rdparty/external"} {
+		for _, dryRun := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dry=%v", requested, dryRun), func(t *testing.T) {
+				project := t.TempDir()
+				archive := newArchiveServer(t, archiveFiles{
+					"skills/index.json":                       {body: `{"schema_version":1,"skills":[{"name":"external","path":"skills/3rdparty/external","description":"test"}]}`, mode: 0644},
+					"skills/3rdparty/external/SKILL.md":       {body: skillBody("external"), mode: 0644},
+					"skills/3rdparty/external/LICENSE":        {body: "license preserved", mode: 0644},
+					"skills/3rdparty/external/scripts/run.sh": {body: "#!/bin/sh\n", mode: 0755},
+					"skills/3rdparty/unselected/SKILL.md":     {body: skillBody("unselected"), mode: 0644},
+				})
+				manager := Manager{ProjectRoot: project, Client: archive.Client(), DryRun: dryRun}
+				results, err := manager.Install(context.Background(), archive.URL, "commit:fixed", []string{requested})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(results) != 1 || results[0].Path != ".agents/skills/external" || results[0].Files != 3 {
+					t.Fatal(results)
+				}
+				if dryRun {
+					entries, _ := os.ReadDir(project)
+					if len(entries) != 0 {
+						t.Fatal("dry run wrote project")
+					}
+					return
+				}
+				base := filepath.Join(project, ".agents", "skills", "external")
+				data, _ := os.ReadFile(filepath.Join(base, "LICENSE"))
+				if string(data) != "license preserved" {
+					t.Fatal("license lost")
+				}
+				info, err := os.Stat(filepath.Join(base, "scripts", "run.sh"))
+				if err != nil || info.Mode().Perm()&0111 == 0 {
+					t.Fatal("executable lost")
+				}
+				entries, _ := os.ReadDir(filepath.Dir(base))
+				if len(entries) != 1 {
+					t.Fatal("extra Skills installed")
+				}
+				if _, err := manager.Install(context.Background(), archive.URL, "commit:fixed", []string{requested}); err == nil {
+					t.Fatal("overwrote installed Skill")
+				}
+			})
+		}
+	}
+}
+func TestThirdPartyRejectsAmbiguousAndUnsafeTargets(t *testing.T) {
+	for _, targets := range [][]string{
+		{"skills/external", "skills/3rdparty/external"},
+		{"skills/3rdparty"}, {"skills/3rdparty/../external"},
+		{"skills/3rdparty/external/references"},
+		{"skills/other/external"},
+	} {
+		if _, err := normalizeTargets(targets); err == nil {
+			t.Fatalf("accepted %v", targets)
+		}
+	}
+}
+func TestCatalogCannotRedirectInstallOutsideSkill(t *testing.T) {
+	for _, body := range []string{
+		`{"schema_version":1,"skills":[{"name":"external","path":"../external","description":"test"}]}`,
+		`{"schema_version":1,"skills":[{"name":"external","path":"skills/3rdparty/other","description":"test"}]}`,
+		`broken`,
+	} {
+		project := t.TempDir()
+		archive := newArchiveServer(t, archiveFiles{"skills/index.json": {body: body, mode: 0644}, "skills/external/SKILL.md": {body: skillBody("external"), mode: 0644}})
+		manager := Manager{ProjectRoot: project, Client: archive.Client()}
+		if _, err := manager.Install(context.Background(), archive.URL, "tag:v1", []string{"skills/external"}); err == nil {
+			t.Fatal("accepted invalid catalog")
+		}
+		entries, _ := os.ReadDir(project)
+		if len(entries) != 0 {
+			t.Fatal("invalid install wrote project")
+		}
 	}
 }

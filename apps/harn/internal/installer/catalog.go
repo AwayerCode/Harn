@@ -73,6 +73,7 @@ func readCatalog(root string) ([]Skill, error) {
 		SchemaVersion int `json:"schema_version"`
 		Skills        []struct {
 			Name        string `json:"name"`
+			Path        string `json:"path"`
 			Description string `json:"description"`
 		} `json:"skills"`
 	}
@@ -93,7 +94,17 @@ func readCatalog(root string) ([]Skill, error) {
 			return nil, fmt.Errorf("duplicate skill name %q", entry.Name)
 		}
 		names[entry.Name] = true
-		skills = append(skills, Skill{Name: entry.Name, Path: "skills/" + entry.Name, Summary: strings.Join(strings.Fields(entry.Description), " ")})
+		location := entry.Path
+		if location == "" {
+			location = "skills/" + entry.Name
+		}
+		if location != "skills/"+entry.Name && location != "skills/3rdparty/"+entry.Name {
+			return nil, fmt.Errorf("invalid catalog path %q for %q", location, entry.Name)
+		}
+		if entry.Name == "3rdparty" {
+			return nil, errors.New("3rdparty is a reserved grouping directory")
+		}
+		skills = append(skills, Skill{Name: entry.Name, Path: location, Summary: strings.Join(strings.Fields(entry.Description), " ")})
 	}
 	return skills, nil
 }

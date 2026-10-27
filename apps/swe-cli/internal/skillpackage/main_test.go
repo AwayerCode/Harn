@@ -25,6 +25,7 @@ func TestPlatformPackagesContainCompleteSkillAndLocalCLI(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	write(filepath.Join(root, "skills", "3rdparty", "external", "SKILL.md"), "third-party must not ship in SWE")
 	write(filepath.Join(skill, "SKILL.md"), "---\nname: swe\ndescription: test\n---\n")
 	write(filepath.Join(skill, "testing", "SKILL.md"), "testing entry")
 	write(filepath.Join(skill, "adoption", "SKILL.md"), "adoption entry")

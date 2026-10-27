@@ -64,6 +64,10 @@ func TestParseSkill(t *testing.T) {
 func TestSearchRejectsInvalidCatalog(t *testing.T) {
 	for _, body := range []string{
 		`invalid`,
+		`{"schema_version":1,"skills":[{"name":"a","path":"../a","description":"a"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a","path":"skills/3rdparty/b","description":"a"}]}`,
+		`{"schema_version":1,"skills":[{"name":"a","path":"skills/3rdparty/../a","description":"a"}]}`,
+		`{"schema_version":1,"skills":[{"name":"3rdparty","description":"a"}]}`,
 		`{"schema_version":2,"skills":[]}`,
 		`{"schema_version":1}`,
 		`{"schema_version":1,"skills":[{"name":"a"}]}`,
@@ -81,5 +85,17 @@ func TestSearchRejectsInvalidCatalog(t *testing.T) {
 	archive := newArchiveServer(t, archiveFiles{"skills/a/SKILL.md": {body: "---\nname: a\ndescription: a\n---", mode: 0o644}})
 	if _, err := (Manager{Client: archive.Client()}).Search(context.Background(), archive.URL, "tag:v1", ""); err == nil {
 		t.Fatal("missing index must fail without scanning fallback")
+	}
+}
+
+func TestSearchThirdPartyPaths(t *testing.T) {
+	archive := newArchiveServer(t, archiveFiles{
+		"skills/index.json": {body: `{"schema_version":1,"skills":[{"name":"external","path":"skills/3rdparty/external","description":"diagram tool"}]}`, mode: 0644},
+	})
+	for _, query := range []string{"external", "3rdparty", "diagram"} {
+		skills, err := (Manager{Client: archive.Client()}).Search(context.Background(), archive.URL, "tag:v1", query)
+		if err != nil || len(skills) != 1 || skills[0].Path != "skills/3rdparty/external" {
+			t.Fatalf("%s: %+v %v", query, skills, err)
+		}
 	}
 }

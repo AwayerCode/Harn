@@ -39,11 +39,19 @@ SWE 使用包含 CLI 的平台 Skill 包。以下示例的 `vX.Y.Z` 需替换为
 ```
 
 无需 CLI 的 Skill 仍可从仓库标签或 commit 安装。SWE 源码目录不包含构建产物，直接安装源码归档不会自动获得 CLI；应选择完整平台包。
-安装只接受 `skills/<名称>` 目录，历史路径 `Skills/<名称>` 也映射到 `.agents/skills/<名称>/`。入口必须是具有名称与简介的 `SKILL.md`，名称须与目录一致；不再分发普通文件或整个仓库。可重复 `--path` 选择多个 Skill。
+安装接受自有路径 `skills/<名称>` 和第三方路径 `skills/3rdparty/<名称>`，两者都映射到 `.agents/skills/<名称>/`。新版 Harn 也会按统一索引将旧的 `skills/<第三方名称>` 解析到新目录，原有安装命令无需更改；没有索引的历史归档仍按原路径安装。`Skills/<名称>` 保留历史直接路径支持，不能直接安装分组目录 `skills/3rdparty`。入口必须是具有名称与简介的 `SKILL.md`，名称须与目录一致；不再分发普通文件或整个仓库。可重复 `--path` 选择多个 Skill。
+
+例如安装第三方 Skill（`<固定SHA>` 替换为包含新目录的仓库提交）：
+
+```bash
+/tmp/harn install --source https://github.com/AwayerCode/Harn --version commit:<固定SHA> --path skills/3rdparty/diagram-design
+```
+
+旧参数 `--path skills/diagram-design` 在新版 Harn 中得到相同安装结果。新旧别名不能在同一命令重复选择，避免同名目标冲突。第三方来源与本仓路径由统一的 `skills/index.json` 登记；安装仍以明确的仓库标签或 commit 为准。迁移后的仓库需使用新版 Harn，不能保证旧二进制理解新目录。
 
 harn 只下载所选 Skill 归档，将包内文件原样安装，不解释 `runtime.json` 或额外下载 CLI。SWE 包已经包含本平台 `bin/swe-cli` 和打包生成的本地摘要清单；CLI 启动时核对自身版本和摘要。安装前可用发行页 `SHA256SUMS` 验证整个包，选择正确平台。版本支持 `tag:<标签>`、`commit:<SHA>` 和 `branch:<分支>`；需要可复现安装时使用固定标签或 commit。
 
-`--dry-run` 会下载、检查 Skill 包结构，但不写业务项目。来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选 Skill 目录。下载上限为 128 MiB，整个解压流（含未选中内容、元数据与尾部填充）上限为 512 MiB，归档条目最多 100000 个；选中文件单个最多 32 MiB。安装前会完整读取 gzip 流并校验尾部，损坏或超限的包不会进入项目安装阶段。
+`--dry-run` 会下载、检查 Skill 包结构，但不写业务项目。来源支持 GitHub 仓库 URL 或直接 `.tar.gz` URL；归档需包含所选 Skill 目录。存在索引时，用同一次下载中的索引解析路径，索引非法则拒绝安装；不跨两次分支下载混用索引与内容。下载上限为 128 MiB，整个解压流（含未选中内容、元数据与尾部填充）上限为 512 MiB，归档条目最多 100000 个；选中文件单个最多 32 MiB。安装前会完整读取 gzip 流并校验尾部，损坏或超限的包不会进入项目安装阶段。
 
 ## 项目接入
 

@@ -76,6 +76,12 @@ func ResolveArchiveURL(rawSource, version string) (string, error) {
 }
 
 func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets []string, destination string) error {
+	return FetchOptional(ctx, client, archiveURL, targets, nil, destination)
+}
+
+// FetchOptional extracts required and optional paths from the same verified
+// archive snapshot. Missing optional paths are allowed; malformed entries are not.
+func FetchOptional(ctx context.Context, client *http.Client, archiveURL string, targets, optional []string, destination string) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, archiveURL, nil)
 	if err != nil {
 		return fmt.Errorf("create archive request: %w", err)
@@ -103,6 +109,9 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 
 	selected := make(map[string]bool, len(targets))
 	for _, target := range targets {
+		selected[target] = true
+	}
+	for _, target := range optional {
 		selected[target] = true
 	}
 	fileCount := 0
@@ -183,7 +192,7 @@ func Fetch(ctx context.Context, client *http.Client, archiveURL string, targets 
 	if limitedBody.N == 0 {
 		return fmt.Errorf("archive exceeds %d bytes", maxArchiveBytes)
 	}
-	for target := range selected {
+	for _, target := range targets {
 		if _, err := os.Lstat(filepath.Join(destination, filepath.FromSlash(target))); err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				return fmt.Errorf("resource path %q was not found in the archive", target)

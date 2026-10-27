@@ -60,7 +60,17 @@ func (m *Manager) Install(ctx context.Context, rawSource, version string, reques
 	}
 	defer os.RemoveAll(stage)
 	content := filepath.Join(stage, "content")
-	if err := source.Fetch(ctx, m.Client, archiveURL, targets, content); err != nil {
+	candidates := append([]string{"skills/index.json"}, targets...)
+	for _, target := range targets {
+		if strings.Count(target, "/") == 1 && strings.HasPrefix(target, "skills/") {
+			candidates = append(candidates, "skills/3rdparty/"+path.Base(target))
+		}
+	}
+	if err := source.FetchOptional(ctx, m.Client, archiveURL, nil, candidates, content); err != nil {
+		return nil, err
+	}
+	targets, err = resolveCatalogTargets(content, targets)
+	if err != nil {
 		return nil, err
 	}
 	results := make([]Result, 0, len(targets))
@@ -199,18 +209,50 @@ func normalizeTargets(requested []string) ([]string, error) {
 	for _, raw := range requested {
 		clean := strings.TrimSuffix(strings.ReplaceAll(raw, "\\", "/"), "/")
 		parts := strings.Split(clean, "/")
-		if len(parts) != 2 || (parts[0] != "skills" && parts[0] != "Skills") || !validName.MatchString(parts[1]) || len(parts[1]) > 64 {
-			return nil, fmt.Errorf("invalid Skill path %q; expected skills/<name> (historical Skills/<name> is also supported)", raw)
+		name := path.Base(clean)
+		validLayout := (len(parts) == 2 && (parts[0] == "skills" || parts[0] == "Skills")) ||
+			(len(parts) == 3 && parts[0] == "skills" && parts[1] == "3rdparty")
+		if !validLayout || !validName.MatchString(name) || len(name) > 64 || name == "3rdparty" {
+			return nil, fmt.Errorf("invalid Skill path %q; expected skills/<name> or skills/3rdparty/<name> (historical Skills/<name> is also supported)", raw)
 		}
-		if previous, ok := seen[parts[1]]; ok {
+		if previous, ok := seen[name]; ok {
 			if previous != clean {
 				return nil, fmt.Errorf("Skill paths %q and %q have the same destination", previous, clean)
 			}
 			continue
 		}
-		seen[parts[1]] = clean
+		seen[name] = clean
 		targets = append(targets, clean)
 	}
 	sort.Strings(targets)
 	return targets, nil
+}
+
+// Catalog paths are authoritative when present. Legacy flat paths are aliases;
+// archives without a catalog (including platform packages) retain direct lookup.
+func resolveCatalogTargets(root string, targets []string) ([]string, error) {
+	catalog, err := readCatalog(root)
+	if errors.Is(err, os.ErrNotExist) {
+		return targets, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	byName := map[string]string{}
+	for _, skill := range catalog {
+		byName[skill.Name] = skill.Path
+	}
+	resolved := append([]string(nil), targets...)
+	for i, target := range targets {
+		location, ok := byName[path.Base(target)]
+		if !ok || strings.HasPrefix(target, "Skills/") {
+			continue
+		}
+		if strings.Count(target, "/") == 1 {
+			resolved[i] = location
+		} else if location != target {
+			return nil, fmt.Errorf("requested path %q differs from catalog path %q", target, location)
+		}
+	}
+	return resolved, nil
 }
