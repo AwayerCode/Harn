@@ -38,6 +38,7 @@ func TestSkillCommandContracts(t *testing.T) {
 		"<协议路径>", "skills/swe/system-design/assets/interface-protocol.md",
 		"<测试设计路径>", "skills/swe/testing/assets/test-design.md",
 		"<相对路径>", "apps/swe-cli",
+		"<固定版本>", Version,
 	)
 	count := 0
 	for _, line := range strings.Split(string(doc), "\n") {
@@ -52,6 +53,10 @@ func TestSkillCommandContracts(t *testing.T) {
 				command = strings.ReplaceAll(command, "<YAML路径>", "system-design.yaml")
 			}
 			args := strings.Fields(repl.Replace(command))
+			if len(args) > 1 && args[0] == "system-design" && args[1] == "preview" {
+				testPreviewCommand(t, args)
+				return
+			}
 			var out bytes.Buffer
 			code := Run(args, nil, &out)
 			if code != 0 && code != 1 {

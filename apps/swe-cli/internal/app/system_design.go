@@ -18,6 +18,9 @@ type designBatch struct {
 }
 
 func SystemDesign(args []string, out io.Writer) int {
+	if len(args) > 0 && args[0] == "preview" {
+		return systemDesignPreview(args[1:], out)
+	}
 	if len(args) == 1 && helpFlag(args[0]) {
 		return printHelp(out, designHelp)
 	}

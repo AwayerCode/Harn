@@ -16,7 +16,9 @@
 
 ## YAML 模块架构
 
-新增 `system-design list/validate/check/render` 入口，执行结构化设计校验、目录归属与 Go 跨模块导入检查，并生成可展开、可追踪依赖的只读 HTML。采用规则、限制与示例见 [YAML 模块架构](../../skills/swe/references/system-design/guide.md)。`validate --profile layers` 用于层设计交接，完整验收要求存在模块；该入口不并入 JSON 协议版本 2。
+新增 `system-design list/validate/check/render/preview` 入口，执行结构化设计校验、目录归属与 Go 跨模块导入检查，并生成可展开、可追踪依赖的只读 HTML。采用规则、限制与示例见 [YAML 模块架构](../../skills/swe/references/system-design/guide.md)。`validate --profile layers` 用于层设计交接，完整验收要求存在模块；该入口不并入 JSON 协议版本 2。
+
+受控查看使用 `swe-cli system-design preview --file /absolute/project/system-design.yaml --expect-version <固定版本>`。命令验证版本和 YAML 后输出本机 URL，保持前台运行，Ctrl-C 或 30 分钟后停止；宿主打开该 URL。每次刷新从 YAML 直接渲染，不接受磁盘 HTML，不输出中间页面文件；错误返回诊断，不继续展示旧图。`render` 仅用于离线导出。版本声明不能替代安装包和运行权限保护。
 
 ## 使用
 

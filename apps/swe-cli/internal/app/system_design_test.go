@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -84,5 +85,65 @@ func TestArchitectureConflictingFilesCannotRender(t *testing.T) {
 		if code != 1 || report.Status != "violations" {
 			t.Fatalf("%s: %d %s", mode, code, out.String())
 		}
+	}
+}
+
+// Invoke the actual command dispatcher in fresh processes, avoiding a shared
+// template instance, caches, or map iteration seed masking nondeterminism.
+func TestRenderDeterminismProcess(t *testing.T) {
+	if file := os.Getenv("HARN_TEST_RENDER_INPUT"); file != "" {
+		os.Exit(Run([]string{"system-design", "render", "--file", file}, nil, os.Stdout))
+	}
+}
+
+func TestArchitectureRenderDeterministicAcrossProcesses(t *testing.T) {
+	data, err := os.ReadFile("../systemdesign/testdata/project/system-design.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	render := func(file string) []byte {
+		cmd := exec.Command(binary, "-test.run=^TestRenderDeterminismProcess$")
+		cmd.Env = append(os.Environ(), "HARN_TEST_RENDER_INPUT="+file)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("render failed: %v\n%s", err, out)
+		}
+		if !bytes.HasPrefix(out, []byte("<!doctype html>")) {
+			t.Fatalf("not HTML: %s", out)
+		}
+		return out
+	}
+	first := filepath.Join(t.TempDir(), "system-design.yaml")
+	if err = os.WriteFile(first, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	expected := render(first)
+	for i := 0; i < 3; i++ {
+		if actual := render(first); !bytes.Equal(expected, actual) {
+			t.Fatal("same YAML produced different HTML across processes")
+		}
+	}
+	// The checkout location must not leak into the generated page.
+	relocated := filepath.Join(t.TempDir(), "system-design.yaml")
+	if err = os.WriteFile(relocated, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if actual := render(relocated); !bytes.Equal(expected, actual) {
+		t.Fatal("output depends on absolute YAML location")
+	}
+	changed := bytes.Replace(data, []byte("订单处理"), []byte("确定性回归测试的新职责"), 1)
+	if bytes.Equal(changed, data) {
+		t.Fatal("fixture responsibility missing")
+	}
+	if err = os.WriteFile(first, changed, 0600); err != nil {
+		t.Fatal(err)
+	}
+	actual := render(first)
+	if bytes.Equal(expected, actual) || !bytes.Contains(actual, []byte("确定性回归测试的新职责")) {
+		t.Fatal("render ignored changed YAML")
 	}
 }

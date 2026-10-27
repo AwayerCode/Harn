@@ -16,7 +16,7 @@ CLI 版本随本次 Harn 构建写入平台包；仓库仅发布 Harn，完整 S
 | --- | --- | --- |
 | 业务模型 | `documents --kind business-model` | 格式与本地链接，抽象与规则仍由领域判断 |
 | YAML 层／模块设计 | `system-design validate`，局部层设计加 `--profile layers` | Schema、引用、路径冲突与声明依赖，不要求代码已存在 |
-| YAML 设计视图 | `system-design render` | 内含完整设计校验；成功输出单份 HTML，由 Agent 按查看流程保存并打开，不代表实现验收 |
+| YAML 设计视图 | `system-design preview` / `render` | preview 校验固定版本后从 YAML 直接提供本机页面；render 仅用于离线导出，均不代表实现验收 |
 | YAML 下的生产代码或测试 | `system-design check` | 当前 YAML 作用域的目录归属、必要文件与 Go 导入；接口与行为未覆盖 |
 | Markdown 系统设计及协议 | `documents`、`design` | 约定格式与显式关系，不等同 YAML 检查 |
 | Markdown 代码映射 | `structure` | 显式位置与入口，不解析源码依赖 |
@@ -41,6 +41,7 @@ YAML 文件统一命名 `system-design.yaml`，每份只负责所在目录；`li
 <CLI> system-design validate --root <项目根目录> --file <YAML路径>
 <CLI> system-design validate --root <项目根目录> --file <YAML路径> --profile layers
 <CLI> system-design check --root <项目根目录> --file <YAML路径>
+<CLI> system-design preview --root <项目根目录> --file <YAML路径> --expect-version <固定版本>
 <CLI> system-design render --root <项目根目录> --file <YAML路径>
 <CLI> design --root <项目根目录> --system-design <Markdown路径> --interface-protocol <协议路径>
 <CLI> structure --root <项目根目录> --design <Markdown路径> --scope <相对路径>

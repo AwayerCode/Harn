@@ -50,11 +50,12 @@ const scopeHelp = `Usage: swe-cli scope <snapshot|check|readonly> [options]
   check --root <Git root> --baseline <original file>
   readonly --root <Git root> [--expected <fingerprint>]`
 
-const designHelp = `Usage: swe-cli system-design <list|validate|check|render> [options]
+const designHelp = `Usage: swe-cli system-design <list|validate|check|render|preview> [options]
   list --root <dir>
   validate --file <system-design.yaml> or --root <dir> --all [--profile layers]
   check --file <system-design.yaml> or --root <dir> --all
-  render --file <system-design.yaml>`
+  render --file <system-design.yaml>
+  preview --file <system-design.yaml> --expect-version <version>`
 
 const checkHelp = `Usage: swe-cli check --request <file|-> [--format json]
   --request <file|->  JSON protocol v2 request; - reads stdin
