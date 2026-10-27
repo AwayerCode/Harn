@@ -2,6 +2,7 @@ package systemdesign
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -101,6 +103,44 @@ func TestPreviewRejectsNonYAMLInputs(t *testing.T) {
 	}
 }
 
+func TestPreviewSharesConcurrentSnapshotRender(t *testing.T) {
+	design := denseOrderingDesign(8, 50, 5)
+	data, err := json.Marshal(design)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(t.TempDir(), Filename)
+	if err = os.WriteFile(file, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	preview := &Preview{file: file, version: "test"}
+
+	const clients = 8
+	start := make(chan struct{})
+	results := make([]previewRender, clients)
+	var wait sync.WaitGroup
+	for index := range clients {
+		wait.Add(1)
+		go func() {
+			defer wait.Done()
+			<-start
+			results[index] = preview.current(context.Background())
+		}()
+	}
+	close(start)
+	wait.Wait()
+
+	if results[0].code != 0 || len(results[0].html) == 0 {
+		t.Fatalf("render failed: %+v", results[0].report)
+	}
+	first := &results[0].html[0]
+	for index := 1; index < clients; index++ {
+		if results[index].code != 0 || &results[index].html[0] != first {
+			t.Fatal("concurrent requests repeated the snapshot render")
+		}
+	}
+}
+
 func TestPreviewCSPMatchesRenderedScripts(t *testing.T) {
 	_, data := fixture(t)
 	r := NewReport("render", "test", data)
@@ -170,16 +210,18 @@ func TestLivePreviewBrowserMonitor(t *testing.T) {
 	script := strings.TrimSuffix(strings.TrimPrefix(liveScript, "<script type=\"application/javascript\">"), "</script>")
 	harness := `
 const vm = require("node:vm"), assert = require("node:assert/strict");
-let callback, overlay, reloads = 0, state = {valid:true, revision:"REVISION"}, disconnected = false;
+let callback, overlay, reloads = 0, timeout, state = {valid:true, revision:"REVISION"}, disconnected = false;
 const context = {
-  URL, AbortSignal, location:{href:"http://127.0.0.1:1234/token/#info-order", reload(){reloads++;}},
+  URL,
+  AbortSignal:{timeout(ms){timeout=ms;return "abort-signal";}},
+  location:{href:"http://127.0.0.1:1234/token/#info-order", reload(){reloads++;}},
   document:{createElement(){return {style:{}, setAttribute(){}, remove(){overlay=null;}};},body:{appendChild(el){overlay=el;}}},
   setTimeout(fn){callback=fn;},
-  async fetch(url){assert.equal(url.href,"http://127.0.0.1:1234/token/state");if(disconnected)throw Error("offline");return {ok:true,json:async()=>state};}
+  async fetch(url, options){assert.equal(url.href,"http://127.0.0.1:1234/token/state");assert.equal(options.signal,"abort-signal");if(disconnected)throw Error("offline");return {ok:true,json:async()=>state};}
 };
 vm.runInNewContext(process.argv[1],context);
 (async()=>{
- await callback(); assert.equal(reloads,0); assert.equal(overlay,undefined);
+ await callback(); assert.equal(timeout,60000); assert.equal(reloads,0); assert.equal(overlay,undefined);
  state={valid:false,report:{message:"bad YAML"}}; await callback(); assert.match(overlay.textContent,/已过期/);
  state={valid:true,revision:"REVISION"}; await callback(); assert.equal(overlay,null);
  disconnected=true; await callback(); assert.match(overlay.textContent,/连接中断/);

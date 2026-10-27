@@ -13,30 +13,35 @@ func Execute(s Scope, mode, profile, version string) (Report, []byte, int) {
 }
 
 func (session *Session) Execute(s Scope, mode, profile, version string) (Report, []byte, int) {
-	fail := func(err error) (Report, []byte, int) {
+	data, err := readScopeInput(s)
+	if err != nil {
 		r := UnavailableReport(mode, version, err)
 		r.Scope = &s
 		return r, nil, 2
 	}
+	return session.executeData(s, data, mode, profile, version)
+}
+
+func readScopeInput(s Scope) ([]byte, error) {
 	if s.Unavailable != "" {
-		return fail(errors.New(s.Unavailable))
+		return nil, errors.New(s.Unavailable)
 	}
 	info, err := os.Lstat(s.File)
 	if err != nil {
-		return fail(err)
+		return nil, err
 	}
 	if !info.Mode().IsRegular() {
-		return fail(errors.New("design must be a regular file"))
+		return nil, errors.New("design must be a regular file")
 	}
 	input, err := os.Open(s.File)
 	if err != nil {
-		return fail(err)
+		return nil, err
 	}
 	defer input.Close()
-	data, err := io.ReadAll(io.LimitReader(input, 1024*1024+1))
-	if err != nil {
-		return fail(err)
-	}
+	return io.ReadAll(io.LimitReader(input, 1024*1024+1))
+}
+
+func (session *Session) executeData(s Scope, data []byte, mode, profile, version string) (Report, []byte, int) {
 	r := NewReport(mode, version, data)
 	r.Scope = &s
 	d := ParseProfile(data, &r, profile == "layers")
@@ -47,7 +52,7 @@ func (session *Session) Execute(s Scope, mode, profile, version string) (Report,
 		d.ValidateScope(s, &r)
 	}
 	if len(r.Diagnostics) == 0 && mode == "check" {
-		if err = d.checkGo(s.Root, &r, session); err != nil {
+		if err := d.checkGo(s.Root, &r, session); err != nil {
 			r.Status = "unavailable"
 			r.Diagnostics = append(r.Diagnostics, Diagnostic{Rule: "implementation.unavailable", Message: err.Error()})
 			return r, nil, 2
@@ -58,7 +63,7 @@ func (session *Session) Execute(s Scope, mode, profile, version string) (Report,
 	}
 	if mode == "render" {
 		var html bytes.Buffer
-		if err = Render(&html, d, r); err != nil {
+		if err := Render(&html, d, r); err != nil {
 			r.Status = "unavailable"
 			r.Diagnostics = append(r.Diagnostics, Diagnostic{Rule: "render.unavailable", Message: err.Error()})
 			return r, nil, 2

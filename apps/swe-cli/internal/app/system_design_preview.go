@@ -47,14 +47,22 @@ func systemDesignPreview(args []string, out io.Writer) int {
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(*root, path)
 	}
-	preview, report, code := systemdesign.NewPreview(path, Version)
-	if code != 0 {
-		return encode(out, report, code)
-	}
-
-	key, err := previewKey(preview.File())
+	scope, err := systemdesign.FileScope(path)
 	if err != nil {
 		return fail(err)
+	}
+	key, err := previewKey(scope.File)
+	if err != nil {
+		return fail(err)
+	}
+	if info, ok := findExistingPreview(key, scope.File); ok {
+		info["reused"] = true
+		openPreview(info, *noOpen)
+		return encode(out, info, 0)
+	}
+	preview, report, code := systemdesign.NewPreview(scope.File, Version)
+	if code != 0 {
+		return encode(out, report, code)
 	}
 	for attempt := 0; attempt < 32; attempt++ {
 		port := 20000 + (int(key[0])*256+int(key[1])+attempt)%40000
@@ -84,7 +92,6 @@ func systemDesignPreview(args []string, out io.Writer) int {
 		return servePreview(ctx, listener, preview, out, identityPath, !*noOpen)
 	}
 	return fail(errors.New("no available preview port"))
-
 }
 
 func serveDesignPreview(ctx context.Context, listener net.Listener, preview *systemdesign.Preview, out io.Writer) int {
@@ -104,7 +111,7 @@ func servePreview(ctx context.Context, listener net.Listener, preview *systemdes
 		}
 		page.ServeHTTP(w, r)
 	})
-	server := &http.Server{Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 8192}
+	server := newPreviewServer(handler)
 	result := make(chan error, 1)
 	go func() { result <- server.Serve(listener) }()
 	openPreview(info, !autoOpen)
@@ -129,6 +136,22 @@ func servePreview(ctx context.Context, listener net.Listener, preview *systemdes
 	return 0
 }
 
+const (
+	previewWriteTimeout    = 2 * time.Minute
+	previewIdentityTimeout = 250 * time.Millisecond
+)
+
+func newPreviewServer(handler http.Handler) *http.Server {
+	return &http.Server{
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      previewWriteTimeout,
+		IdleTimeout:       30 * time.Second,
+		MaxHeaderBytes:    8192,
+	}
+}
+
 // Include executable bytes so distinct builds with the same version cannot reuse
 // each other's renderer. Canonical FileScope paths identify the YAML.
 func previewKey(file string) ([32]byte, error) {
@@ -148,8 +171,20 @@ func previewKey(file string) ([32]byte, error) {
 	return sha256.Sum256(append(h.Sum(nil), []byte("\x00"+Version+"\x00"+file)...)), nil
 }
 
+func findExistingPreview(key [32]byte, file string) (map[string]any, bool) {
+	for attempt := 0; attempt < 32; attempt++ {
+		port := 20000 + (int(key[0])*256+int(key[1])+attempt)%40000
+		host := fmt.Sprintf("127.0.0.1:%d", port)
+		identityPath := "/" + hex.EncodeToString(key[:]) + "/service"
+		if info, ok := existingPreview(host, identityPath, file); ok {
+			return info, true
+		}
+	}
+	return nil, false
+}
+
 func existingPreview(host, path, file string) (map[string]any, bool) {
-	client := &http.Client{Timeout: time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	client := &http.Client{Timeout: previewIdentityTimeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	response, err := client.Get("http://" + host + path)
 	if err != nil {
 		return nil, false

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -84,6 +85,16 @@ func TestPreviewServerServesAndStops(t *testing.T) {
 	}
 }
 
+func TestPreviewServerWriteTimeoutCoversRendering(t *testing.T) {
+	server := newPreviewServer(http.NotFoundHandler())
+	if server.WriteTimeout != previewWriteTimeout {
+		t.Fatalf("WriteTimeout=%s", server.WriteTimeout)
+	}
+	if server.WriteTimeout <= 30*time.Second {
+		t.Fatalf("WriteTimeout still matches the old render limit: %s", server.WriteTimeout)
+	}
+}
+
 func TestPreviewCommandProcess(t *testing.T) {
 	if raw := os.Getenv("HARN_PREVIEW_TEST_ARGS"); raw != "" {
 		var args []string
@@ -91,6 +102,66 @@ func TestPreviewCommandProcess(t *testing.T) {
 			os.Exit(2)
 		}
 		os.Exit(Run(args, nil, os.Stdout))
+	}
+}
+
+func TestPreviewReuseDoesNotRenderCurrentYAML(t *testing.T) {
+	data, err := os.ReadFile("../systemdesign/testdata/project/system-design.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(t.TempDir(), "system-design.yaml")
+	if err = os.WriteFile(file, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	args := []string{"system-design", "preview", "--file", file, "--expect-version", Version, "--no-open"}
+	raw, err := json.Marshal(args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	binary, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	first := exec.CommandContext(ctx, binary, "-test.run=^TestPreviewCommandProcess$")
+	first.Env = append(os.Environ(), "HARN_PREVIEW_TEST_ARGS="+string(raw))
+	pipe, err := first.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = first.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = first.Process.Kill(); _ = first.Wait() }()
+	var started struct {
+		URL string `json:"url"`
+	}
+	if err = json.NewDecoder(pipe).Decode(&started); err != nil {
+		t.Fatal(err)
+	}
+
+	if err = os.WriteFile(file, []byte("invalid: ["), 0600); err != nil {
+		t.Fatal(err)
+	}
+	repeatCtx, repeatCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer repeatCancel()
+	repeat := exec.CommandContext(repeatCtx, binary, "-test.run=^TestPreviewCommandProcess$")
+	repeat.Env = first.Env
+	out, err := repeat.Output()
+	if err != nil {
+		t.Fatalf("reuse rendered invalid YAML first: %v\n%s", err, out)
+	}
+	var reused struct {
+		URL    string `json:"url"`
+		Reused bool   `json:"reused"`
+	}
+	if err = json.Unmarshal(out, &reused); err != nil {
+		t.Fatal(err)
+	}
+	if !reused.Reused || reused.URL != started.URL {
+		t.Fatalf("running preview was not reused: %s", out)
 	}
 }
 

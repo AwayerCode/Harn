@@ -1,6 +1,7 @@
 package systemdesign
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -9,12 +10,35 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 // Preview owns only a YAML path and the running build's renderer. It never
 // accepts HTML, serves a directory, loads a template, or invokes another binary.
 type Preview struct {
 	file, version, route string
+
+	mu        sync.Mutex
+	cachedKey string
+	cached    previewRender
+	loading   map[string]*previewLoad
+}
+
+type previewRender struct {
+	report Report
+	html   []byte
+	code   int
+}
+
+type previewLoad struct {
+	done chan struct{}
+}
+
+type previewSnapshot struct {
+	scope Scope
+	data  []byte
+	key   string
+	err   error
 }
 
 func NewPreview(file, version string) (*Preview, Report, int) {
@@ -22,15 +46,17 @@ func NewPreview(file, version string) (*Preview, Report, int) {
 	if err != nil {
 		return nil, UnavailableReport("preview", version, err), 2
 	}
-	report, _, code := Execute(scope, "render", "", version)
-	if code != 0 {
-		return nil, report, code
+	preview := &Preview{file: scope.File, version: version}
+	rendered := preview.current(context.Background())
+	if rendered.code != 0 {
+		return nil, rendered.report, rendered.code
 	}
 	var token [24]byte
 	if _, err = rand.Read(token[:]); err != nil {
 		return nil, UnavailableReport("preview", version, err), 2
 	}
-	return &Preview{scope.File, version, "/" + hex.EncodeToString(token[:]) + "/"}, report, 0
+	preview.route = "/" + hex.EncodeToString(token[:]) + "/"
+	return preview, rendered.report, 0
 }
 
 func (p *Preview) Path() string { return p.route }
@@ -58,15 +84,8 @@ func (p *Preview) Handler(host string) http.Handler {
 			http.Error(w, "read-only preview", http.StatusMethodNotAllowed)
 			return
 		}
-		scope, err := FileScope(p.file)
-		var report Report
-		var html []byte
-		code := 2
-		if err != nil {
-			report = UnavailableReport("preview", p.version, err)
-		} else {
-			report, html, code = Execute(scope, "render", "", p.version)
-		}
+		rendered := p.current(r.Context())
+		report, html, code := rendered.report, rendered.html, rendered.code
 		if r.URL.Path == p.route+"state" {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			sum := sha256.Sum256(html)
@@ -94,6 +113,103 @@ func (p *Preview) Handler(host string) http.Handler {
 			_, _ = w.Write(html)
 		}
 	})
+}
+
+func previewSnapshotKey(scope Scope, data []byte) string {
+	meta, _ := json.Marshal(struct {
+		Unavailable string
+		File        string
+		Root        string
+		Children    []string
+	}{scope.Unavailable, scope.File, scope.Root, scope.Children})
+	dataDigest := sha256.Sum256(data)
+	digest := sha256.New()
+	_, _ = digest.Write(meta)
+	_, _ = digest.Write(dataDigest[:])
+	return hex.EncodeToString(digest.Sum(nil))
+}
+
+func previewErrorKey(file string, err error) string {
+	digest := sha256.Sum256([]byte(file + "\x00" + err.Error()))
+	return hex.EncodeToString(digest[:])
+}
+
+func (p *Preview) snapshot() previewSnapshot {
+	scope, err := FileScope(p.file)
+	if err != nil {
+		return previewSnapshot{
+			scope: Scope{File: p.file},
+			key:   previewErrorKey(p.file, err),
+			err:   err,
+		}
+	}
+	data, err := readScopeInput(scope)
+	if err != nil {
+		return previewSnapshot{
+			scope: scope,
+			key:   previewSnapshotKey(scope, []byte(err.Error())),
+			err:   err,
+		}
+	}
+	return previewSnapshot{scope: scope, data: data, key: previewSnapshotKey(scope, data)}
+}
+
+// current renders each stable filesystem snapshot once. Concurrent page and
+// state requests for the same YAML wait for that result instead of repeating
+// the expensive layout work.
+func (p *Preview) current(ctx context.Context) previewRender {
+	for {
+		snapshot := p.snapshot()
+
+		p.mu.Lock()
+		if p.cachedKey == snapshot.key {
+			rendered := p.cached
+			p.mu.Unlock()
+			return rendered
+		}
+		if load := p.loading[snapshot.key]; load != nil {
+			p.mu.Unlock()
+			select {
+			case <-load.done:
+				continue
+			case <-ctx.Done():
+				return previewRender{
+					report: UnavailableReport("preview", p.version, ctx.Err()),
+					code:   2,
+				}
+			}
+		}
+		done := make(chan struct{})
+		if p.loading == nil {
+			p.loading = map[string]*previewLoad{}
+		}
+		p.loading[snapshot.key] = &previewLoad{done: done}
+		p.mu.Unlock()
+
+		var rendered previewRender
+		if snapshot.err != nil {
+			rendered = previewRender{
+				report: UnavailableReport("preview", p.version, snapshot.err),
+				code:   2,
+			}
+		} else {
+			rendered.report, rendered.html, rendered.code = NewSession().executeData(
+				snapshot.scope,
+				snapshot.data,
+				"render",
+				"",
+				p.version,
+			)
+		}
+
+		p.mu.Lock()
+		p.cachedKey = snapshot.key
+		p.cached = rendered
+		delete(p.loading, snapshot.key)
+		close(done)
+		p.mu.Unlock()
+		return rendered
+	}
 }
 
 // Permit only the scripts embedded in this build. Dynamic inline styles support
@@ -129,7 +245,7 @@ const liveScript = `<script type="application/javascript">
   }
   async function check() {
     try {
-      const response = await fetch(new URL("state", location.href), {cache:"no-store", signal:AbortSignal.timeout(5000)});
+      const response = await fetch(new URL("state", location.href), {cache:"no-store", signal:AbortSignal.timeout(60000)});
       if (!response.ok) throw new Error("HTTP " + response.status);
       const state = await response.json();
       if (!state.valid) {
