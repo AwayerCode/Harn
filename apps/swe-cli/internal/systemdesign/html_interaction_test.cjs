@@ -80,6 +80,7 @@ test('zoom fits both dimensions, preserves manual zoom on resize, and restores f
  canvas.clientHeight=400;resize();assert.ok(parseFloat(svg.style.height)<=400);
  canvas.clientWidth=4000;canvas.clientHeight=3000;resize();assert.equal(svg.style.width,'2000px');
  assert.equal(controls['zoom-level'].textContent,'100%');
+
 });
 
 test('module details open in modal without navigation and restore focus on close',()=>{
@@ -90,12 +91,16 @@ test('module details open in modal without navigation and restore focus on close
  dialog.showModal=()=>{dialog.open=true;};
  dialog.close=()=>{dialog.open=false;dialog.fire('close');};
  node.focus=options=>{focused=options.preventScroll;};
- const ids={'module-dialog':dialog,'detail-content':content,'detail-close':close,'module-detail-title':{},'info-orders':{dataset:{name:'orders'},content:{cloneNode:()=> 'order details'}}};
- vm.runInNewContext(detailScript,{document:{getElementById:id=>ids[id],querySelectorAll:()=>[node]}});
+ const menu=element({}),action=element({});menu.hidden=true;menu.style={};menu.offsetWidth=180;menu.offsetHeight=40;action.focus=()=>{};
+ const ids={'module-menu':menu,'menu-details':action,'module-dialog':dialog,'detail-content':content,'detail-close':close,'module-detail-title':{},'info-orders':{dataset:{name:'orders'},content:{cloneNode:()=> 'order details'}}};
+ vm.runInNewContext(detailScript,{window:{innerWidth:800,innerHeight:600,addEventListener(){}},document:{getElementById:id=>ids[id],querySelectorAll:()=>[node],addEventListener(){}}});
  node.fire('click',{preventDefault(){prevented=true;}});
- assert.equal(prevented,true);assert.equal(dialog.open,true);assert.equal(rendered,'order details');
+ assert.equal(prevented,true);assert.notEqual(dialog.open,true);
+ node.fire('contextmenu',{preventDefault(){},clientX:790,clientY:590});
+ assert.equal(menu.hidden,false);assert.equal(menu.style.left,'612px');assert.equal(menu.style.top,'552px');
+ action.fire('click');assert.equal(menu.hidden,true);assert.equal(dialog.open,true);assert.equal(rendered,'order details');
  close.fire('click');assert.equal(dialog.open,false);assert.equal(focused,true);
- node.fire('click',{preventDefault(){}});
+ node.fire('contextmenu',{preventDefault(){},clientX:100,clientY:100});action.fire('click');
  dialog.getBoundingClientRect=()=>({left:100,right:500,top:100,bottom:500});
  const inside={target:dialog,clientX:120,clientY:120};
  const outside={target:dialog,clientX:50,clientY:50};
@@ -134,4 +139,22 @@ test('theme follows system in auto mode and preserves manual choice',()=>{
  select.value='dark';select.fire('change');assert.equal(saved,'dark');
  system.fire('change');assert.equal(root.dataset.theme,'dark');
  select.value='auto';select.fire('change');assert.equal(root.dataset.theme,'light');
+});
+
+test('edge filters respect persistent selection',()=>{
+ const searchScript=[...source.matchAll(/<script type="application\/javascript">([\s\S]*?)<\/script>/g)][5][1];
+ const nodes=['inventory','orders'].map(module=>element({module}));
+ const edges=[element({from:'inventory',to:'orders'},['edge-module']),element({from:'other',to:'orders'},['edge-module']),element({from:'domain',to:'ports'},['edge-layer'])];
+ const svg={querySelectorAll:s=>s==='.node-link'?nodes:edges,dispatchEvent:event=>{svg.selection=event.detail;}};
+ const canvas={...element({}),querySelector:()=>svg,dispatchEvent:event=>{canvas.located=event.detail;}};
+ const ids=Object.fromEntries(['edge-filter'].map(id=>[id,element({})]));
+ ids['edge-filter'].value='all';
+ vm.runInNewContext(searchScript,{CustomEvent:class{constructor(type,options){this.type=type;this.detail=options.detail;}},document:{querySelector:()=>canvas,getElementById:id=>ids[id],addEventListener(){},createElement(){const b=element({});b.click=()=>b.fire('click');return b;}}});
+ nodes[0].fire('click');assert.equal(svg.selection,'inventory');
+ ids['edge-filter'].value='related';ids['edge-filter'].fire('change');
+ assert.deepEqual(edges.map(e=>e.classList.contains('filtered')),[false,true,true]);
+ canvas.fire('click',{target:{closest:()=>null}});assert.ok(edges.every(e=>e.classList.contains('filtered')));assert.equal(svg.selection,null);
+ ids['edge-filter'].value='layer';ids['edge-filter'].fire('change');assert.deepEqual(edges.map(e=>e.classList.contains('filtered')),[true,true,false]);
+ ids['edge-filter'].value='module';ids['edge-filter'].fire('change');assert.deepEqual(edges.map(e=>e.classList.contains('filtered')),[false,false,true]);
+ ids['edge-filter'].value='all';ids['edge-filter'].fire('change');assert.ok(edges.every(e=>!e.classList.contains('filtered')));
 });

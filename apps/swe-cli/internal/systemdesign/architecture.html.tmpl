@@ -28,20 +28,26 @@ dialog{width:min(1120px,calc(100vw - 32px));height:min(720px,85dvh)}#detail-cont
 [data-theme="dark"] .node{fill:#293e60;stroke:#729de3}[data-theme="dark"] .color-1 .node{fill:#4a3627;stroke:#c99a69}[data-theme="dark"] .color-2 .node{fill:#403055;stroke:#aa8bd4}[data-theme="dark"] .color-3 .node{fill:#23493f;stroke:#6db5a3}
 [data-theme="dark"] svg.tracing .node-link.related .node{fill:#293e60;stroke:#80b7ff}[data-theme="dark"] svg.tracing .node-link.selected .node{fill:#355580;stroke:#a6cdff}}
 body,dialog{background:var(--surface);color:var(--text)}.canvas{background-color:var(--canvas);background-image:radial-gradient(circle at 1px 1px,var(--grid) 1px,transparent 1.2px);background-size:var(--grid-size,24px) var(--grid-size,24px);background-position:var(--grid-x,0px) var(--grid-y,0px)}svg text{fill:var(--text)}.edge-module{stroke:var(--blue)}.edge-layer{stroke:var(--orange)}#arrow-module path{fill:var(--blue)}#arrow-layer path{fill:var(--orange)}.solid,a,.detail-link{color:var(--blue)}.dashed{color:var(--orange)}.muted,.module-path,.detail-count,.module-dependencies summary{color:var(--muted)}.statusbar,.detail-section h3,#detail-content .module-path{background:var(--panel);color:var(--muted);border-color:var(--border)}.zoom-controls button,.dialog-close{color:var(--text)}.zoom-controls button:hover,.dialog-close:hover{background:var(--hover);color:var(--text)}dialog,.dialog-heading,.view-info>div{background:var(--surface);color:var(--text);border-color:var(--border)}#detail-content .detail-section,.interface-item,.file-list li,.module-dependencies{border-color:var(--border)}.column-divider{background:var(--panel)}.column-divider::after{background:var(--border)}.column-divider:hover,.column-divider:focus-visible,.column-divider.resizing{background:var(--blue)}.theme-control{display:flex;align-items:center;gap:6px;white-space:nowrap}.theme-control select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:2px 5px}@media print{.canvas{background:#fff}}
+.statusbar>button,.statusbar select{font:inherit;padding:3px 6px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:4px}.statusbar button:disabled{opacity:.4}.edge.filtered{display:none}
+
+/* Detail panel: quiet surfaces, clear hierarchy, and independent list columns. */
+dialog{width:min(1160px,calc(100vw - 40px));height:min(680px,84dvh);border:1px solid var(--border);border-radius:16px;box-shadow:0 24px 80px #0004}dialog::backdrop{background:rgb(8 15 28 / 48%);backdrop-filter:blur(3px)}.dialog-heading{padding:20px 24px;gap:20px}.dialog-heading h2{font-size:19px;font-weight:650;letter-spacing:-.3px}.dialog-close{width:30px;height:30px;border:1px solid var(--border);background:var(--panel);border-radius:8px;color:var(--muted);font-size:23px;transition:background .12s}.dialog-close:hover{background:var(--hover);color:var(--text)}#detail-content .module-path{padding:10px 24px;font-size:12px;margin:0;background:var(--surface);color:var(--muted)}.module-path code{font-size:12px}.detail-columns{background:var(--surface)}#detail-content .detail-section{border-right:0}.detail-section h3{display:flex;align-items:center;gap:8px;padding:16px 20px;font-size:13px;font-weight:600;background:var(--surface);color:var(--text);border-bottom:1px solid var(--border)}.detail-count{margin:0;padding:0 6px;border-radius:5px;background:var(--panel);font-size:11px;line-height:19px;font-variant-numeric:tabular-nums}.column-body{padding:8px 20px 20px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;font-size:14px;line-height:1.65}.column-body>p.muted{font-size:12px}.interface-item{padding:14px 0}.interface-item code{font-size:13px;line-height:1.6;color:var(--blue)}.interface-item p{font-size:13px;color:var(--muted);line-height:1.65;margin-top:6px}.file-list li{border-bottom:0;padding:8px 10px;border-radius:5px}.file-list li:hover{background:var(--panel)}.file-list code{font-size:13px}.column-divider{background:var(--surface)}.column-divider::after{background:var(--border)}.column-divider:hover,.column-divider:focus-visible,.column-divider.resizing{background:var(--hover)}.column-divider:hover::after,.column-divider.resizing::after{background:var(--blue)}.module-dependencies{margin-top:24px}.detail-link{margin:3px 4px 3px 0;padding:3px 7px;background:var(--panel);border:1px solid var(--border);border-radius:5px;text-decoration:none;font-size:12px}@media(max-width:700px){dialog{width:calc(100vw - 16px);border-radius:12px}.dialog-heading{padding:16px 18px}}
+#module-menu{position:fixed;z-index:20;min-width:180px;padding:5px;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px #0004}#module-menu[hidden]{display:none}#module-menu button{display:block;width:100%;padding:9px 12px;border:0;border-radius:4px;background:transparent;color:var(--text);font:inherit;font-size:13px;text-align:left;cursor:pointer}#module-menu button:hover,#module-menu button:focus-visible{background:var(--hover);outline:none}@media print{#module-menu{display:none}}
 </style></head><body><main>
 <div class="canvas" tabindex="0" aria-label="架构图画布，滚轮缩放，拖拽平移"><svg xmlns="http://www.w3.org/2000/svg" width="{{.Width}}" height="{{.Height}}" viewBox="0 0 {{.Width}} {{.Height}}" role="group" aria-labelledby="diagram-title diagram-desc">
-<title id="diagram-title">分层模块架构与允许依赖</title><desc id="diagram-desc">每个虚线分区代表一个层，顶部为层名和职责，区内淡色矩形代表模块。实线箭头表示模块允许依赖，虚线箭头表示层间允许依赖。点击模块查看目录和必要文件。</desc>
+<title id="diagram-title">分层模块架构与允许依赖</title><desc id="diagram-desc">每个虚线分区代表一个层，顶部为层名和职责，区内淡色矩形代表模块。实线箭头表示模块允许依赖，虚线箭头表示层间允许依赖。右键模块打开菜单，查看目录和必要文件。</desc>
 <defs><marker id="arrow-module" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563a6"/></marker><marker id="arrow-layer" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#925119"/></marker></defs>
 {{range .Layers}}<g id="layer-{{.ID}}" class="color-{{.Color}}"><title>{{.ID}}：{{.Responsibility}}</title><rect class="band color-{{.Color}}" x="{{$.BandX}}" y="{{.Y}}" width="{{$.BandWidth}}" height="{{.Height}}" rx="12"/>
 {{$layer := .}}{{range $i,$line := .Lines}}<text class="layer-title" x="{{$layer.LabelX}}" y="{{lineY $layer.LabelY $i}}">{{$line}}</text>{{end}}
-{{range .Modules}}<a class="node-link" data-module="{{.ID}}" tabindex="0" aria-haspopup="dialog" id="module-{{.ID}}" href="#info-{{.ID}}"><title>{{.ID}}：{{.Responsibility}} · {{.Path}}</title><rect class="node" x="{{.X}}" y="{{.Y}}" width="{{.Width}}" height="{{.Height}}" rx="8"/>
+{{range .Modules}}<a class="node-link" data-module="{{.ID}}" tabindex="0" aria-haspopup="menu" id="module-{{.ID}}" href="#info-{{.ID}}"><title>{{.ID}}：{{.Responsibility}} · {{.Path}}</title><rect class="node" x="{{.X}}" y="{{.Y}}" width="{{.Width}}" height="{{.Height}}" rx="8"/>
 {{$module := .}}{{range $i,$line := .Lines}}<text {{if eq $i 0}}class="node-title"{{end}} text-anchor="middle" x="{{add $module.X 112}}" y="{{lineY $module.Y $i}}">{{$line}}</text>{{end}}</a>{{end}}</g>{{end}}
 {{range .Edges}}<path class="edge edge-{{.Kind}}" data-from="{{.From}}" data-to="{{.To}}" d="{{.Path}}"><title>{{.From}} → {{.To}}</title></path>{{end}}
 </svg></div>
-<p class="sr-only" id="trace-status" role="status" aria-live="polite">悬停或键盘聚焦模块，追踪直接上下游依赖；移开后恢复。点击模块查看详情。</p>
+<p class="sr-only" id="trace-status" role="status" aria-live="polite">悬停或键盘聚焦模块，追踪直接上下游依赖；移开后恢复。右键模块查看详情。</p>
 {{range .Layers}}{{range .Modules}}<template id="info-{{.ID}}" data-name="{{.ID}}"><p class="module-path"><code>{{.Path}}/</code></p><div class="detail-columns"><section class="detail-section"><h3>模块功能</h3><div class="column-body"><p>{{.Responsibility}}</p><details class="module-dependencies"><summary>允许依赖</summary><p>{{range .Allowed}}<button class="detail-link" data-detail="{{.}}">→ {{.}}</button> {{else}}无{{end}}</p></details></div></section><div class="column-divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="模块功能列宽" aria-valuemin="180" aria-valuenow="240" data-divider="0"></div><section class="detail-section"><h3>接口列表 <span class="detail-count">{{len .Interfaces}}</span></h3><div class="column-body">{{range .Interfaces}}<div class="interface-item"><code>{{.Name}}</code><p>{{.Description}}</p></div>{{else}}<p class="muted">尚未声明接口</p>{{end}}</div></section><div class="column-divider" role="separator" tabindex="0" aria-orientation="vertical" aria-label="接口列表列宽" aria-valuemin="180" aria-valuenow="240" data-divider="1"></div><section class="detail-section"><h3>文件列表 <span class="detail-count">{{len .Required}}</span></h3><div class="column-body"><p class="muted">设计声明的必要文件</p><ul class="file-list">{{range .Required}}<li><code>{{.}}</code></li>{{else}}<li class="muted">尚未声明文件</li>{{end}}</ul></div></section></div></template>{{end}}{{end}}
+<div id="module-menu" role="menu" aria-label="模块操作" hidden><button id="menu-details" role="menuitem">查看模块详情</button></div>
 <dialog id="module-dialog" aria-labelledby="module-detail-title"><div class="dialog-heading"><h2 id="module-detail-title"></h2><button class="dialog-close" id="detail-close" aria-label="关闭模块详情" title="关闭（Esc）" autofocus><span aria-hidden="true">×</span></button></div><div id="detail-content"></div></dialog>
-<footer class="statusbar" aria-label="架构图工具栏"><div class="zoom-controls" role="group" aria-label="架构图缩放"><button id="zoom-out" aria-label="缩小">−</button><output id="zoom-level" aria-live="polite">100%</output><button id="zoom-in" aria-label="放大">＋</button><button id="zoom-reset">100%</button><button id="zoom-fit">适应全图</button></div><label class="theme-control">主题 <select id="theme-mode" aria-label="配色主题"><option value="auto">自动</option><option value="light">亮色</option><option value="dark">暗色</option></select></label><details class="view-info"><summary>信息</summary><div><p>虚线框：职责边界<br>箭头：依赖方 → 被依赖方<br><span class="solid">蓝色实线：模块允许依赖</span><br><span class="dashed">橙色虚线：层间允许依赖</span></p></div></details></footer>
+<footer class="statusbar" aria-label="架构图工具栏"><label>连线 <select id="edge-filter" aria-label="连线过滤"><option value="all">全部</option><option value="module">仅模块</option><option value="layer">仅层级</option><option value="related">仅相关</option></select></label><div class="zoom-controls" role="group" aria-label="架构图缩放"><button id="zoom-out" aria-label="缩小">−</button><output id="zoom-level" aria-live="polite">100%</output><button id="zoom-in" aria-label="放大">＋</button><button id="zoom-reset">100%</button><button id="zoom-fit">适应全图</button></div><label class="theme-control">主题 <select id="theme-mode" aria-label="配色主题"><option value="auto">自动</option><option value="light">亮色</option><option value="dark">暗色</option></select></label><details class="view-info"><summary>信息</summary><div><p>虚线框：职责边界<br>箭头：依赖方 → 被依赖方<br><span class="solid">蓝色实线：模块允许依赖</span><br><span class="dashed">橙色虚线：层间允许依赖</span></p></div></details></footer>
 </main>
 <script type="application/javascript">
 (() => {
@@ -50,10 +56,11 @@ body,dialog{background:var(--surface);color:var(--text)}.canvas{background-color
   const edges = Array.from(svg.querySelectorAll('.edge'));
   const status = document.getElementById('trace-status');
   const idle = status.textContent;
+  let selected = null;
   let hovered = null;
   let focused = null;
   function update() {
-    const id = hovered || focused;
+    const id = selected || hovered || focused;
     const related = new Set(id ? [id] : []);
     const upstream = new Set();
     const downstream = new Set();
@@ -79,6 +86,7 @@ body,dialog{background:var(--surface);color:var(--text)}.canvas{background-color
       ? id + '：' + upstream.size + ' 个上游模块依赖它，依赖 ' + downstream.size + ' 个下游模块。仅高亮直接关系。'
       : idle;
   }
+  svg.addEventListener('module-selection', event => { selected = event.detail; update(); });
   for (const node of nodes) {
     const id = node.dataset.module;
     node.addEventListener('pointerenter', () => { hovered = id; update(); });
@@ -186,13 +194,39 @@ body,dialog{background:var(--surface);color:var(--text)}.canvas{background-color
     content.scrollTop = 0;
     if (!dialog.open) dialog.showModal();
   }
+  const menu = document.getElementById('module-menu');
+  const action = document.getElementById('menu-details');
+  function hideMenu(restore = false) {
+    menu.hidden = true;
+    if (restore && opener) opener.focus({preventScroll:true});
+  }
+  function openMenu(node, x, y) {
+    opener = node;
+    menu.hidden = false;
+    menu.style.left = Math.max(8, Math.min(x, window.innerWidth - menu.offsetWidth - 8)) + 'px';
+    menu.style.top = Math.max(8, Math.min(y, window.innerHeight - menu.offsetHeight - 8)) + 'px';
+    action.focus({preventScroll:true});
+  }
   for (const node of document.querySelectorAll('.node-link')) {
-    node.addEventListener('click', event => {
+    node.addEventListener('click', event => event.preventDefault());
+    node.addEventListener('contextmenu', event => {
       event.preventDefault();
-      opener = node;
-      show(node.dataset.module);
+      openMenu(node, event.clientX, event.clientY);
+    });
+    node.addEventListener('keydown', event => {
+      if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+        event.preventDefault();
+        const rect = node.getBoundingClientRect();
+        openMenu(node, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }
     });
   }
+  action.addEventListener('click', () => { hideMenu(); if (opener) show(opener.dataset.module); });
+  menu.addEventListener('keydown', event => {
+    if (event.key === 'Escape' || event.key === 'Tab') { event.preventDefault(); hideMenu(true); }
+  });
+  document.addEventListener('pointerdown', event => { if (!menu.contains(event.target)) hideMenu(); });
+  window.addEventListener('resize', () => hideMenu());
   content.addEventListener('click', event => {
     const link = event.target.closest('[data-detail]');
     if (link) show(link.dataset.detail);
@@ -276,6 +310,34 @@ body,dialog{background:var(--surface);color:var(--text)}.canvas{background-color
   });
   system.addEventListener('change', apply);
   apply();
+})();
+</script>
+<script type="application/javascript">
+(() => {
+  const canvas = document.querySelector('.canvas');
+  const svg = canvas.querySelector('svg');
+  const nodes = Array.from(svg.querySelectorAll('.node-link'));
+  const edges = Array.from(svg.querySelectorAll('.edge'));
+  const filter = document.getElementById('edge-filter');
+  let selected = null;
+  function updateFilter() {
+    for (const edge of edges) {
+      const module = edge.classList.contains('edge-module');
+      const visible = filter.value === 'all' || (filter.value === 'module' && module) || (filter.value === 'layer' && !module) || (filter.value === 'related' && module && selected && (edge.dataset.from === selected || edge.dataset.to === selected));
+      edge.classList.toggle('filtered', !visible);
+    }
+  }
+  function select(id) {
+    selected = id;
+    svg.dispatchEvent(new CustomEvent('module-selection', {detail:id}));
+    updateFilter();
+  }
+  for (const node of nodes) {
+    node.addEventListener('click', () => select(node.dataset.module));
+    node.addEventListener('contextmenu', event => { event.preventDefault(); select(node.dataset.module); });
+  }
+  canvas.addEventListener('click', event => { if (!event.target.closest('.node-link')) select(null); });
+  filter.addEventListener('change', updateFilter);
 })();
 </script>
 </body></html>
